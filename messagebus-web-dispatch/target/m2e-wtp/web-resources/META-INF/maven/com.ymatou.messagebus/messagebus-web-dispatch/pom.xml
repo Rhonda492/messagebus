@@ -1,0 +1,71 @@
+<?xml version="1.0"?>
+<project
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.ymatou.messagebus</groupId>
+		<artifactId>messagebus</artifactId>
+		<version>1.0.0</version>
+	</parent>
+
+	<artifactId>messagebus-web-dispatch</artifactId>
+	<packaging>war</packaging>
+
+	<name>messagebus-web-dispatch</name>
+	<url>http://www.ymatou.com</url>
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.ymatou.messagebus</groupId>
+			<artifactId>messagebus-facade-impl</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.tomcat.embed</groupId>
+			<artifactId>tomcat-embed-core</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.tomcat.embed</groupId>
+			<artifactId>tomcat-embed-logging-juli</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.tomcat</groupId>
+			<artifactId>jasper</artifactId>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<finalName>messagebus-web-dispatch</finalName>
+	</build>
+
+	<profiles>
+		<profile>
+			<id>not-local</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<artifactId>maven-war-plugin</artifactId>
+						<version>2.6</version>
+						<configuration>
+							<!-- 非本地Profile，所有配置文件不打在war包，而是通过disconf或http://cmc.ops.ymatou.cn/管理 -->
+							<packagingExcludes>
+								WEB-INF/classes/*.properties,WEB-INF/classes/logback-test.xml
+							</packagingExcludes>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<id>local</id>
+		</profile>
+	</profiles>
+</project>
