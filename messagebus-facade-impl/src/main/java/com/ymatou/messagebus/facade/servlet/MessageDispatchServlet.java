@@ -19,7 +19,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ymatou.messagebus.facade.task.MessageDispatchTask;
+import com.ymatou.messagebus.task.MessageDispatchTask;
 
 
 /**

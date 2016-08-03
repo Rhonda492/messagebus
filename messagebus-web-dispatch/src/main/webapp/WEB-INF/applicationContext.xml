@@ -68,6 +68,8 @@
 		<property name="serverUrl" value="http://172.16.100.13:8089/api/perfmon"></property>
 	</bean>
 
+	<import resource="classpath:spring/persistence.xml" />
+	
 	<aop:config>
 		<aop:advisor advice-ref="performanceMonitorAdvice"
 			pointcut="execution(* com.ymatou.messagebus.facade.*Facade.*(..))

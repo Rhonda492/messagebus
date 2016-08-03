@@ -5,6 +5,7 @@
  */
 package com.ymatou.messagebus.facade.rest;
 
+import javax.annotation.Resource;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -23,12 +24,12 @@ import com.ymatou.messagebus.facade.model.PublishMessageResp;
  *
  */
 @Component("publishMessageResource")
-@Path("/message")
+@Path("/{message:(?i:message)}")
 @Produces({"application/json; charset=UTF-8"})
 @Consumes({MediaType.APPLICATION_JSON})
 public class PublishMessageResourceImpl implements PublishMessageResource {
 
-    @Autowired
+    @Resource
     PublishMessageFacade publishMessageFacade;
 
     /*
@@ -40,11 +41,11 @@ public class PublishMessageResourceImpl implements PublishMessageResource {
      */
     @Override
     @POST
-    @Path("/publish")
-    public String publish(PublishMessageReq req) {
+    @Path("/{publish:(?i:publish)}")
+    public RestResp publish(PublishMessageReq req) {
         PublishMessageResp resp = publishMessageFacade.publish(req);
 
-        return "ok";
+        return RestResp.newInstance(resp);
     }
 
 }

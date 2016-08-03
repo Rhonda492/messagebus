@@ -1,1 +1,5 @@
-D:\JavaProject\messagebus\messagebus-infrastructure\src\main\java\com\ymatou\messagebus\infrastructure\threadexception\LogRejectedPolicy.java
+D:\JavaProject\messagebus\messagebus-infrastructure\src\main\java\com\ymatou\messagebus\infrastructure\thread\LogRejectedPolicy.java
+D:\JavaProject\messagebus\messagebus-infrastructure\src\main\java\com\ymatou\messagebus\infrastructure\config\RabbitMQConfig.java
+D:\JavaProject\messagebus\messagebus-infrastructure\src\main\java\com\ymatou\messagebus\infrastructure\serialize\BigCamelPropertyNamingStrategy.java
+D:\JavaProject\messagebus\messagebus-infrastructure\src\main\java\com\ymatou\messagebus\infrastructure\rabbitmq\EndPoint.java
+D:\JavaProject\messagebus\messagebus-infrastructure\src\main\java\com\ymatou\messagebus\infrastructure\serialize\JacksonConfig.java

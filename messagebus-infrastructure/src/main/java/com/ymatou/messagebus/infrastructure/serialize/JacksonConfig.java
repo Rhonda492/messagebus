@@ -2,7 +2,6 @@ package com.ymatou.messagebus.infrastructure.serialize;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.TimeZone;
 
 import javax.ws.rs.ext.ContextResolver;
 import javax.ws.rs.ext.Provider;
@@ -17,13 +16,18 @@ public class JacksonConfig implements ContextResolver<ObjectMapper> {
 
     private final ObjectMapper objectMapper;
 
+
     public JacksonConfig() {
         objectMapper = new ObjectMapper();
 
-        objectMapper.setPropertyNamingStrategy(new BigCamelPropertyNamingStrategy());
-
         objectMapper.enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES);
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+
+        // 对enum使用toString()方法序列化 如果没有重写toString方法则默认使用Enum.name() 与名称一样
+        // objectMapper.configure(SerializationFeature.WRITE_ENUMS_USING_TO_STRING,true);
+        // 对enum反序列化使用 toString()
+        // objectMapper.configure(DeserializationFeature.READ_ENUMS_USING_TO_STRING,true);
 
 
         // 解析.NET客戶端传入的时间格式
@@ -31,9 +35,6 @@ public class JacksonConfig implements ContextResolver<ObjectMapper> {
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
         objectMapper.setDateFormat(dateFormat);
-
-        // 设置默认的时区
-        TimeZone.setDefault(TimeZone.getTimeZone("Asia/Shanghai"));
     }
 
     @Override

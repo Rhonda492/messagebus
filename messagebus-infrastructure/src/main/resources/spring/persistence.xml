@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:osgi="http://www.springframework.org/schema/osgi"
+	xmlns:mybatis="http://mybatis.org/schema/mybatis-spring" xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+         http://www.springframework.org/schema/osgi http://www.springframework.org/schema/osgi/spring-osgi.xsd
+         http://mybatis.org/schema/mybatis-spring http://mybatis.org/schema/mybatis-spring.xsd
+         http://www.springframework.org/schema/tx
+         http://www.springframework.org/schema/tx/spring-tx.xsd"
+	default-autowire="byName">
+
+	<bean id="configMongoUri" class="com.mongodb.MongoClientURI">
+		<constructor-arg value="${mongo.config.uri}"></constructor-arg>
+	</bean>
+
+	<bean id="configMongoClient" class="com.mongodb.MongoClient">
+		<constructor-arg ref="configMongoUri"></constructor-arg>
+	</bean>
+
+	<bean id="messageMongoUri" class="com.mongodb.MongoClientURI">
+		<constructor-arg value="${mongo.message.uri}"></constructor-arg>
+	</bean>
+
+	<bean id="messageMongoClient" class="com.mongodb.MongoClient">
+		<constructor-arg ref="messageMongoUri"></constructor-arg>
+	</bean>
+
+	<bean id="messageCompensateMongoUri" class="com.mongodb.MongoClientURI">
+		<constructor-arg value="${mongo.compensate.uri}"></constructor-arg>
+	</bean>
+
+	<bean id="messageCompensateMongoClient" class="com.mongodb.MongoClient">
+		<constructor-arg ref="messageCompensateMongoUri"></constructor-arg>
+	</bean>
+</beans>

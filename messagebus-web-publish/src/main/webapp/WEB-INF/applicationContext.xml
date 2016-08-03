@@ -35,6 +35,7 @@
 		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
 		<property name="locations">
 			<list>
+				<value>classpath:mongodb.properties</value>
 				<value>classpath:dubbo.properties</value>
 			</list>
 		</property>
@@ -67,6 +68,8 @@
 		<property name="appId" value="mqpublish.iapi.ymatou.com"></property>
 		<property name="serverUrl" value="http://172.16.100.13:8089/api/perfmon"></property>
 	</bean>
+	
+	<import resource="classpath:spring/persistence.xml" />
 
 	<aop:config>
 		<aop:advisor advice-ref="performanceMonitorAdvice"
@@ -86,7 +89,7 @@
 	<dubbo:registry address="zookeeper://${dubbo.zoo}" />
 
 	<!-- 用dubbo协议在20880端口暴露服务 -->
-	<dubbo:protocol name="dubbo" port="30880" serialization="kryo" />
+	<dubbo:protocol name="dubbo" port="60880" serialization="kryo" />
 
 	<dubbo:protocol name="rest" server="servlet" port="7000"
 		extension="com.ymatou.messagebus.infrastructure.serialize.JacksonConfig" />

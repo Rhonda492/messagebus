@@ -18,6 +18,7 @@
 		<logback.version>1.1.7</logback.version>
 		<slf4j.version>1.7.21</slf4j.version>
 		<spring.version>4.2.5.RELEASE</spring.version>
+		<spring.data.version>1.9.2.RELEASE</spring.data.version>
 		<mybatis.version>3.3.1</mybatis.version>
 		<mybatis-spring.version>1.2.5</mybatis-spring.version>
 		<junit.version>4.12</junit.version>
@@ -47,7 +48,8 @@
 		<commons-io.version>2.4</commons-io.version>
 
 		<mongo-driver.version>3.2.2</mongo-driver.version>
-		<rabbitmq-driver.version>3.5.3</rabbitmq-driver.version>
+		<morphia.version>1.2.1</morphia.version>
+		<rabbitmq-driver.version>3.6.3</rabbitmq-driver.version>
 
 		<joda-time.verson>2.9.3</joda-time.verson>
 
@@ -175,6 +177,30 @@
 				<groupId>org.springframework</groupId>
 				<artifactId>spring-aspects</artifactId>
 				<version>${spring.version}</version>
+			</dependency>			
+		
+			<dependency>
+			    <groupId>org.springframework.data</groupId>
+			    <artifactId>spring-data-mongodb</artifactId>
+			    <version>${spring.data.version}</version>
+			</dependency>		
+		
+			<dependency>
+			    <groupId>org.springframework.data</groupId>
+			    <artifactId>spring-data-mongodb-cross-store</artifactId>
+			    <version>${spring.data.version}</version>
+			</dependency>		
+		
+			<dependency>
+			    <groupId>org.springframework.data</groupId>
+			    <artifactId>spring-data-mongodb</artifactId>
+			    <version>${spring.data.version}</version>
+			</dependency>
+			
+			<dependency>
+			    <groupId>org.mongodb.morphia</groupId>
+			    <artifactId>morphia</artifactId>
+			    <version>${morphia.version}</version>
 			</dependency>
 
 			<dependency>
@@ -432,10 +458,8 @@
 		<module>messagebus-facade-model</module>
 		<module>messagebus-facade-impl</module>
 		<module>messagebus-domain</module>
-		<module>messagebus-web-publish</module>
-		<module>messagebus-daemon-dispatch</module>
-		<module>messagebus-daemon-compensate</module>
 		<module>messagebus-test</module>
+		<module>messagebus-web-publish</module>
 		<module>messagebus-web-dispatch</module>
 		<module>messagebus-web-compensate</module>
 	</modules>

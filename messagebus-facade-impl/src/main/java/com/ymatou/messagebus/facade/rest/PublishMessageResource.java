@@ -15,5 +15,5 @@ public interface PublishMessageResource {
      * @param req
      * @return
      */
-    public String publish(PublishMessageReq req);
+    public RestResp publish(PublishMessageReq req);
 }

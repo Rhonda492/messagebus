@@ -5,20 +5,16 @@
  */
 package com.ymatou.messagebus.facade.model;
 
+import javax.validation.constraints.NotNull;
+
+import org.hibernate.validator.constraints.NotEmpty;
+
 import com.ymatou.messagebus.facade.BaseRequest;
 
 /**
  * 发布消息请求体
  * 
  * @author wangxudong 2016年7月27日 下午6:51:48
- *
- */
-/**
- * @author wangxudong 2016年7月27日 下午6:54:23
- *
- */
-/**
- * @author wangxudong 2016年7月27日 下午6:54:58
  *
  */
 public class PublishMessageReq extends BaseRequest {
@@ -28,18 +24,21 @@ public class PublishMessageReq extends BaseRequest {
     /**
      * 应用Id
      */
+    @NotEmpty(message = "应用Id不能为空")
     private String appId;
 
 
     /**
      * 业务代码
      */
+    @NotEmpty(message = "业务Code不能为空")
     private String code;
 
 
     /**
      * 消息Id
      */
+    @NotEmpty(message = "消息Id不能为空")
     private String msgUniqueId;
 
 
@@ -51,6 +50,7 @@ public class PublishMessageReq extends BaseRequest {
     /**
      * 业务消息体
      */
+    @NotNull(message = "消息体不能为Null")
     private Object body;
 
     /**
@@ -93,6 +93,7 @@ public class PublishMessageReq extends BaseRequest {
      */
     public void setMsgUniqueId(String msgUniqueId) {
         this.msgUniqueId = msgUniqueId;
+        setRequestId(msgUniqueId);
     }
 
     /**
