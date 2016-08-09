@@ -10,11 +10,16 @@ import java.io.Serializable;
 import java.net.URISyntaxException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rabbitmq.client.AMQP.BasicProperties;
+import com.ymatou.messagebus.infrastructure.cluster.HealthProxy;
+import com.ymatou.messagebus.infrastructure.cluster.HealthService;
 import com.ymatou.messagebus.infrastructure.config.RabbitMQConfig;
 
 /**
@@ -23,30 +28,81 @@ import com.ymatou.messagebus.infrastructure.config.RabbitMQConfig;
  * @author wangxudong 2016年7月29日 下午2:50:14
  *
  */
-public class MessageProducer {
+public class MessageProducer implements HealthService {
     private static Logger logger = LoggerFactory.getLogger(MessageProducer.class);
 
     private EndPoint primary;
     private EndPoint secondary;
+    private HealthProxy healthProxy;
+
+    private boolean usePrimary = true;
+    private boolean broken = false;
+    private String exchange;
+    private String queue;
+
+    // key: exchange_queue
+    private static Map<String, MessageProducer> messageProducerMap = new HashMap<String, MessageProducer>();
 
     /**
-     * 标识主消息队列是否健康
+     * 获取到消息生产者列表
+     * 
+     * @return
      */
-    private boolean primaryHealth = true;
-    /**
-     * 标识备用消息队列是否健康
-     */
-    private boolean secondaryHealth = true;
-
-    protected MessageProducer(RabbitMQConfig rabbitMQConfig, String exchange, String queue)
-            throws KeyManagementException, NoSuchAlgorithmException, IOException, TimeoutException, URISyntaxException {
-        primary = new EndPoint(rabbitMQConfig.getPrimaryUri(), exchange, queue);
-        secondary = new EndPoint(rabbitMQConfig.getSecondaryUri(), exchange, queue);
+    public static Map<String, MessageProducer> getProducerMap() {
+        return messageProducerMap;
     }
 
+    /**
+     * 消息生产者
+     * 
+     * @param rabbitMQConfig
+     * @param exchange
+     * @param queue
+     * @throws KeyManagementException
+     * @throws NoSuchAlgorithmException
+     * @throws IOException
+     * @throws TimeoutException
+     * @throws URISyntaxException
+     */
+    protected MessageProducer(RabbitMQConfig rabbitMQConfig, String exchange, String queue)
+            throws KeyManagementException, NoSuchAlgorithmException, IOException, TimeoutException, URISyntaxException {
+        this.exchange = exchange;
+        this.queue = queue;
+        this.primary = EndPoint.newInstance(EndPointEnum.PRODUCER, rabbitMQConfig.getPrimaryUri(), exchange, queue);
+        this.secondary = EndPoint.newInstance(EndPointEnum.PRODUCER, rabbitMQConfig.getSecondaryUri(), exchange, queue);
+        this.healthProxy = new HealthProxy(primary, secondary);
+    }
+
+    /**
+     * 构造生产者实例
+     * 
+     * @param rabbitMQConfig
+     * @param exchange
+     * @param queue
+     * @return
+     * @throws KeyManagementException
+     * @throws NoSuchAlgorithmException
+     * @throws IOException
+     * @throws TimeoutException
+     * @throws URISyntaxException
+     */
     public static MessageProducer newInstance(RabbitMQConfig rabbitMQConfig, String exchange, String queue)
             throws KeyManagementException, NoSuchAlgorithmException, IOException, TimeoutException, URISyntaxException {
-        return new MessageProducer(rabbitMQConfig, exchange, queue);
+        String key = String.format("%s_%s", exchange, queue);
+        MessageProducer producer = messageProducerMap.get(key);
+        if (producer == null) {
+            synchronized (messageProducerMap) {
+                if (messageProducerMap.containsKey(key)) {
+                    return messageProducerMap.get(key);
+                } else {
+                    producer = new MessageProducer(rabbitMQConfig, exchange, queue);
+                    messageProducerMap.put(key, producer);
+                    return producer;
+                }
+            }
+        } else {
+            return producer;
+        }
     }
 
     /**
@@ -55,19 +111,21 @@ public class MessageProducer {
      * @param object
      * @throws RabbitMQPublishException
      */
-    public void publishMessage(Serializable object) throws RabbitMQPublishException {
-        if (primaryHealth) {
-            try {
-                primary.publish(object);
+    public void publishMessage(Serializable object, String messageId) throws RabbitMQPublishException {
+        setBroken(false);
 
+        BasicProperties basicProperties = new BasicProperties.Builder().messageId(messageId).build();
+        if (healthProxy.primaryHealth()) {
+            try {
+                primary.publish(object, basicProperties);
+                usePrimary = true;
             } catch (Exception e) {
-                primaryHealth = false;
                 logger.error("primary publish failed:" + e.getMessage(), e);
                 logger.warn("primary publish failed, try secondary.");
-                publishMessageSecondary(object);
+                publishMessageSecondary(object, basicProperties);
             }
-        } else if (secondaryHealth) {
-            publishMessageSecondary(object);
+        } else if (healthProxy.secondaryHealth()) {
+            publishMessageSecondary(object, basicProperties);
         } else {
             throw new RabbitMQPublishException();
         }
@@ -79,12 +137,42 @@ public class MessageProducer {
      * @param object
      * @throws RabbitMQPublishException
      */
-    public void publishMessageSecondary(Serializable object) throws RabbitMQPublishException {
+    public void publishMessageSecondary(Serializable object, BasicProperties basicProperties)
+            throws RabbitMQPublishException {
+        if (usePrimary) {
+            logger.error("change to secondary rabbitmq exchange:{}, queue:{}.", exchange, queue);
+            usePrimary = false;
+        }
+
         try {
-            secondary.publish(object);
+            secondary.publish(object, basicProperties);
         } catch (Exception e) {
             logger.error("secondary publish failed:" + e.getMessage(), e);
             throw new RabbitMQPublishException(e);
         }
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see com.ymatou.messagebus.infrastructure.cluster.HealthService#isHealth()
+     */
+    @Override
+    public boolean isHealth() {
+        return healthProxy.isHealth();
+    }
+
+    /**
+     * @return the broken
+     */
+    public boolean isBroken() {
+        return broken;
+    }
+
+    /**
+     * @param broken the broken to set
+     */
+    public void setBroken(boolean broken) {
+        this.broken = broken;
     }
 }

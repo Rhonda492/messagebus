@@ -35,6 +35,7 @@
 		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
 		<property name="locations">
 			<list>
+				<value>classpath:mongodb.properties</value>
 				<value>classpath:dubbo.properties</value>
 			</list>
 		</property>
@@ -95,4 +96,7 @@
 
 	<dubbo:service interface="com.ymatou.messagebus.facade.rest.SystemResource"
 		ref="systemResource" protocol="rest" />
+
+	<dubbo:service interface="com.ymatou.messagebus.facade.rest.DispatchResource"
+		ref="dispatchResource" protocol="rest" />
 </beans>

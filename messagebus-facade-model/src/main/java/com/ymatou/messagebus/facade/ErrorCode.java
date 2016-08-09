@@ -16,9 +16,7 @@ public enum ErrorCode {
      * 业务逻辑错误 3000
      */
 
-    RABBITMQ_PRODUCER_INIT_FAILED(3000, "队列消费者初始化异常"),
-
-    RABBITMQ_PRODUCER_PUBLISH_FAILED(3001, "队列消费者发布消息异常"),
+    MESSAGE_PUBLISH_FAIL(3000, "消息发布失败"),
 
     /*
      * 通用错误 5000

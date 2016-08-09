@@ -414,6 +414,11 @@
 			</dependency>
 			<dependency>
 				<groupId>com.ymatou.messagebus</groupId>
+				<artifactId>messagebus-domain-dispatch</artifactId>
+				<version>${messagebus.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.ymatou.messagebus</groupId>
 				<artifactId>messagebus-infrastructure</artifactId>
 				<version>${messagebus.version}</version>
 			</dependency>

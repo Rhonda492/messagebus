@@ -3,13 +3,13 @@
  *
  * All rights reserved.
  */
-package com.ymatou.messagebus.model;
+package com.ymatou.messagebus.domain.model;
 
 import java.util.Date;
 
 import org.mongodb.morphia.annotations.Entity;
-import org.mongodb.morphia.annotations.NotSaved;
 import org.mongodb.morphia.annotations.Property;
+import org.mongodb.morphia.annotations.Transient;
 
 import com.ymatou.messagebus.facade.PrintFriendliness;
 
@@ -45,7 +45,7 @@ public class Message extends PrintFriendliness {
     /**
      * 业务code
      */
-    @NotSaved
+    @Transient
     private String code;
 
     /**
@@ -82,7 +82,7 @@ public class Message extends PrintFriendliness {
      * 创建时间
      */
     @Property("ctime")
-    private Date CreateTime;
+    private Date createTime;
 
     /*
      * 推送状态
@@ -93,13 +93,27 @@ public class Message extends PrintFriendliness {
      * 1600: 客户端已消费
      */
     @Property("pushstatus")
-    private Integer PushStatus;
+    private Integer pushStatus;
+
+    /**
+     * 消息状态（Java版）
+     */
+    @Property("nstatus")
+    private Integer newStatus;
 
     /**
      * 推送时间
+     * 0-进入RabbitMQ
+     * 1-接收进入补单
+     * 2-分发进入补单
+     * 3-检测进入补单
+     * 90-分发完成（0->完成）
+     * 91-补单完成（1->完成）
+     * 92-补单完成（2->完成）
+     * 93-补单完成（3->完成）
      */
     @Property("pushtime")
-    private Date PushTime;
+    private Date pushTime;
 
     /**
      * @return the id
@@ -217,42 +231,42 @@ public class Message extends PrintFriendliness {
      * @return the createTime
      */
     public Date getCreateTime() {
-        return CreateTime;
+        return createTime;
     }
 
     /**
      * @param createTime the createTime to set
      */
     public void setCreateTime(Date createTime) {
-        CreateTime = createTime;
+        this.createTime = createTime;
     }
 
     /**
      * @return the pushStatus
      */
     public Integer getPushStatus() {
-        return PushStatus;
+        return pushStatus;
     }
 
     /**
      * @param pushStatus the pushStatus to set
      */
     public void setPushStatus(Integer pushStatus) {
-        PushStatus = pushStatus;
+        this.pushStatus = pushStatus;
     }
 
     /**
      * @return the pushTime
      */
     public Date getPushTime() {
-        return PushTime;
+        return pushTime;
     }
 
     /**
      * @param pushTime the pushTime to set
      */
     public void setPushTime(Date pushTime) {
-        PushTime = pushTime;
+        this.pushTime = pushTime;
     }
 
     /**
@@ -267,5 +281,19 @@ public class Message extends PrintFriendliness {
      */
     public void setAppCode(String appCode) {
         this.appCode = appCode;
+    }
+
+    /**
+     * @return the newStatus
+     */
+    public Integer getNewStatus() {
+        return newStatus;
+    }
+
+    /**
+     * @param newStatus the newStatus to set
+     */
+    public void setNewStatus(Integer newStatus) {
+        this.newStatus = newStatus;
     }
 }

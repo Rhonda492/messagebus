@@ -3,7 +3,7 @@
  *
  * All rights reserved.
  */
-package com.ymatou.messagebus.model;
+package com.ymatou.messagebus.domain.model;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -29,38 +29,85 @@ public class MessageCompensate extends PrintFriendliness {
 
     private static final long serialVersionUID = 7869866217863020411L;
 
+    /**
+     * 主键
+     */
     @Property("_id")
     private String id;
 
+    /**
+     * 状态
+     * 
+     * @see com.ymatou.messagebus.facade.enums.MessageCompensateStatusEnum
+     */
     @Property("status")
     private Integer status;
 
+    /**
+     * 应用Id
+     */
     @Property("appid")
     private String appId;
 
+    /**
+     * 业务代码
+     */
     @Property("code")
     private String appCode;
 
+    /**
+     * 消息Id
+     */
     @Property("mid")
     private String messageId;
 
+    /**
+     * 消息体
+     */
     @Property("body")
     private String body;
 
+    /**
+     * 创建时间
+     */
     @Property("ctime")
     private Date createTime;
 
+    /**
+     * 重试过期时间
+     */
     @Property("rtimeout")
     private Date retryTimeout;
 
+    /**
+     * 
+     */
     @Property("appkey")
     private String appKey;
 
+    /**
+     * 重试次数
+     */
     @Property("retrycount")
     private Integer retryCount;
 
+    /**
+     * 消费者列表
+     */
     @Embedded("callback")
     private List<CallbackInfo> callbackList = new ArrayList<CallbackInfo>();
+
+    /**
+     * 补单状态 JAVA版
+     */
+    @Property("nstatus")
+    private Integer newStatus;
+
+    /**
+     * 来源：1-接收站，2-分发站，3-补单站
+     */
+    @Property("source")
+    private Integer source;
 
     /**
      * @return the id
@@ -226,7 +273,8 @@ public class MessageCompensate extends PrintFriendliness {
     public static MessageCompensate from(AppConfig appConfig, Message message) {
         MessageCompensate compensate = new MessageCompensate();
         compensate.setId(UUID.randomUUID().toString());
-        compensate.setStatus(MessageCompensateStatusEnum.NotRetry.code());
+        compensate.setStatus(MessageCompensateStatusEnum.RetryOk.code()); // 避免.NET补单
+        compensate.setNewStatus(MessageCompensateStatusEnum.NotRetry.code());
         compensate.setAppId(message.getAppId());
         compensate.setAppCode(message.getAppCode());
         compensate.setMessageId(message.getMessageId());
@@ -241,13 +289,42 @@ public class MessageCompensate extends PrintFriendliness {
         compensate.setAppKey("*");
         compensate.setRetryCount(0);
 
-        for (CallbackConfig config : appConfig.getMessageConfig(message.getCode()).getCallbackCfgList()) {
+        for (CallbackConfig config : appConfig.getMessageConfigByAppCode(message.getAppCode()).getCallbackCfgList()) {
             CallbackInfo callbackInfo = new CallbackInfo();
             callbackInfo.setCallbackKey(config.getCallbackKey());
-            callbackInfo.setStatus(MessageCompensateStatusEnum.NotRetry.code());
+            callbackInfo.setStatus(MessageCompensateStatusEnum.RetryOk.code());// 避免.NET补单
+            callbackInfo.setNewStatus(MessageCompensateStatusEnum.NotRetry.code());
             compensate.callbackList.add(callbackInfo);
         }
 
         return compensate;
+    }
+
+    /**
+     * @return the source
+     */
+    public Integer getSource() {
+        return source;
+    }
+
+    /**
+     * @param source the source to set
+     */
+    public void setSource(Integer source) {
+        this.source = source;
+    }
+
+    /**
+     * @return the newStatus
+     */
+    public Integer getNewStatus() {
+        return newStatus;
+    }
+
+    /**
+     * @param newStatus the newStatus to set
+     */
+    public void setNewStatus(Integer newStatus) {
+        this.newStatus = newStatus;
     }
 }

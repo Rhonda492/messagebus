@@ -3,15 +3,15 @@
  *
  * All rights reserved.
  */
-package com.ymatou.messagebus.repository;
+package com.ymatou.messagebus.domain.repository;
 
 import javax.annotation.Resource;
 
 import org.springframework.stereotype.Component;
 
 import com.mongodb.MongoClient;
+import com.ymatou.messagebus.domain.model.MessageCompensate;
 import com.ymatou.messagebus.infrastructure.mongodb.MongoRepository;
-import com.ymatou.messagebus.model.MessageCompensate;
 
 /**
  * 补偿消息仓储

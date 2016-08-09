@@ -18,8 +18,11 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.context.ContextLoader;
+import org.springframework.web.context.WebApplicationContext;
 
-import com.ymatou.messagebus.task.MessageDispatchTask;
+import com.ymatou.messagebus.domain.service.DispatchService;
+import com.ymatou.messagebus.domain.task.MessageDispatchTask;
 
 
 /**
@@ -39,6 +42,11 @@ public class MessageDispatchServlet extends HttpServlet {
     // 定时器
     private Timer timer = null;
 
+    /**
+     * 分发服务
+     */
+    private DispatchService dispatchService;
+
     /*
      * (non-Javadoc)
      * 
@@ -48,8 +56,12 @@ public class MessageDispatchServlet extends HttpServlet {
         super.init(config);
 
         try {
+            WebApplicationContext wac = ContextLoader.getCurrentWebApplicationContext();
+            dispatchService = (DispatchService) wac.getBean("dispatchService");
+            dispatchService.start();
+
             start();
-            logger.info("message dispatch servlet init.");
+            logger.info("message dispatch servlet init success.");
         } catch (Exception ex) {
             logger.error("message dispatch task start failed", ex);
             throw new ServletException("message dispatch task start failed", ex);
@@ -117,6 +129,7 @@ public class MessageDispatchServlet extends HttpServlet {
             timer.cancel();
             timer.purge();
             timer = null;
+
             return "stop success!";
         } else {
             return "task allready stop.";
@@ -131,7 +144,7 @@ public class MessageDispatchServlet extends HttpServlet {
     private String start() throws Exception {
         if (timer == null) {
             timer = new Timer(true);
-            timer.schedule(new MessageDispatchTask(), 0, 1000 * 1);
+            timer.schedule(new MessageDispatchTask(), 0, 1000 * 3);
             return "start success!";
         } else {
             return "task allready start.";

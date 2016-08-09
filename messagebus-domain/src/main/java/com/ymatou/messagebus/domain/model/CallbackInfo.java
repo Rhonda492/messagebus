@@ -3,7 +3,7 @@
  *
  * All rights reserved.
  */
-package com.ymatou.messagebus.model;
+package com.ymatou.messagebus.domain.model;
 
 import org.mongodb.morphia.annotations.Embedded;
 import org.mongodb.morphia.annotations.Property;
@@ -12,13 +12,16 @@ import org.mongodb.morphia.annotations.Property;
 public class CallbackInfo {
 
     @Property("_cid")
-    public String callbackKey;
+    private String callbackKey;
 
     @Property("_status")
-    public Integer status;
+    private Integer status;
 
     @Property("_count")
-    public Integer retryCount;
+    private Integer retryCount;
+
+    @Property("nstatus")
+    private Integer newStatus;
 
     /**
      * @return the callbackKey
@@ -60,5 +63,19 @@ public class CallbackInfo {
      */
     public void setRetryCount(Integer retryCount) {
         this.retryCount = retryCount;
+    }
+
+    /**
+     * @return the newStatus
+     */
+    public Integer getNewStatus() {
+        return newStatus;
+    }
+
+    /**
+     * @param newStatus the newStatus to set
+     */
+    public void setNewStatus(Integer newStatus) {
+        this.newStatus = newStatus;
     }
 }

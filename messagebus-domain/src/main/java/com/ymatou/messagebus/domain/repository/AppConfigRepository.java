@@ -3,7 +3,9 @@
  *
  * All rights reserved.
  */
-package com.ymatou.messagebus.repository;
+package com.ymatou.messagebus.domain.repository;
+
+import java.util.List;
 
 import javax.annotation.Resource;
 
@@ -12,8 +14,8 @@ import org.mongodb.morphia.query.Query;
 import org.springframework.stereotype.Component;
 
 import com.mongodb.MongoClient;
+import com.ymatou.messagebus.domain.model.AppConfig;
 import com.ymatou.messagebus.infrastructure.mongodb.MongoRepository;
-import com.ymatou.messagebus.model.AppConfig;
 
 @Component
 public class AppConfigRepository extends MongoRepository {
@@ -21,7 +23,7 @@ public class AppConfigRepository extends MongoRepository {
     @Resource(name = "configMongoClient")
     private MongoClient mongoClient;
 
-    private String dbName = "MQ_Configuration_201505";
+    private final String dbName = "MQ_Configuration_201505";
 
     /*
      * (non-Javadoc)
@@ -53,8 +55,17 @@ public class AppConfigRepository extends MongoRepository {
      * @return
      */
     public AppConfig getAppConfig(String appId) {
-        Datastore datastore = getDatastore("MQ_Configuration_201505");
+        Datastore datastore = getDatastore(dbName);
 
         return datastore.find(AppConfig.class).field("_id").equal(appId).get();
+    }
+
+    /**
+     * @return
+     */
+    public List<AppConfig> getAllAppConfig() {
+        Datastore datastore = getDatastore(dbName);
+
+        return datastore.find(AppConfig.class).asList();
     }
 }

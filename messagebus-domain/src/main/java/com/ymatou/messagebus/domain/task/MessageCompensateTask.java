@@ -3,7 +3,7 @@
  *
  * All rights reserved.
  */
-package com.ymatou.messagebus.task;
+package com.ymatou.messagebus.domain.task;
 
 import java.util.TimerTask;
 

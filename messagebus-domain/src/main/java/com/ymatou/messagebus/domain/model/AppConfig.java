@@ -3,7 +3,7 @@
  *
  * All rights reserved.
  */
-package com.ymatou.messagebus.model;
+package com.ymatou.messagebus.domain.model;
 
 
 import java.util.List;
@@ -27,20 +27,41 @@ public class AppConfig extends PrintFriendliness {
 
     private static final long serialVersionUID = -7585171825610208707L;
 
+    /**
+     * 应用Id
+     */
     @Property("_id")
-    public String appId;
+    private String appId;
 
+    /**
+     * 配置版本
+     */
     @Property("Version")
-    public Integer version;
+    private Integer version;
 
+    /**
+     * 连接属性配置
+     */
     @Property("ConnCfg")
-    public Object connCfg;
+    private Object connCfg;
 
+    /**
+     * 消息配置列表
+     */
     @Embedded("MessageCfgList")
-    public List<MessageConfig> messageCfgList;
+    private List<MessageConfig> messageCfgList;
 
+    /**
+     * 处理主机
+     */
     @Property("OwnerHost")
-    public String ownerHost;
+    private String ownerHost;
+
+    /**
+     * 分发组
+     */
+    @Property("DispatchGroup")
+    private String dispatchGroup;
 
 
     /**
@@ -114,7 +135,31 @@ public class AppConfig extends PrintFriendliness {
     }
 
     /**
-     * 根据code查找消息配置
+     * @return the dispatchGroup
+     */
+    public String getDispatchGroup() {
+        return dispatchGroup;
+    }
+
+    /**
+     * @param dispatchGroup the dispatchGroup to set
+     */
+    public void setDispatchGroup(String dispatchGroup) {
+        this.dispatchGroup = dispatchGroup;
+    }
+
+    /**
+     * 拼装AppCode
+     * 
+     * @param code
+     * @return
+     */
+    public String getAppCode(String code) {
+        return String.format("%s_%s", this.appId, code);
+    }
+
+    /**
+     * 根据Code查找消息配置
      * 
      * @param code
      * @return
@@ -129,5 +174,16 @@ public class AppConfig extends PrintFriendliness {
             return null;
 
         return findFirst.get();
+    }
+
+    /**
+     * 根据AppCode查找消息配置
+     * 
+     * @param appCode
+     * @return
+     */
+    public MessageConfig getMessageConfigByAppCode(String appCode) {
+        String code = appCode.substring(getAppId().length() + 1);
+        return getMessageConfig(code);
     }
 }

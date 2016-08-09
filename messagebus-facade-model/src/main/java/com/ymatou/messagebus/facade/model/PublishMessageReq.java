@@ -24,21 +24,21 @@ public class PublishMessageReq extends BaseRequest {
     /**
      * 应用Id
      */
-    @NotEmpty(message = "应用Id不能为空")
+    @NotEmpty(message = "appId not empty")
     private String appId;
 
 
     /**
      * 业务代码
      */
-    @NotEmpty(message = "业务Code不能为空")
+    @NotEmpty(message = "code not empty")
     private String code;
 
 
     /**
      * 消息Id
      */
-    @NotEmpty(message = "消息Id不能为空")
+    @NotEmpty(message = "messageId not empty")
     private String msgUniqueId;
 
 
@@ -50,7 +50,7 @@ public class PublishMessageReq extends BaseRequest {
     /**
      * 业务消息体
      */
-    @NotNull(message = "消息体不能为Null")
+    @NotNull(message = "body not null")
     private Object body;
 
     /**

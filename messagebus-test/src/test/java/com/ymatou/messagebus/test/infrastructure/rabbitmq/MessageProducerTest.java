@@ -5,6 +5,8 @@
  */
 package com.ymatou.messagebus.test.infrastructure.rabbitmq;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.security.KeyManagementException;
@@ -15,7 +17,6 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.ymatou.messagebus.infrastructure.config.RabbitMQConfig;
-import com.ymatou.messagebus.infrastructure.rabbitmq.MessageConsumer;
 import com.ymatou.messagebus.infrastructure.rabbitmq.MessageProducer;
 import com.ymatou.messagebus.infrastructure.rabbitmq.RabbitMQPublishException;
 import com.ymatou.messagebus.test.BaseTest;
@@ -26,19 +27,33 @@ public class MessageProducerTest extends BaseTest {
     RabbitMQConfig rabbitMQConfig;
 
     @Test
-    public void publishMessageTest()
+    public void testPublishNewInstance()
             throws KeyManagementException, NoSuchAlgorithmException, IOException, TimeoutException, URISyntaxException,
             InterruptedException, RabbitMQPublishException {
+        MessageProducer messageProducer1 = MessageProducer.newInstance(rabbitMQConfig, "testjava", "testjava_hello");
+        MessageProducer messageProducer2 = MessageProducer.newInstance(rabbitMQConfig, "testjava", "testjava_hello");
+        MessageProducer messageProducer3 = MessageProducer.newInstance(rabbitMQConfig, "testjava", "testjava_demo");
 
-        MessageConsumer consumer = new MessageConsumer(rabbitMQConfig, "test", "test.simple_queue");
-        Thread consumerThread = new Thread(consumer);
-        consumerThread.start();
+        assertEquals(true, messageProducer1 == messageProducer2);
+        assertEquals(false, messageProducer1 == messageProducer3);
 
-        MessageProducer producer = MessageProducer.newInstance(rabbitMQConfig, "test", "test.simple_queue");
-        for (int i = 0; i < 3; i++) {
-            producer.publishMessage(String.valueOf(i));
+        assertEquals(2, MessageProducer.getProducerMap().size());
+    }
 
-            Thread.sleep(1000 * 3);
-        }
+    @Test
+    public void testIsHealth()
+            throws KeyManagementException, NoSuchAlgorithmException, IOException, TimeoutException, URISyntaxException {
+        MessageProducer messageProducer = MessageProducer.newInstance(rabbitMQConfig, "testjava", "testjava_hello");
+        boolean isHealth = messageProducer.isHealth();
+
+        assertEquals(true, isHealth);
+    }
+
+    @Test
+    public void testPublish()
+            throws KeyManagementException, NoSuchAlgorithmException, IOException, TimeoutException, URISyntaxException,
+            RabbitMQPublishException {
+        MessageProducer messageProducer = MessageProducer.newInstance(rabbitMQConfig, "testjava", "testjava_hello");
+        messageProducer.publishMessage("hello", "xxx-1");
     }
 }

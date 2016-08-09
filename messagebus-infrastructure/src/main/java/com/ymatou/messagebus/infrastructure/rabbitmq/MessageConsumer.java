@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.lang.SerializationUtils;
@@ -34,14 +36,39 @@ public class MessageConsumer implements Runnable, Consumer {
     private EndPoint primary;
     private EndPoint secondary;
 
+    private String exchange;
+    private String queue;
+
+    private CallbackService callbackService;
+
+
     /**
-     * 标识主消息队列是否健康
+     * 消费者Map key={exchange}_{queue}
+     * 
+     * @see com.ymatou.messagebus.infrastructure.rabbitmq.MessageConsumer#getConsumerId
      */
-    private boolean primaryHealth = true;
+    private static Map<String, MessageConsumer> messageConsumerMap = new HashMap<String, MessageConsumer>();
+
     /**
-     * 标识备用消息队列是否健康
+     * 获取到消费者列表
+     * 
+     * @return
      */
-    private boolean secondaryHealth = true;
+    public static Map<String, MessageConsumer> getConsumerMap() {
+        return messageConsumerMap;
+    }
+
+    /**
+     * 判断是否包含指定消费者
+     * 
+     * @param exchange
+     * @param queue
+     * @return
+     */
+    public static boolean contains(String exchange, String queue) {
+        String key = getConsumerId(exchange, queue);
+        return messageConsumerMap.containsKey(key);
+    }
 
     /**
      * 消费者构造函数
@@ -55,13 +82,93 @@ public class MessageConsumer implements Runnable, Consumer {
      * @throws NoSuchAlgorithmException
      * @throws URISyntaxException
      */
-    public MessageConsumer(RabbitMQConfig rabbitMQConfig, String exchange, String queue)
+    private MessageConsumer(RabbitMQConfig rabbitMQConfig, String exchange, String queue)
             throws IOException, TimeoutException, KeyManagementException, NoSuchAlgorithmException, URISyntaxException {
-        primary = new EndPoint(rabbitMQConfig.getPrimaryUri(), exchange, queue);
-        secondary = new EndPoint(rabbitMQConfig.getSecondaryUri(), exchange, queue);
+        this.exchange = exchange;
+        this.queue = queue;
+        this.primary = EndPoint.newInstance(EndPointEnum.CONSUMER, rabbitMQConfig.getPrimaryUri(), exchange, queue);
+        this.secondary = EndPoint.newInstance(EndPointEnum.CONSUMER, rabbitMQConfig.getSecondaryUri(), exchange, queue);
+    }
+
+    /**
+     * 获取到消费者Id
+     * 
+     * @return
+     */
+    public String getConsumerId() {
+        return getConsumerId(exchange, queue);
+    }
+
+    /**
+     * 拼装ConsumerId
+     * 
+     * @param exchange
+     * @param queue
+     * @return
+     */
+    private static String getConsumerId(String exchange, String queue) {
+        return String.format("%s_%s", exchange, queue);
+    }
+
+    /**
+     * 获取Consumer
+     * 
+     * @param exchange
+     * @param queue
+     * @return
+     */
+    public static MessageConsumer getConsumer(String exchange, String queue) {
+        String key = getConsumerId(exchange, queue);
+
+        return messageConsumerMap.get(key);
+    }
+
+    /**
+     * 清空消费者列表
+     */
+    public static void clear() {
+        messageConsumerMap.clear();
+    }
+
+    /**
+     * 构造生产者实例
+     * 
+     * @param rabbitMQConfig
+     * @param exchange
+     * @param queue
+     * @return
+     * @throws KeyManagementException
+     * @throws NoSuchAlgorithmException
+     * @throws IOException
+     * @throws TimeoutException
+     * @throws URISyntaxException
+     */
+    public static MessageConsumer newInstance(RabbitMQConfig rabbitMQConfig, String exchange, String queue)
+            throws KeyManagementException, NoSuchAlgorithmException, IOException, TimeoutException, URISyntaxException {
+        String key = getConsumerId(exchange, queue);
+        MessageConsumer consumer = messageConsumerMap.get(key);
+        if (consumer == null) {
+            synchronized (messageConsumerMap) {
+                if (messageConsumerMap.containsKey(key)) {
+                    return messageConsumerMap.get(key);
+                } else {
+                    consumer = new MessageConsumer(rabbitMQConfig, exchange, queue);
+                    messageConsumerMap.put(key, consumer);
+                    return consumer;
+                }
+            }
+        } else {
+            return consumer;
+        }
     }
 
 
+    /*
+     * 启动消费者
+     * (non-Javadoc)
+     * 
+     * @see java.lang.Runnable#run()
+     */
     @Override
     public void run() {
         try {
@@ -72,18 +179,52 @@ public class MessageConsumer implements Runnable, Consumer {
         }
     }
 
+    /**
+     * 停止消费
+     */
+    public void stop() {
+        try {
+            primary.close();
+            secondary.close();
+        } catch (Exception e) {
+            logger.error(String.format("message consumer: %s stop", getConsumerId()), e);
+        } finally {
+            String key = getConsumerId(exchange, queue);
+            synchronized (messageConsumerMap) {
+                messageConsumerMap.remove(key);
+            }
+        }
+    }
+
+    /**
+     * 设置回调服务
+     * 
+     * @param callbackService
+     */
+    public void setCallbackService(CallbackService callbackService) {
+        this.callbackService = callbackService;
+    }
+
 
     @Override
     public void handleDelivery(String consumerTag, Envelope env, BasicProperties props, byte[] body)
             throws IOException {
         String message = (String) SerializationUtils.deserialize(body);
-        logger.info(message + " received.");
+        String messageId = props.getMessageId();
+        logger.info("consumer {} receive rabbitmq messageId:{}, message:{}", getConsumerId(), messageId, message);
 
+        if (callbackService != null) {
+            try {
+                callbackService.invoke(exchange, queue, message, messageId);
+            } catch (Exception e) {
+                logger.error(String.format("consumer %s callback failed", getConsumerId()), e);
+            }
+        }
     }
 
     @Override
     public void handleConsumeOk(String consumerTag) {
-        logger.info("Consumer " + consumerTag + " registered");
+        logger.info("Consumer " + consumerTag + " registered.");
 
     }
 
@@ -101,13 +242,13 @@ public class MessageConsumer implements Runnable, Consumer {
 
     @Override
     public void handleShutdownSignal(String consumerTag, ShutdownSignalException sig) {
-        // TODO Auto-generated method stub
+        logger.info("Consumer " + consumerTag + " shutdown.");
 
     }
 
     @Override
     public void handleRecoverOk(String consumerTag) {
-        // TODO Auto-generated method stub
+        logger.info("Consumer " + consumerTag + " recover ok.");
 
     }
 }

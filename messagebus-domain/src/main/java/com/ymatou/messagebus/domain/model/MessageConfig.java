@@ -3,7 +3,7 @@
  *
  * All rights reserved.
  */
-package com.ymatou.messagebus.model;
+package com.ymatou.messagebus.domain.model;
 
 import java.util.List;
 
@@ -28,8 +28,8 @@ public class MessageConfig {
     @Embedded("CallbackCfgList")
     private List<CallbackConfig> callbackCfgList;
 
-    @Property("ConsumeCfg")
-    private Object consumeCfg;
+    @Embedded("ConsumeCfg")
+    private ConsumerConfig consumeCfg;
 
     @Property("ExchangeCfg")
     private Object exchangeCfg;
@@ -85,14 +85,14 @@ public class MessageConfig {
     /**
      * @return the consumeCfg
      */
-    public Object getConsumeCfg() {
+    public ConsumerConfig getConsumeCfg() {
         return consumeCfg;
     }
 
     /**
      * @param consumeCfg the consumeCfg to set
      */
-    public void setConsumeCfg(Object consumeCfg) {
+    public void setConsumeCfg(ConsumerConfig consumeCfg) {
         this.consumeCfg = consumeCfg;
     }
 
