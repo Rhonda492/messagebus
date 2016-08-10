@@ -15,6 +15,7 @@ import com.googlecode.junittoolbox.WildcardPatternSuite;
 @RunWith(WildcardPatternSuite.class)
 @SuiteClasses({
         "**/*Test.class",
-        "!*BaseTest.class"})
+        "!*BaseTest.class",
+        "!**/*HumanTest.class"})
 public class MessageBusTestSuit {
 }

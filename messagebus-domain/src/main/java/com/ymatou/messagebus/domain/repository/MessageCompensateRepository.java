@@ -31,7 +31,7 @@ public class MessageCompensateRepository extends MongoRepository {
 
     public void insert(MessageCompensate messageCompensate) {
         String dbName = "MQ_Message_Compensate";
-        String collectionName = "Mq_" + messageCompensate.getAppCode();
+        String collectionName = String.format("Mq_%s_%s", messageCompensate.getAppId(), messageCompensate.getCode());
 
         insertEntiy(dbName, collectionName, messageCompensate);
     }

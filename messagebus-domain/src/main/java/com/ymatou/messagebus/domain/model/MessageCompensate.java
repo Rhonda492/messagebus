@@ -53,7 +53,7 @@ public class MessageCompensate extends PrintFriendliness {
      * 业务代码
      */
     @Property("code")
-    private String appCode;
+    private String code;
 
     /**
      * 消息Id
@@ -154,15 +154,15 @@ public class MessageCompensate extends PrintFriendliness {
     /**
      * @return the appCode
      */
-    public String getAppCode() {
-        return appCode;
+    public String getCode() {
+        return code;
     }
 
     /**
      * @param appCode the appCode to set
      */
-    public void setAppCode(String appCode) {
-        this.appCode = appCode;
+    public void setCode(String appCode) {
+        this.code = appCode;
     }
 
     /**
@@ -276,7 +276,7 @@ public class MessageCompensate extends PrintFriendliness {
         compensate.setStatus(MessageCompensateStatusEnum.RetryOk.code()); // 避免.NET补单
         compensate.setNewStatus(MessageCompensateStatusEnum.NotRetry.code());
         compensate.setAppId(message.getAppId());
-        compensate.setAppCode(message.getAppCode());
+        compensate.setCode(message.getCode());
         compensate.setMessageId(message.getMessageId());
         compensate.setBody(message.getBody());
         compensate.setCreateTime(new Date());
@@ -289,13 +289,54 @@ public class MessageCompensate extends PrintFriendliness {
         compensate.setAppKey("*");
         compensate.setRetryCount(0);
 
-        for (CallbackConfig config : appConfig.getMessageConfigByAppCode(message.getAppCode()).getCallbackCfgList()) {
+        for (CallbackConfig config : appConfig.getMessageConfigByAppCode(message.getCode()).getCallbackCfgList()) {
             CallbackInfo callbackInfo = new CallbackInfo();
             callbackInfo.setCallbackKey(config.getCallbackKey());
             callbackInfo.setStatus(MessageCompensateStatusEnum.RetryOk.code());// 避免.NET补单
             callbackInfo.setNewStatus(MessageCompensateStatusEnum.NotRetry.code());
             compensate.callbackList.add(callbackInfo);
         }
+
+        return compensate;
+    }
+
+
+    /**
+     * 构建消息补偿实例
+     * 
+     * @param appId
+     * @param code
+     * @param messageId
+     * @param body
+     * @param consumerId
+     * @return
+     */
+    public static MessageCompensate newInstance(String appId, String code, String messageId, String body,
+            String consumerId) {
+        MessageCompensate compensate = new MessageCompensate();
+        compensate.setId(UUID.randomUUID().toString());
+        compensate.setStatus(MessageCompensateStatusEnum.RetryOk.code()); // 避免.NET补单
+        compensate.setNewStatus(MessageCompensateStatusEnum.NotRetry.code());
+        compensate.setAppId(appId);
+        compensate.setCode(code);
+        compensate.setMessageId(messageId);
+        compensate.setBody(body);
+        compensate.setCreateTime(new Date());
+
+        // 计算重试截止时间
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.MINUTE, 10);
+        compensate.setRetryTimeout(calendar.getTime());
+
+        compensate.setAppKey("*");
+        compensate.setRetryCount(0);
+
+        // 添加消费者信息
+        CallbackInfo callbackInfo = new CallbackInfo();
+        callbackInfo.setCallbackKey(consumerId);
+        callbackInfo.setStatus(MessageCompensateStatusEnum.RetryOk.code());// 避免.NET补单
+        callbackInfo.setNewStatus(MessageCompensateStatusEnum.NotRetry.code());
+        compensate.callbackList.add(callbackInfo);
 
         return compensate;
     }

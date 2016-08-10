@@ -36,7 +36,7 @@
 		<property name="locations">
 			<list>
 				<value>classpath:mongodb.properties</value>
-				<value>classpath:dubbo.properties</value>
+				<value>classpath:app.properties</value>
 			</list>
 		</property>
 	</bean>
@@ -66,7 +66,7 @@
 	<bean id="performanceMonitorAdvice"
 		class="com.ymatou.performancemonitorclient.PerformanceMonitorAdvice">
 		<property name="appId" value="mqdispatch.iapi.ymatou.com"></property>
-		<property name="serverUrl" value="http://172.16.100.13:8089/api/perfmon"></property>
+		<property name="serverUrl" value="${perfmonapi.url}"></property>
 	</bean>
 
 	<import resource="classpath:spring/persistence.xml" />
@@ -84,14 +84,14 @@
 
 
 	<!-- 提供方应用信息，用于计算依赖关系 -->
-	<dubbo:application name="mqdispatch.iapi.ymatou.com" />
+	<dubbo:application name="${appId}" />
 
 	<dubbo:registry address="zookeeper://${dubbo.zoo}" />
 
 	<!-- 用dubbo协议在20880端口暴露服务 -->
-	<dubbo:protocol name="dubbo" port="30880" serialization="kryo" />
+	<dubbo:protocol name="dubbo" port="${dubbo.port}" serialization="kryo" />
 
-	<dubbo:protocol name="rest" server="servlet" port="7001"
+	<dubbo:protocol name="rest" server="servlet" port="${rest.port}"
 		extension="com.ymatou.messagebus.infrastructure.serialize.JacksonConfig" />
 
 	<dubbo:service interface="com.ymatou.messagebus.facade.rest.SystemResource"

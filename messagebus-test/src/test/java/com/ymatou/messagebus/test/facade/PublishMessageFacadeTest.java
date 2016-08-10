@@ -22,6 +22,7 @@ import com.ymatou.messagebus.facade.model.PublishMessageResp;
 import com.ymatou.messagebus.infrastructure.net.NetUtil;
 import com.ymatou.messagebus.test.BaseTest;
 import com.ymatou.messagebus.test.MessageBody;
+import com.ymatou.messagebus.test.TaskItemRequest;
 
 public class PublishMessageFacadeTest extends BaseTest {
 
@@ -37,7 +38,7 @@ public class PublishMessageFacadeTest extends BaseTest {
         req.setAppId("testjava");
         req.setCode("hello");
         req.setMsgUniqueId(UUID.randomUUID().toString());
-        req.setBody(MessageBody.newInstance());
+        req.setBody(TaskItemRequest.newInstance());
         req.setIp(NetUtil.getHostIp());
         PublishMessageResp resp = publishMessageFacade.publish(req);
 

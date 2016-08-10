@@ -13,11 +13,9 @@ import java.util.concurrent.ExecutionException;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.concurrent.FutureCallback;
 import org.apache.http.entity.StringEntity;
@@ -38,43 +36,17 @@ public class HttpClientUtil {
 
     private static Logger logger = LoggerFactory.getLogger(HttpClientUtil.class);
 
-    public static final Integer CONN_TIME_OUT = 1000 * 30;
-    public static final Integer SOCKET_TIME_OUT = 1000 * 30;
+    public static final Integer CONN_TIME_OUT = 5000;
+    public static final Integer SOCKET_TIME_OUT = 5000;
+    public static final Integer CONN_REQ_TIME_OUT = 5000;
 
-    private static RequestConfig REQUEST_CONFIG = RequestConfig.custom()
+    private static RequestConfig DEFAULT_REQUEST_CONFIG = RequestConfig.custom()
             .setConnectTimeout(CONN_TIME_OUT)
             .setSocketTimeout(SOCKET_TIME_OUT)
+            .setConnectionRequestTimeout(CONN_REQ_TIME_OUT)
             .build();
 
-    /**
-     * 
-     * @param url 请求路径
-     * @param header 请求Header
-     * @param httpClient 执行请求的HttpClient
-     * @return 请求应答
-     * @throws ParseException
-     * @throws ClientProtocolException
-     * @throws IOException
-     */
-    public static String sendGet(String url, HashMap<String, String> header, HttpClient httpClient) throws IOException {
-        String result = null;
 
-        HttpGet httpGet = new HttpGet(url);
-        httpGet.setConfig(REQUEST_CONFIG);
-        logger.info("executing request" + httpGet.getRequestLine());
-        logger.info("request header: " + Arrays.toString(httpGet.getAllHeaders()));
-
-        try {
-            HttpResponse response = httpClient.execute(httpGet);
-            HttpEntity entity = response.getEntity();
-            result = EntityUtils.toString(entity, "UTF-8");
-            logger.info("response message:" + result);
-        } finally {
-            httpGet.releaseConnection();
-        }
-
-        return result;
-    }
 
     /**
      * 
@@ -88,15 +60,18 @@ public class HttpClientUtil {
      * @throws IOException
      */
     public static HttpResult sendPost(String url, String body, String contentType, HashMap<String, String> header,
-            HttpClient httpClient)
+            HttpClient httpClient, int timeout)
             throws IOException {
         HttpResult result = new HttpResult();
 
+        RequestConfig requestConfig = RequestConfig.copy(DEFAULT_REQUEST_CONFIG)
+                .setConnectionRequestTimeout(timeout).build();
+
         HttpPost httpPost = new HttpPost(url);
-        httpPost.setConfig(REQUEST_CONFIG);
+        httpPost.setConfig(requestConfig);
         StringEntity postEntity = new StringEntity(body, "UTF-8");
-        httpPost.setEntity(postEntity); // set request body
-        httpPost.addHeader("Content-Type", contentType); // 设置body类型
+        httpPost.setEntity(postEntity);
+        httpPost.addHeader("Content-Type", contentType);
 
         logger.info("executing request" + httpPost.getRequestLine());
         logger.info("request header: " + Arrays.toString(httpPost.getAllHeaders()));
@@ -117,41 +92,6 @@ public class HttpClientUtil {
 
         return result;
     }
-
-    /**
-     * 
-     * @param url 请求路径
-     * @param body 请求body
-     * @param header 请求header
-     * @param httpClient 执行请求的HttpClient
-     * @return 请求应答
-     * @throws ParseException
-     * @throws IOException
-     */
-    public static String sendPost(String url, List<NameValuePair> body, HashMap<String, String> header,
-            HttpClient httpClient) throws IOException {
-        String result = null;
-
-        HttpPost httpPost = new HttpPost(url);
-        httpPost.setConfig(REQUEST_CONFIG);
-        UrlEncodedFormEntity postEntity = new UrlEncodedFormEntity(body, "UTF-8");
-        httpPost.setEntity(postEntity); // set request body
-        logger.info("executing request" + httpPost.getRequestLine());
-        logger.info("request header: " + Arrays.toString(httpPost.getAllHeaders()));
-        logger.info("request body: " + body);
-
-        try {
-            HttpResponse response = httpClient.execute(httpPost);
-            HttpEntity entity = response.getEntity();
-            result = EntityUtils.toString(entity, "UTF-8");
-            logger.info("response message:" + result);
-        } finally {
-            httpPost.releaseConnection();
-        }
-
-        return result;
-    }
-
 
     /**
      * 发送HTTP POST请求

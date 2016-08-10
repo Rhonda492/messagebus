@@ -43,7 +43,7 @@
 		<property name="locations">
 			<list>
 				<value>classpath:mongodb.properties</value>
-				<value>classpath:dubbo.properties</value>
+				<value>classpath:app.properties</value>
 			</list>
 		</property>
 	</bean>

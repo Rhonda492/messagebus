@@ -19,6 +19,6 @@ public class CallbackServiceImplTest extends BaseTest {
 
     @Test
     public void testInvoke() {
-        callbackServiceImpl.invoke("testjava", "testjava_hello", "hello", "0b60d46b-09cf-45ba-950d-f14a09516d87");
+        callbackServiceImpl.invoke("testjava", "testjava_hello", "hello", "d279e334-876c-43ed-b184-0361cdeefd03");
     }
 }
