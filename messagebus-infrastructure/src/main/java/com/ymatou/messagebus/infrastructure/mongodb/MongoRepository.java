@@ -48,6 +48,32 @@ public abstract class MongoRepository {
     }
 
     /**
+     * 获取实体信息
+     * 
+     * @param c
+     * @param dbName
+     * @param fieldName
+     * @param fieldValue
+     * @return
+     */
+    protected <T> T getEntity(Class<T> c, String dbName, String fieldName, String fieldValue) {
+        Datastore datastore = getDatastore(dbName);
+
+        return datastore.find(c).field(fieldName).equal(fieldValue).get();
+    }
+
+    /**
+     * 插入文档
+     * 
+     * @param dbName
+     * @param entity
+     */
+    protected void insertEntiy(String dbName, Object entity) {
+        Datastore datastore = getDatastore(dbName);
+        datastore.save(entity);
+    }
+
+    /**
      * 插入文档
      * 
      * @param dbName
