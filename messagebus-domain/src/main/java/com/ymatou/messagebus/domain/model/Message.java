@@ -5,11 +5,12 @@
  */
 package com.ymatou.messagebus.domain.model;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Property;
-import org.mongodb.morphia.annotations.Transient;
 
 import com.ymatou.messagebus.facade.PrintFriendliness;
 
@@ -45,14 +46,8 @@ public class Message extends PrintFriendliness {
     /**
      * 业务code
      */
-    @Transient
-    private String code;
-
-    /**
-     * 业务AppCode: app_code
-     */
     @Property("code")
-    private String appCode;
+    private String code;
 
     /**
      * 消息Id
@@ -273,14 +268,7 @@ public class Message extends PrintFriendliness {
      * @return the appCode
      */
     public String getAppCode() {
-        return appCode;
-    }
-
-    /**
-     * @param appCode the appCode to set
-     */
-    public void setAppCode(String appCode) {
-        this.appCode = appCode;
+        return String.format("%s_%s", appId, code);
     }
 
     /**
@@ -295,5 +283,15 @@ public class Message extends PrintFriendliness {
      */
     public void setNewStatus(Integer newStatus) {
         this.newStatus = newStatus;
+    }
+
+    /**
+     * 生成MessageUuid: {yyyyMM}.{ObjectId}
+     * 
+     * @return
+     */
+    public static String newUuid() {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMM");
+        return String.format("%s.%s", dateFormat.format(new Date()), ObjectId.get().toString());
     }
 }

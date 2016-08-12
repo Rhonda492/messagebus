@@ -16,6 +16,7 @@ import java.util.concurrent.TimeoutException;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.ymatou.messagebus.domain.model.Message;
 import com.ymatou.messagebus.infrastructure.config.RabbitMQConfig;
 import com.ymatou.messagebus.infrastructure.rabbitmq.MessageProducer;
 import com.ymatou.messagebus.infrastructure.rabbitmq.RabbitMQPublishException;
@@ -54,6 +55,6 @@ public class MessageProducerTest extends BaseTest {
             throws KeyManagementException, NoSuchAlgorithmException, IOException, TimeoutException, URISyntaxException,
             RabbitMQPublishException {
         MessageProducer messageProducer = MessageProducer.newInstance(rabbitMQConfig, "testjava", "testjava_hello");
-        messageProducer.publishMessage("hello", "xxx-1");
+        messageProducer.publishMessage("hello", "xxx-1", Message.newUuid());
     }
 }

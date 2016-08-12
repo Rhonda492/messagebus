@@ -15,6 +15,7 @@ import org.junit.Test;
 
 import com.ymatou.messagebus.domain.model.Message;
 import com.ymatou.messagebus.domain.repository.MessageRepository;
+import com.ymatou.messagebus.facade.enums.MessageNewStatusEnum;
 import com.ymatou.messagebus.test.BaseTest;
 
 public class MessageRepositoryTest extends BaseTest {
@@ -25,9 +26,10 @@ public class MessageRepositoryTest extends BaseTest {
     @Test
     public void testInsert() {
         Message message = new Message();
-        message.setAppId("javatest");
+        message.setUuid(Message.newUuid());
+        message.setMessageId(UUID.randomUUID().toString());
+        message.setAppId("testjava");
         message.setCode("hello");
-        message.setAppCode("javatest_hello");
         message.setNewStatus(1);
 
         messageRepository.insert(message);
@@ -36,18 +38,19 @@ public class MessageRepositoryTest extends BaseTest {
     @Test
     public void testUpdate() {
         Message message = new Message();
-        message.setAppId("javatest");
+        message.setAppId("testjava");
         message.setCode("hello");
-        message.setAppCode("javatest_hello");
         message.setNewStatus(1);
         message.setMessageId(UUID.randomUUID().toString());
+        message.setUuid(Message.newUuid());
 
         messageRepository.insert(message);
-        messageRepository.updateMessageStatus(message.getAppId(), message.getCode(), message.getMessageId(), 3);
+        messageRepository.updateMessageStatus(message.getAppId(), message.getCode(), message.getUuid(),
+                MessageNewStatusEnum.CheckToCompensate);
 
         Message messageAssert =
-                messageRepository.getByMessageId(message.getAppId(), message.getCode(), message.getMessageId());
+                messageRepository.getByUuid(message.getAppId(), message.getCode(), message.getUuid());
 
-        assertEquals(3, messageAssert.getNewStatus().intValue());
+        assertEquals(MessageNewStatusEnum.CheckToCompensate.code().intValue(), messageAssert.getNewStatus().intValue());
     }
 }

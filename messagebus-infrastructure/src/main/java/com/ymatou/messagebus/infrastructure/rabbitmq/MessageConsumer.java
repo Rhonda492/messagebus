@@ -211,11 +211,14 @@ public class MessageConsumer implements Runnable, Consumer {
             throws IOException {
         String message = (String) SerializationUtils.deserialize(body);
         String messageId = props.getMessageId();
-        logger.info("consumer {} receive rabbitmq messageId:{}, message:{}", getConsumerId(), messageId, message);
+        String correlationId = props.getCorrelationId();
+
+        logger.info("consumer {} receive rabbitmq messageId:{}, correlationId:{}, message:{}", getConsumerId(),
+                messageId, correlationId, message);
 
         if (callbackService != null) {
             try {
-                callbackService.invoke(exchange, queue, message, messageId);
+                callbackService.invoke(exchange, queue, message, messageId, correlationId);
             } catch (Exception e) {
                 logger.error(String.format("consumer %s callback failed", getConsumerId()), e);
             }

@@ -105,16 +105,22 @@ public class MessageProducer implements HealthService {
         }
     }
 
+
     /**
-     * 发布消息（主）
+     * 消息发布（主）
      * 
      * @param object
+     * @param messageId
+     * @param correlationId
      * @throws RabbitMQPublishException
      */
-    public void publishMessage(Serializable object, String messageId) throws RabbitMQPublishException {
+    public void publishMessage(Serializable object, String messageId, String correlationId)
+            throws RabbitMQPublishException {
         setBroken(false);
 
-        BasicProperties basicProperties = new BasicProperties.Builder().messageId(messageId).build();
+        BasicProperties basicProperties = new BasicProperties.Builder()
+                .messageId(messageId).correlationId(correlationId).build();
+
         if (healthProxy.primaryHealth()) {
             try {
                 primary.publish(object, basicProperties);

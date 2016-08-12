@@ -45,7 +45,7 @@ public class PublishMessageFacadeTest extends BaseTest {
         System.out.println(resp.getErrorMessage());
         assertEquals(true, resp.isSuccess());
 
-        Message message = messageRepository.getByMessageId(req.getAppId(), req.getCode(), req.getMsgUniqueId());
+        Message message = messageRepository.getByUuid(req.getAppId(), req.getCode(), resp.getUuid());
         assertNotNull(message);
         assertEquals(req.getMsgUniqueId(), message.getMessageId());
         assertEquals(req.getIp(), message.getIp());

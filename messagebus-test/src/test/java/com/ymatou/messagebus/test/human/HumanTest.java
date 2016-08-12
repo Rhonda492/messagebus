@@ -93,7 +93,7 @@ public class HumanTest extends BaseTest {
 
         Thread.sleep(500);
 
-        Message message = messageRepository.getByMessageId(req.getAppId(), req.getCode(), req.getMsgUniqueId());
+        Message message = messageRepository.getByUuid(req.getAppId(), req.getCode(), resp.getUuid());
         assertNotNull(message);
         assertEquals(req.getMsgUniqueId(), message.getMessageId());
         assertEquals(req.getIp(), message.getIp());

@@ -14,9 +14,13 @@ package com.ymatou.messagebus.infrastructure.rabbitmq;
 public interface CallbackService {
 
     /**
+     * 回调服务
+     * 
      * @param exchange
      * @param queue
-     * @param message
+     * @param messageBody
+     * @param messageId
+     * @param messageUuid
      */
-    public void invoke(String exchange, String queue, String message, String messageId);
+    public void invoke(String exchange, String queue, String messageBody, String messageId, String messageUuid);
 }

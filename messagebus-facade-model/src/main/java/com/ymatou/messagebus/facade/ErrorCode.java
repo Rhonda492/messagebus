@@ -18,6 +18,12 @@ public enum ErrorCode {
 
     MESSAGE_PUBLISH_FAIL(3000, "消息发布失败"),
 
+
+    /**
+     * 不存在有效的回调信息
+     */
+    NOT_EXIST_INVALID_CALLBACK(3001, "不存在有效的回调信息"),
+
     /*
      * 通用错误 5000
      */

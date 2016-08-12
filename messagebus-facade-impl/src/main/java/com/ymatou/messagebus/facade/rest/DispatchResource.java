@@ -5,6 +5,7 @@
  */
 package com.ymatou.messagebus.facade.rest;
 
+import com.ymatou.messagebus.facade.model.DispatchMessageReq;
 import com.ymatou.messagebus.facade.model.DispatchServerInfo;
 
 /**
@@ -20,4 +21,11 @@ public interface DispatchResource {
      * @return
      */
     public DispatchServerInfo status();
+
+    /**
+     * 分发消息
+     * 
+     * @return
+     */
+    public RestResp dispatch(DispatchMessageReq req);
 }

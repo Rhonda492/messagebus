@@ -6,9 +6,9 @@
 package com.ymatou.messagebus.domain.repository;
 
 import static com.mongodb.client.model.Filters.eq;
-import static com.mongodb.client.model.Updates.*;
+import static com.mongodb.client.model.Updates.combine;
+import static com.mongodb.client.model.Updates.set;
 
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import javax.annotation.Resource;
@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 
 import com.mongodb.MongoClient;
 import com.ymatou.messagebus.domain.model.Message;
+import com.ymatou.messagebus.facade.enums.MessageNewStatusEnum;
 import com.ymatou.messagebus.infrastructure.mongodb.MongoRepository;
 
 /**
@@ -32,7 +33,6 @@ public class MessageRepository extends MongoRepository implements InitializingBe
     @Resource(name = "messageMongoClient")
     private MongoClient mongoClient;
 
-    private SimpleDateFormat dateFormat;
 
     @Override
     protected MongoClient getMongoClient() {
@@ -46,8 +46,8 @@ public class MessageRepository extends MongoRepository implements InitializingBe
      * @param message
      */
     public void insert(Message message) {
-        String dbName = "MQ_Message_" + message.getAppId() + "_" + dateFormat.format(new Date());
-        String collectionName = "Message_" + message.getAppCode();
+        String dbName = "MQ_Message_" + message.getAppId() + "_" + message.getUuid().substring(0, 6);
+        String collectionName = "Message_" + message.getCode();
 
         insertEntiy(dbName, collectionName, message);
     }
@@ -61,11 +61,11 @@ public class MessageRepository extends MongoRepository implements InitializingBe
      * @param messageId
      * @return
      */
-    public Message getByMessageId(String appId, String code, String messageId) {
-        String dbName = "MQ_Message_" + appId + "_" + dateFormat.format(new Date());
-        String collectionName = "Message_" + appId + "_" + code;
+    public Message getByUuid(String appId, String code, String uuid) {
+        String dbName = "MQ_Message_" + appId + "_" + uuid.substring(0, 6);
+        String collectionName = "Message_" + code;
 
-        return newQuery(Message.class, dbName, collectionName).field("mid").equal(messageId).get();
+        return newQuery(Message.class, dbName, collectionName).field("uuid").equal(uuid).get();
     }
 
     /**
@@ -73,15 +73,15 @@ public class MessageRepository extends MongoRepository implements InitializingBe
      * 
      * @param appId
      * @param code
-     * @param messageId
+     * @param uuid
      * @param newStatus
      */
-    public void updateMessageStatus(String appId, String code, String messageId, Integer newStatus) {
-        String dbName = "MQ_Message_" + appId + "_" + dateFormat.format(new Date());
-        String collectionName = "Message_" + appId + "_" + code;
+    public void updateMessageStatus(String appId, String code, String uuid, MessageNewStatusEnum newStatus) {
+        String dbName = "MQ_Message_" + appId + "_" + uuid.substring(0, 6);
+        String collectionName = "Message_" + code;
 
-        Bson doc = eq("mid", messageId);
-        Bson set = set("nstatus", newStatus);
+        Bson doc = eq("uuid", uuid);
+        Bson set = set("nstatus", newStatus.code());
 
         updateOne(dbName, collectionName, doc, set);
     }
@@ -94,18 +94,17 @@ public class MessageRepository extends MongoRepository implements InitializingBe
      * @param messageId
      * @param newStatus
      */
-    public void updateMessageStatusAndPublishTime(String appId, String code, String messageId, Integer newStatus) {
-        String dbName = "MQ_Message_" + appId + "_" + dateFormat.format(new Date());
-        String collectionName = "Message_" + appId + "_" + code;
+    public void updateMessageStatusAndPublishTime(String appId, String code, String uuid,
+            MessageNewStatusEnum newStatus) {
+        String dbName = "MQ_Message_" + appId + "_" + uuid.substring(0, 6);
+        String collectionName = "Message_" + code;
 
-        Bson doc = eq("mid", messageId);
-        Bson set = combine(set("nstatus", newStatus), set("pushtime", new Date()));
+        Bson doc = eq("uuid", uuid);
+        Bson set = combine(set("nstatus", newStatus.code()), set("pushtime", new Date()));
 
         updateOne(dbName, collectionName, doc, set);
     }
 
     @Override
-    public void afterPropertiesSet() throws Exception {
-        dateFormat = new SimpleDateFormat("yyyyMM");
-    }
+    public void afterPropertiesSet() throws Exception {}
 }

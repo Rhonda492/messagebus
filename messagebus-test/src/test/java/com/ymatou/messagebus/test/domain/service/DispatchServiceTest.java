@@ -50,24 +50,25 @@ public class DispatchServiceTest extends BaseTest {
             throws KeyManagementException, NoSuchAlgorithmException, IOException, TimeoutException, URISyntaxException,
             InterruptedException {
 
-        PublishMessageReq publishMessage = publishMessage();
+        String appId = "testjava";
+        String code = "hello";
+        PublishMessageResp resp = publishMessage(appId, code);
         dispatchService.start();
 
         Thread.sleep(1000 * 1);
 
-        assertEquals(1, MessageConsumer.getConsumerMap().size());
+        assertEquals(true, MessageConsumer.getConsumerMap().size() > 0);
 
 
-        Message message = messageRepository.getByMessageId(publishMessage.getAppId(), publishMessage.getCode(),
-                publishMessage.getMsgUniqueId());
+        Message message = messageRepository.getByUuid(appId, code, resp.getUuid());
         assertNotNull(message);
         assertEquals(MessageNewStatusEnum.Success.code(), message.getNewStatus());
     }
 
-    private PublishMessageReq publishMessage() {
+    private PublishMessageResp publishMessage(String appId, String code) {
         PublishMessageReq req = new PublishMessageReq();
-        req.setAppId("testjava");
-        req.setCode("hello");
+        req.setAppId(appId);
+        req.setCode(code);
         req.setMsgUniqueId(UUID.randomUUID().toString());
         req.setBody(TaskItemRequest.newInstance());
         req.setIp(NetUtil.getHostIp());
@@ -76,13 +77,13 @@ public class DispatchServiceTest extends BaseTest {
         System.out.println(resp.getErrorMessage());
         assertEquals(true, resp.isSuccess());
 
-        Message message = messageRepository.getByMessageId(req.getAppId(), req.getCode(), req.getMsgUniqueId());
+        Message message = messageRepository.getByUuid(req.getAppId(), req.getCode(), resp.getUuid());
         assertNotNull(message);
         assertEquals(req.getMsgUniqueId(), message.getMessageId());
         assertEquals(req.getIp(), message.getIp());
         assertEquals(req.getAppId(), message.getAppId());
         assertEquals(req.getAppId() + "_" + req.getCode(), message.getAppCode());
 
-        return req;
+        return resp;
     }
 }

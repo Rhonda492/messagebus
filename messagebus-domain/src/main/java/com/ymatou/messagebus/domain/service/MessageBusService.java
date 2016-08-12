@@ -128,7 +128,7 @@ public class MessageBusService {
                     MessageProducer.newInstance(rabbitMQConfig, message.getAppId(), message.getAppCode());
 
             if (producer.isHealth()) {
-                producer.publishMessage(message.getBody(), message.getMessageId());
+                producer.publishMessage(message.getBody(), message.getMessageId(), message.getUuid());
             } else {
                 if (producer.isBroken() == false) {
                     producer.setBroken(true);
@@ -153,7 +153,7 @@ public class MessageBusService {
         messageCompensate.setSource(MessageCompensateSourceEnum.Publish.code());
         compensateRepository.insert(messageCompensate);
 
-        messageRepository.updateMessageStatus(appConfig.getAppId(), message.getCode(), message.getMessageId(),
-                MessageNewStatusEnum.PublishToCompensate.code());
+        messageRepository.updateMessageStatus(appConfig.getAppId(), message.getCode(), message.getUuid(),
+                MessageNewStatusEnum.PublishToCompensate);
     }
 }

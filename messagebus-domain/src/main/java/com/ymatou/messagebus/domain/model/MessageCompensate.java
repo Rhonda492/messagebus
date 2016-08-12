@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 
 import org.mongodb.morphia.annotations.Embedded;
 import org.mongodb.morphia.annotations.Entity;
@@ -272,7 +271,7 @@ public class MessageCompensate extends PrintFriendliness {
      */
     public static MessageCompensate from(AppConfig appConfig, Message message) {
         MessageCompensate compensate = new MessageCompensate();
-        compensate.setId(UUID.randomUUID().toString());
+        compensate.setId(message.getUuid());
         compensate.setStatus(MessageCompensateStatusEnum.RetryOk.code()); // 避免.NET补单
         compensate.setNewStatus(MessageCompensateStatusEnum.NotRetry.code());
         compensate.setAppId(message.getAppId());
@@ -311,10 +310,10 @@ public class MessageCompensate extends PrintFriendliness {
      * @param consumerId
      * @return
      */
-    public static MessageCompensate newInstance(String appId, String code, String messageId, String body,
-            String consumerId) {
+    public static MessageCompensate newInstance(String appId, String code, String uuid, String messageId, String body,
+            List<CallbackInfo> listCallbackInfo) {
         MessageCompensate compensate = new MessageCompensate();
-        compensate.setId(UUID.randomUUID().toString());
+        compensate.setId(uuid);
         compensate.setStatus(MessageCompensateStatusEnum.RetryOk.code()); // 避免.NET补单
         compensate.setNewStatus(MessageCompensateStatusEnum.NotRetry.code());
         compensate.setAppId(appId);
@@ -332,11 +331,7 @@ public class MessageCompensate extends PrintFriendliness {
         compensate.setRetryCount(0);
 
         // 添加消费者信息
-        CallbackInfo callbackInfo = new CallbackInfo();
-        callbackInfo.setCallbackKey(consumerId);
-        callbackInfo.setStatus(MessageCompensateStatusEnum.RetryOk.code());// 避免.NET补单
-        callbackInfo.setNewStatus(MessageCompensateStatusEnum.NotRetry.code());
-        compensate.callbackList.add(callbackInfo);
+        compensate.setCallbackList(listCallbackInfo);
 
         return compensate;
     }

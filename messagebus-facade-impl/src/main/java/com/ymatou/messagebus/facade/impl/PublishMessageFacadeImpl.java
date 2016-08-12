@@ -6,7 +6,6 @@
 package com.ymatou.messagebus.facade.impl;
 
 import java.util.Date;
-import java.util.UUID;
 
 import javax.annotation.Resource;
 
@@ -48,13 +47,12 @@ public class PublishMessageFacadeImpl implements PublishMessageFacade {
         Message message = new Message();
         message.setAppId(req.getAppId());
         message.setBody(JSON.toJSONStringWithDateFormat(req.getBody(), DATE_FORMAT));
-        message.setAppCode(String.format("%s_%s", req.getAppId(), req.getCode()));
         message.setCode(req.getCode());
         message.setIp(req.getIp());
         message.setCreateTime(new Date());
         message.setBusReceivedServerIp(NetUtil.getHostIp());
         message.setPushStatus(MessagePublishStatusEnum.AlreadyPush.code()); // 避免被.NET版补单
-        message.setUuid(UUID.randomUUID().toString());
+        message.setUuid(Message.newUuid());
         message.setMessageId(req.getMsgUniqueId());
         message.setNewStatus(MessageNewStatusEnum.InRabbitMQ.code());
 
@@ -62,6 +60,7 @@ public class PublishMessageFacadeImpl implements PublishMessageFacade {
 
         PublishMessageResp resp = new PublishMessageResp();
         resp.setSuccess(true);
+        resp.setUuid(message.getUuid());
 
         return resp;
     }
