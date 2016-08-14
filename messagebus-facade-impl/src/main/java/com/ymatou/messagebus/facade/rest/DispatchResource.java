@@ -6,7 +6,7 @@
 package com.ymatou.messagebus.facade.rest;
 
 import com.ymatou.messagebus.facade.model.DispatchMessageReq;
-import com.ymatou.messagebus.facade.model.DispatchServerInfo;
+import com.ymatou.messagebus.facade.model.DispatchServerVO;
 
 /**
  * 消息分发API
@@ -20,7 +20,7 @@ public interface DispatchResource {
      * 
      * @return
      */
-    public DispatchServerInfo status();
+    public DispatchServerVO status();
 
     /**
      * 分发消息

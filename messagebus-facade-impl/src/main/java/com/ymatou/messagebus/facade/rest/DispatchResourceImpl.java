@@ -18,7 +18,7 @@ import com.ymatou.messagebus.domain.config.DispatchConfig;
 import com.ymatou.messagebus.facade.DispatchMessageFacade;
 import com.ymatou.messagebus.facade.model.DispatchMessageReq;
 import com.ymatou.messagebus.facade.model.DispatchMessageResp;
-import com.ymatou.messagebus.facade.model.DispatchServerInfo;
+import com.ymatou.messagebus.facade.model.DispatchServerVO;
 import com.ymatou.messagebus.infrastructure.net.NetUtil;
 
 @Component("dispatchResource")
@@ -35,8 +35,8 @@ public class DispatchResourceImpl implements DispatchResource {
     @GET
     @Path("/status")
     @Override
-    public DispatchServerInfo status() {
-        DispatchServerInfo dispatchServerInfo = new DispatchServerInfo();
+    public DispatchServerVO status() {
+        DispatchServerVO dispatchServerInfo = new DispatchServerVO();
         dispatchServerInfo.setGroupId(dispatchConfig.getGroupId());
         dispatchServerInfo.setIp(NetUtil.getHostIp());
         dispatchServerInfo.setHostName(NetUtil.getHostName());

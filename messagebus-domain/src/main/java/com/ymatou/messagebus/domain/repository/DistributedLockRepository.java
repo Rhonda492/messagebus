@@ -7,9 +7,13 @@ package com.ymatou.messagebus.domain.repository;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
 import javax.annotation.Resource;
 
+import org.mongodb.morphia.Datastore;
+import org.mongodb.morphia.query.Query;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
 
 import com.mongodb.MongoClient;
@@ -24,7 +28,7 @@ import com.ymatou.messagebus.infrastructure.net.NetUtil;
  *
  */
 @Component
-public class DistributedLockRepository extends MongoRepository {
+public class DistributedLockRepository extends MongoRepository implements InitializingBean {
 
     @Resource(name = "configMongoClient")
     private MongoClient mongoClient;
@@ -45,17 +49,16 @@ public class DistributedLockRepository extends MongoRepository {
      */
     public boolean AcquireLock(String lockType, int lifeTimeMinute) {
         try {
-            // DistributedLock lock = getByLockType(lockType);
-            // if (lock != null && lock.getDeadTime().after(new Date())) {
-            // return false;
-            // }
-            //
-            // DistributedLock distributedLock = new DistributedLock();
-            // if (lock != null) {
-            // distributedLock = lock;
-            // }
+            DistributedLock lock = getByLockType(lockType);
+            if (lock != null && lock.getDeadTime().after(new Date())) {
+                return false;
+            }
 
             DistributedLock distributedLock = new DistributedLock();
+            if (lock != null) {
+                distributedLock = lock;
+            }
+
             Calendar now = Calendar.getInstance();
             distributedLock.setCreateTime(now.getTime());
 
@@ -81,5 +84,36 @@ public class DistributedLockRepository extends MongoRepository {
      */
     public DistributedLock getByLockType(String lockType) {
         return getEntity(DistributedLock.class, dbName, "lockType", lockType);
+    }
+
+    /**
+     * 删除指定类型锁
+     * 
+     * @param lockType
+     */
+    public void delete(String lockType) {
+        Datastore datastore = getDatastore(dbName);
+        Query<DistributedLock> query = datastore.createQuery(DistributedLock.class).field("lockType").equal(lockType);
+
+        datastore.delete(query);
+    }
+
+    /**
+     * 获取所有的锁
+     * 
+     * @return
+     */
+    public List<DistributedLock> getAll() {
+        Datastore datastore = getDatastore(dbName);
+
+        Query<DistributedLock> query = datastore.createQuery(DistributedLock.class);
+
+        return query.asList();
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        Datastore datastore = getDatastore(dbName);
+        datastore.ensureIndex(DistributedLock.class, null, "lockType", true, false);
     }
 }

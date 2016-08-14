@@ -5,7 +5,7 @@
  */
 package com.ymatou.messagebus.facade.model;
 
-public class DispatchServerInfo {
+public class DispatchServerVO {
 
 
     /**
