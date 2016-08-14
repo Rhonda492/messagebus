@@ -57,7 +57,7 @@ public class DispatchServiceTest extends BaseTest {
         PublishMessageResp resp = publishMessage(appId, code);
         dispatchService.start();
 
-        Thread.sleep(1000 * 1);
+        Thread.sleep(300 * 1);
 
         assertEquals(true, MessageConsumer.getConsumerMap().size() > 0);
 

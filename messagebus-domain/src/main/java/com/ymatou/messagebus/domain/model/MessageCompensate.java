@@ -404,4 +404,15 @@ public class MessageCompensate extends PrintFriendliness {
     public boolean isRetryTimeout() {
         return this.retryTimeout.before(new Date());
     }
+
+    /**
+     * 增加重试计数
+     */
+    public void incRetryCount() {
+        if (this.retryCount == null) {
+            this.retryCount = 1;
+        } else {
+            this.retryCount = this.retryCount.intValue() + 1;
+        }
+    }
 }

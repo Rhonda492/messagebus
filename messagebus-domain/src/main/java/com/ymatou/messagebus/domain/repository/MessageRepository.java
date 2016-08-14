@@ -108,6 +108,25 @@ public class MessageRepository extends MongoRepository implements InitializingBe
         updateOne(dbName, collectionName, doc, set);
     }
 
+    /**
+     * 更新消息的处理状态和发布时间
+     * 
+     * @param appId
+     * @param code
+     * @param uuid
+     * @param processStatusEnum
+     */
+    public void updateMessageProcessStatus(String appId, String code, String uuid,
+            MessageProcessStatusEnum processStatusEnum) {
+        String dbName = "MQ_Message_" + appId + "_" + uuid.substring(0, 6);
+        String collectionName = "Message_" + code;
+
+        Bson doc = eq("uuid", uuid);
+        Bson set = combine(set("pstatus", processStatusEnum.code()), set("pushtime", new Date()));
+
+        updateOne(dbName, collectionName, doc, set);
+    }
+
     @Override
     public void afterPropertiesSet() throws Exception {}
 }

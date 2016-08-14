@@ -39,7 +39,7 @@ public class MessageStatusRepository extends MongoRepository implements Initiali
      */
     public void insert(MessageStatus messageStatus, String appId) {
         String dbName = "MQ_Message_Status_" + messageStatus.getMessageUuid().substring(0, 6);
-        String collectionName = "mq_subscribe_ok_" + appId;
+        String collectionName = "mq_subscribe_" + appId;
 
         insertEntiy(dbName, collectionName, messageStatus);
     }
@@ -54,7 +54,7 @@ public class MessageStatusRepository extends MongoRepository implements Initiali
      */
     public MessageStatus getByUuid(String appId, String uuid) {
         String dbName = "MQ_Message_Status_" + uuid.substring(0, 6);
-        String collectionName = "mq_subscribe_ok_" + appId;
+        String collectionName = "mq_subscribe_" + appId;
 
         return newQuery(MessageStatus.class, dbName, collectionName).field("uuid").equal(uuid).get();
     }

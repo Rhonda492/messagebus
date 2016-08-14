@@ -32,4 +32,25 @@ public enum MessageProcessStatusEnum {
     public Integer code() {
         return this.code;
     }
+
+    /**
+     * 根据补单状态计算消息状态
+     * 
+     * @param compensateStatusEnum
+     * @return
+     */
+    public static MessageProcessStatusEnum from(MessageCompensateStatusEnum compensateStatusEnum) {
+        switch (compensateStatusEnum) {
+            case NotRetry:
+                return MessageProcessStatusEnum.Compensate;
+            case RetryFail:
+                return MessageProcessStatusEnum.Fail;
+            case Retrying:
+                return MessageProcessStatusEnum.Compensate;
+            case RetryOk:
+                return MessageProcessStatusEnum.Success;
+            default:
+                return MessageProcessStatusEnum.Compensate;
+        }
+    }
 }
