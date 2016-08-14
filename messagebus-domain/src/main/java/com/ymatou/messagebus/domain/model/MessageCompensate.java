@@ -363,4 +363,45 @@ public class MessageCompensate extends PrintFriendliness {
     public void setNewStatus(Integer newStatus) {
         this.newStatus = newStatus;
     }
+
+    /**
+     * 计算出补偿消息的状态
+     * 
+     * @return
+     */
+    public MessageCompensateStatusEnum calNewStatus() {
+        if (callbackList == null) {
+            return MessageCompensateStatusEnum.RetryOk;
+        }
+
+        long countOK = callbackList.stream()
+                .filter(callback -> MessageCompensateStatusEnum.RetryOk.code().equals(callback.getNewStatus())).count();
+        if (countOK == callbackList.size()) {
+            return MessageCompensateStatusEnum.RetryOk;
+        }
+
+        long countFail = callbackList.stream()
+                .filter(callback -> MessageCompensateStatusEnum.RetryFail.code().equals(callback.getNewStatus()))
+                .count();
+        if (countFail == callbackList.size()) {
+            return MessageCompensateStatusEnum.RetryFail;
+        }
+
+        boolean anyRetrying = callbackList.stream()
+                .anyMatch(callback -> MessageCompensateStatusEnum.Retrying.code().equals(callback.getNewStatus()));
+        if (anyRetrying) {
+            return MessageCompensateStatusEnum.Retrying;
+        }
+
+        return MessageCompensateStatusEnum.Retrying;
+    }
+
+    /**
+     * 判断是否已经过了失效时间
+     * 
+     * @return
+     */
+    public boolean isRetryTimeout() {
+        return this.retryTimeout.before(new Date());
+    }
 }

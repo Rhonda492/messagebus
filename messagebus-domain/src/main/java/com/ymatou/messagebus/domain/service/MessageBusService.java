@@ -29,6 +29,7 @@ import com.ymatou.messagebus.facade.BizException;
 import com.ymatou.messagebus.facade.ErrorCode;
 import com.ymatou.messagebus.facade.enums.MessageCompensateSourceEnum;
 import com.ymatou.messagebus.facade.enums.MessageNewStatusEnum;
+import com.ymatou.messagebus.facade.enums.MessageProcessStatusEnum;
 import com.ymatou.messagebus.infrastructure.config.RabbitMQConfig;
 import com.ymatou.messagebus.infrastructure.rabbitmq.MessageProducer;
 import com.ymatou.messagebus.infrastructure.rabbitmq.RabbitMQPublishException;
@@ -154,6 +155,6 @@ public class MessageBusService {
         compensateRepository.insert(messageCompensate);
 
         messageRepository.updateMessageStatus(appConfig.getAppId(), message.getCode(), message.getUuid(),
-                MessageNewStatusEnum.PublishToCompensate);
+                MessageNewStatusEnum.PublishToCompensate, MessageProcessStatusEnum.Init);
     }
 }

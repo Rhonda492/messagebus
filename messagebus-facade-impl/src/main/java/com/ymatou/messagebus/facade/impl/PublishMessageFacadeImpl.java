@@ -16,6 +16,7 @@ import com.ymatou.messagebus.domain.model.Message;
 import com.ymatou.messagebus.domain.service.MessageBusService;
 import com.ymatou.messagebus.facade.PublishMessageFacade;
 import com.ymatou.messagebus.facade.enums.MessageNewStatusEnum;
+import com.ymatou.messagebus.facade.enums.MessageProcessStatusEnum;
 import com.ymatou.messagebus.facade.enums.MessagePublishStatusEnum;
 import com.ymatou.messagebus.facade.model.PublishMessageReq;
 import com.ymatou.messagebus.facade.model.PublishMessageResp;
@@ -55,6 +56,7 @@ public class PublishMessageFacadeImpl implements PublishMessageFacade {
         message.setUuid(Message.newUuid());
         message.setMessageId(req.getMsgUniqueId());
         message.setNewStatus(MessageNewStatusEnum.InRabbitMQ.code());
+        message.setProcessStatus(MessageProcessStatusEnum.Init.code());
 
         messageBusService.publish(message);
 

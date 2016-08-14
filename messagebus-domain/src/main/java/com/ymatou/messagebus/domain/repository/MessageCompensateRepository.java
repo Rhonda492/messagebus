@@ -5,12 +5,17 @@
  */
 package com.ymatou.messagebus.domain.repository;
 
+
+import java.util.List;
+
 import javax.annotation.Resource;
 
+import org.mongodb.morphia.query.Query;
 import org.springframework.stereotype.Component;
 
 import com.mongodb.MongoClient;
 import com.ymatou.messagebus.domain.model.MessageCompensate;
+import com.ymatou.messagebus.facade.enums.MessageCompensateStatusEnum;
 import com.ymatou.messagebus.infrastructure.mongodb.MongoRepository;
 
 /**
@@ -43,6 +48,17 @@ public class MessageCompensateRepository extends MongoRepository {
     }
 
     /**
+     * 更新补单信息
+     * 
+     * @param messageCompensate
+     */
+    public void update(MessageCompensate messageCompensate) {
+        String collectionName = String.format("Mq_%s_%s", messageCompensate.getAppId(), messageCompensate.getCode());
+
+        insertEntiy(dbName, collectionName, messageCompensate);
+    }
+
+    /**
      * 查找消息补偿信息
      * 
      * @param appId
@@ -55,5 +71,23 @@ public class MessageCompensateRepository extends MongoRepository {
 
         return newQuery(MessageCompensate.class, dbName, collectionName)
                 .field("_id").equal(messageUuid).get();
+    }
+
+    /**
+     * 获取到需要补单的消息
+     * 
+     * @param appId
+     * @param code
+     * @return
+     */
+    public List<MessageCompensate> getNeedCompensate(String appId, String code) {
+        String collectionName = String.format("Mq_%s_%s", appId, code);
+
+        Query<MessageCompensate> query = newQuery(MessageCompensate.class, dbName, collectionName);
+        query.or(
+                query.criteria("nstatus").equal(MessageCompensateStatusEnum.NotRetry.code()),
+                query.criteria("nstatus").equal(MessageCompensateStatusEnum.Retrying.code()));
+
+        return query.asList();
     }
 }

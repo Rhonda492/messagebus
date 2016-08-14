@@ -37,6 +37,7 @@ import com.ymatou.messagebus.facade.ErrorCode;
 import com.ymatou.messagebus.facade.enums.MessageCompensateSourceEnum;
 import com.ymatou.messagebus.facade.enums.MessageCompensateStatusEnum;
 import com.ymatou.messagebus.facade.enums.MessageNewStatusEnum;
+import com.ymatou.messagebus.facade.enums.MessageProcessStatusEnum;
 import com.ymatou.messagebus.facade.enums.MessageStatusEnum;
 import com.ymatou.messagebus.facade.enums.MessageStatusSourceEnum;
 import com.ymatou.messagebus.infrastructure.logger.ErrorReportClient;
@@ -140,11 +141,12 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
         }
 
         if (callbackInfoList.size() == 0) {
-            messageRepository.updateMessageStatusAndPublishTime(appId, code, uuid, MessageNewStatusEnum.Success);
+            messageRepository.updateMessageStatusAndPublishTime(appId, code, uuid, MessageNewStatusEnum.InRabbitMQ,
+                    MessageProcessStatusEnum.Success);
         } else {
             publishToCompensate(appId, code, uuid, messageId, messageBody, callbackInfoList);
             messageRepository.updateMessageStatusAndPublishTime(appId, code, uuid,
-                    MessageNewStatusEnum.DispatchToCompensate);
+                    MessageNewStatusEnum.DispatchToCompensate, MessageProcessStatusEnum.Compensate);
         }
 
         messageStatusRepository.insert(messageStatus, appId);
@@ -162,9 +164,8 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
      * @param message
      * @return
      */
-    private boolean invokeBizSystem(MessageStatus messageStatus, CallbackConfig callbackConfig, String appId,
-            String code, String uuid, String messageId,
-            String message) {
+    public boolean invokeBizSystem(MessageStatus messageStatus, CallbackConfig callbackConfig, String appId,
+            String code, String uuid, String messageId, String message) {
         String consumerId = callbackConfig.getCallbackKey();
         String callbackUrl = callbackConfig.getUrl();
         String contentType = getContentType(callbackConfig);

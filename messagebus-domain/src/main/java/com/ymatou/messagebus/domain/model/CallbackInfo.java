@@ -78,4 +78,15 @@ public class CallbackInfo {
     public void setNewStatus(Integer newStatus) {
         this.newStatus = newStatus;
     }
+
+    /**
+     * 增加重试计数
+     */
+    public void incRetryCount() {
+        if (this.retryCount == null) {
+            this.retryCount = 1;
+        } else {
+            this.retryCount = this.retryCount.intValue() + 1;
+        }
+    }
 }

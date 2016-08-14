@@ -5,7 +5,8 @@
  */
 package com.ymatou.messagebus.test.facade;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.util.List;
 import java.util.UUID;
@@ -24,6 +25,7 @@ import com.ymatou.messagebus.domain.repository.MessageStatusRepository;
 import com.ymatou.messagebus.facade.DispatchMessageFacade;
 import com.ymatou.messagebus.facade.ErrorCode;
 import com.ymatou.messagebus.facade.enums.MessageNewStatusEnum;
+import com.ymatou.messagebus.facade.enums.MessageProcessStatusEnum;
 import com.ymatou.messagebus.facade.model.DispatchMessageReq;
 import com.ymatou.messagebus.facade.model.DispatchMessageResp;
 import com.ymatou.messagebus.test.BaseTest;
@@ -57,7 +59,7 @@ public class DispatchMessageFacadeTest extends BaseTest {
 
         messageRepository.insert(message);
         messageRepository.updateMessageStatus(message.getAppId(), message.getCode(), message.getUuid(),
-                MessageNewStatusEnum.CheckToCompensate);
+                MessageNewStatusEnum.CheckToCompensate, MessageProcessStatusEnum.Init);
 
         return message;
     }

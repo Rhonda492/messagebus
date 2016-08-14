@@ -5,7 +5,7 @@
  */
 package com.ymatou.messagebus.test.domain.repository;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.util.UUID;
 
@@ -16,6 +16,7 @@ import org.junit.Test;
 import com.ymatou.messagebus.domain.model.Message;
 import com.ymatou.messagebus.domain.repository.MessageRepository;
 import com.ymatou.messagebus.facade.enums.MessageNewStatusEnum;
+import com.ymatou.messagebus.facade.enums.MessageProcessStatusEnum;
 import com.ymatou.messagebus.test.BaseTest;
 
 public class MessageRepositoryTest extends BaseTest {
@@ -46,7 +47,7 @@ public class MessageRepositoryTest extends BaseTest {
 
         messageRepository.insert(message);
         messageRepository.updateMessageStatus(message.getAppId(), message.getCode(), message.getUuid(),
-                MessageNewStatusEnum.CheckToCompensate);
+                MessageNewStatusEnum.CheckToCompensate, MessageProcessStatusEnum.Init);
 
         Message messageAssert =
                 messageRepository.getByUuid(message.getAppId(), message.getCode(), message.getUuid());

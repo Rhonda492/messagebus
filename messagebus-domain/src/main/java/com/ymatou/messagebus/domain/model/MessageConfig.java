@@ -137,4 +137,18 @@ public class MessageConfig {
     public void setPublishCfg(Object publishCfg) {
         this.publishCfg = publishCfg;
     }
+
+    /**
+     * 根据ConsumerId获取到回调配置
+     * 
+     * @param consumerId
+     * @return
+     */
+    public CallbackConfig getByConsumerId(String consumerId) {
+        if (callbackCfgList == null) {
+            return null;
+        }
+        return callbackCfgList.stream()
+                .filter(callbackCfg -> callbackCfg.getCallbackKey().equals(consumerId)).findAny().get();
+    }
 }

@@ -5,7 +5,8 @@
  */
 package com.ymatou.messagebus.test.domain.service;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -23,6 +24,7 @@ import com.ymatou.messagebus.domain.repository.MessageRepository;
 import com.ymatou.messagebus.domain.service.DispatchService;
 import com.ymatou.messagebus.facade.PublishMessageFacade;
 import com.ymatou.messagebus.facade.enums.MessageNewStatusEnum;
+import com.ymatou.messagebus.facade.enums.MessageProcessStatusEnum;
 import com.ymatou.messagebus.facade.model.PublishMessageReq;
 import com.ymatou.messagebus.facade.model.PublishMessageResp;
 import com.ymatou.messagebus.infrastructure.net.NetUtil;
@@ -62,7 +64,8 @@ public class DispatchServiceTest extends BaseTest {
 
         Message message = messageRepository.getByUuid(appId, code, resp.getUuid());
         assertNotNull(message);
-        assertEquals(MessageNewStatusEnum.Success.code(), message.getNewStatus());
+        assertEquals(MessageNewStatusEnum.InRabbitMQ.code(), message.getNewStatus());
+        assertEquals(MessageProcessStatusEnum.Success.code(), message.getProcessStatus());
     }
 
     private PublishMessageResp publishMessage(String appId, String code) {

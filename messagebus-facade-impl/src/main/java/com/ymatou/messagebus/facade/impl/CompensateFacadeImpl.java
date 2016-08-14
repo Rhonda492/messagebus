@@ -15,6 +15,8 @@ import org.springframework.stereotype.Component;
 import com.ymatou.messagebus.domain.model.DistributedLock;
 import com.ymatou.messagebus.domain.repository.DistributedLockRepository;
 import com.ymatou.messagebus.facade.CompensateFacade;
+import com.ymatou.messagebus.facade.model.CheckToCompensateReq;
+import com.ymatou.messagebus.facade.model.CheckToCompensateResp;
 import com.ymatou.messagebus.facade.model.DeleteLockReq;
 import com.ymatou.messagebus.facade.model.DeleteLockResp;
 import com.ymatou.messagebus.facade.model.DistributedLockVO;
@@ -76,6 +78,20 @@ public class CompensateFacadeImpl implements CompensateFacade {
         DeleteLockResp resp = new DeleteLockResp();
         resp.setSuccess(true);
 
+        return resp;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * com.ymatou.messagebus.facade.CompensateFacade#checkToCompensate(com.ymatou.messagebus.facade.
+     * model.CheckToCompensateReq)
+     */
+    @Override
+    public CheckToCompensateResp checkToCompensate(CheckToCompensateReq req) {
+        CheckToCompensateResp resp = new CheckToCompensateResp();
+        resp.setSuccess(true);
         return resp;
     }
 }

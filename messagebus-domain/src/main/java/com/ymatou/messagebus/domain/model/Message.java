@@ -80,32 +80,29 @@ public class Message extends PrintFriendliness {
     private Date createTime;
 
     /*
-     * 推送状态
-     * 0：未推送
-     * 1000：已推送
-     * 1300：已重试
-     * 1400：直接存储到DB
-     * 1600: 客户端已消费
+     * 推送状态 0：未推送 1000：已推送 1300：已重试 1400：直接存储到DB 1600: 客户端已消费
      */
     @Property("pushstatus")
     private Integer pushStatus;
 
     /**
      * 消息状态（Java版）
+     * 
+     * 0-进入RabbitMQ 1-接收进入补单 2-分发进入补单 3-检测进入补单
      */
     @Property("nstatus")
     private Integer newStatus;
 
     /**
+     * 处理结果（Java版）
+     * 
+     * 0-未处理 1-通知成功 2-补单中 3-处理失败
+     */
+    @Property("pstatus")
+    private Integer processStatus;
+
+    /**
      * 推送时间
-     * 0-进入RabbitMQ
-     * 1-接收进入补单
-     * 2-分发进入补单
-     * 3-检测进入补单
-     * 90-分发完成（0->完成）
-     * 91-补单完成（1->完成）
-     * 92-补单完成（2->完成）
-     * 93-补单完成（3->完成）
      */
     @Property("pushtime")
     private Date pushTime;
@@ -283,6 +280,14 @@ public class Message extends PrintFriendliness {
      */
     public void setNewStatus(Integer newStatus) {
         this.newStatus = newStatus;
+    }
+
+    public Integer getProcessStatus() {
+        return processStatus;
+    }
+
+    public void setProcessStatus(Integer processStatus) {
+        this.processStatus = processStatus;
     }
 
     /**

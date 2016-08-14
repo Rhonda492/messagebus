@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 import com.mongodb.MongoClient;
 import com.ymatou.messagebus.domain.model.Message;
 import com.ymatou.messagebus.facade.enums.MessageNewStatusEnum;
+import com.ymatou.messagebus.facade.enums.MessageProcessStatusEnum;
 import com.ymatou.messagebus.infrastructure.mongodb.MongoRepository;
 
 /**
@@ -76,12 +77,13 @@ public class MessageRepository extends MongoRepository implements InitializingBe
      * @param uuid
      * @param newStatus
      */
-    public void updateMessageStatus(String appId, String code, String uuid, MessageNewStatusEnum newStatus) {
+    public void updateMessageStatus(String appId, String code, String uuid, MessageNewStatusEnum newStatus,
+            MessageProcessStatusEnum processStatusEnum) {
         String dbName = "MQ_Message_" + appId + "_" + uuid.substring(0, 6);
         String collectionName = "Message_" + code;
 
         Bson doc = eq("uuid", uuid);
-        Bson set = set("nstatus", newStatus.code());
+        Bson set = combine(set("nstatus", newStatus.code()), set("pstatus", processStatusEnum.code()));
 
         updateOne(dbName, collectionName, doc, set);
     }
@@ -95,12 +97,13 @@ public class MessageRepository extends MongoRepository implements InitializingBe
      * @param newStatus
      */
     public void updateMessageStatusAndPublishTime(String appId, String code, String uuid,
-            MessageNewStatusEnum newStatus) {
+            MessageNewStatusEnum newStatus, MessageProcessStatusEnum processStatusEnum) {
         String dbName = "MQ_Message_" + appId + "_" + uuid.substring(0, 6);
         String collectionName = "Message_" + code;
 
         Bson doc = eq("uuid", uuid);
-        Bson set = combine(set("nstatus", newStatus.code()), set("pushtime", new Date()));
+        Bson set = combine(set("nstatus", newStatus.code()), set("pstatus", processStatusEnum.code()),
+                set("pushtime", new Date()));
 
         updateOne(dbName, collectionName, doc, set);
     }

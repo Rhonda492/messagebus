@@ -21,19 +21,7 @@ public enum MessageNewStatusEnum {
     DispatchToCompensate(2),
 
     // 检测进入补单
-    CheckToCompensate(3),
-
-    // 分发成功
-    Success(90),
-
-    // 接收进入补单 分发成功
-    PublishToCompensateSuccess(91),
-
-    // 分发进入补单 分发成功
-    DispatchToCompensateSuccess(92),
-
-    // 检测进入补单 分发成功
-    CheckToCompensateSuccess(93);
+    CheckToCompensate(3);
 
     private Integer code;
 
