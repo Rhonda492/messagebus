@@ -132,7 +132,7 @@ public class MessageCompensateServlet extends HttpServlet {
     private String start() throws Exception {
         if (timer == null) {
             timer = new Timer(true);
-            timer.schedule(new MessageCompensateTask(), 0, 1000 * 1);
+            timer.schedule(new MessageCompensateTask(), 0, 1000 * 60);
             return "start success!";
         } else {
             return "task allready start.";

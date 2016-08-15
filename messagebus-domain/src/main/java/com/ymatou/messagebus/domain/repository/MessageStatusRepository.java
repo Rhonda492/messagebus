@@ -11,6 +11,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
 
 import com.mongodb.MongoClient;
+import com.mongodb.ReadPreference;
 import com.ymatou.messagebus.domain.model.MessageStatus;
 import com.ymatou.messagebus.infrastructure.mongodb.MongoRepository;
 
@@ -56,7 +57,8 @@ public class MessageStatusRepository extends MongoRepository implements Initiali
         String dbName = "MQ_Message_Status_" + uuid.substring(0, 6);
         String collectionName = "mq_subscribe_" + appId;
 
-        return newQuery(MessageStatus.class, dbName, collectionName).field("uuid").equal(uuid).get();
+        return newQuery(MessageStatus.class, dbName, collectionName, ReadPreference.primaryPreferred()).field("uuid")
+                .equal(uuid).get();
     }
 
     @Override

@@ -9,6 +9,11 @@ import java.util.TimerTask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.context.ContextLoader;
+import org.springframework.web.context.WebApplicationContext;
+
+import com.ymatou.messagebus.domain.repository.DistributedLockRepository;
+import com.ymatou.messagebus.domain.service.CompensateService;
 
 /**
  * 消息补偿定时任务
@@ -20,10 +25,44 @@ public class MessageCompensateTask extends TimerTask {
 
     private static Logger logger = LoggerFactory.getLogger(MessageCompensateTask.class);
 
+    private CompensateService compensateService;
+
+    private DistributedLockRepository distributedLockRepository;
+
+    /**
+     * 分布式锁的类型
+     */
+    private final String lockType = "Compensate";
+
+    /**
+     * 分布式锁的生命周期
+     */
+    private final int lockLifeTimeMinute = 5;
+
+    public MessageCompensateTask() {
+        WebApplicationContext wac = ContextLoader.getCurrentWebApplicationContext();
+        compensateService = (CompensateService) wac.getBean("compensateService");
+        distributedLockRepository = (DistributedLockRepository) wac.getBean("distributedLockRepository");
+    }
+
     @Override
     public void run() {
-        logger.info("message compensate task run.");
+        try {
+            logger.info("----------------------compensate task begin-------------------------------");
+            boolean acquireLock = distributedLockRepository.AcquireLock(lockType, lockLifeTimeMinute);
+            if (acquireLock == false) {
+                logger.info("acquireLock fail exit task.");
+            } else {
+                logger.info("acquireLock success in task.");
+                compensateService.checkAndCompensate();
+            }
 
+        } catch (Exception e) {
+            logger.error("compensate fail in task", e);
+        } finally {
+            distributedLockRepository.delete(lockType);
+            logger.info("----------------------compensate task end delete lock-------------------------------");
+        }
     }
 
 }

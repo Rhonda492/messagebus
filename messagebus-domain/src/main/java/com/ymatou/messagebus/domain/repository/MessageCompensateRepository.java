@@ -10,10 +10,12 @@ import java.util.List;
 
 import javax.annotation.Resource;
 
+import org.mongodb.morphia.DatastoreImpl;
 import org.mongodb.morphia.query.Query;
 import org.springframework.stereotype.Component;
 
 import com.mongodb.MongoClient;
+import com.mongodb.ReadPreference;
 import com.ymatou.messagebus.domain.model.MessageCompensate;
 import com.ymatou.messagebus.facade.enums.MessageCompensateStatusEnum;
 import com.ymatou.messagebus.infrastructure.mongodb.MongoRepository;
@@ -54,8 +56,9 @@ public class MessageCompensateRepository extends MongoRepository {
      */
     public void update(MessageCompensate messageCompensate) {
         String collectionName = String.format("Mq_%s_%s", messageCompensate.getAppId(), messageCompensate.getCode());
+        DatastoreImpl datastore = (DatastoreImpl) getDatastore(dbName);
 
-        insertEntiy(dbName, collectionName, messageCompensate);
+        datastore.save(collectionName, messageCompensate);
     }
 
     /**
@@ -69,7 +72,7 @@ public class MessageCompensateRepository extends MongoRepository {
     public MessageCompensate getByUuid(String appId, String code, String messageUuid) {
         String collectionName = String.format("Mq_%s_%s", appId, code);
 
-        return newQuery(MessageCompensate.class, dbName, collectionName)
+        return newQuery(MessageCompensate.class, dbName, collectionName, ReadPreference.primaryPreferred())
                 .field("_id").equal(messageUuid).get();
     }
 
@@ -83,7 +86,8 @@ public class MessageCompensateRepository extends MongoRepository {
     public List<MessageCompensate> getNeedCompensate(String appId, String code) {
         String collectionName = String.format("Mq_%s_%s", appId, code);
 
-        Query<MessageCompensate> query = newQuery(MessageCompensate.class, dbName, collectionName);
+        Query<MessageCompensate> query =
+                newQuery(MessageCompensate.class, dbName, collectionName, ReadPreference.primaryPreferred());
         query.or(
                 query.criteria("nstatus").equal(MessageCompensateStatusEnum.NotRetry.code()),
                 query.criteria("nstatus").equal(MessageCompensateStatusEnum.Retrying.code()));

@@ -69,7 +69,7 @@ public class MessageBusService {
         }
 
         MessageConfig messageConfig = appConfig.getMessageConfig(message.getCode());
-        if (messageConfig == null || messageConfig.getEnable() == false) {
+        if (messageConfig == null || Boolean.FALSE.equals(messageConfig.getEnable())) {
             throw new BizException(ErrorCode.ILLEGAL_ARGUMENT, "invalid code:" + message.getCode());
         }
 

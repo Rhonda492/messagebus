@@ -26,6 +26,7 @@ public class MessageDispatchTask extends TimerTask {
 
     private DispatchService dispatchService;
 
+
     public MessageDispatchTask() {
         WebApplicationContext wac = ContextLoader.getCurrentWebApplicationContext();
         dispatchService = (DispatchService) wac.getBean("dispatchService");

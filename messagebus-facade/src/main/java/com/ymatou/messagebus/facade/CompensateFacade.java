@@ -7,6 +7,8 @@ package com.ymatou.messagebus.facade;
 
 import com.ymatou.messagebus.facade.model.CheckToCompensateReq;
 import com.ymatou.messagebus.facade.model.CheckToCompensateResp;
+import com.ymatou.messagebus.facade.model.CompensateReq;
+import com.ymatou.messagebus.facade.model.CompensateResp;
 import com.ymatou.messagebus.facade.model.DeleteLockReq;
 import com.ymatou.messagebus.facade.model.DeleteLockResp;
 import com.ymatou.messagebus.facade.model.ListLockReq;
@@ -42,4 +44,12 @@ public interface CompensateFacade {
      * @return
      */
     public CheckToCompensateResp checkToCompensate(CheckToCompensateReq req);
+
+    /**
+     * 补单
+     * 
+     * @param req
+     * @return
+     */
+    public CompensateResp compensate(CompensateReq req);
 }

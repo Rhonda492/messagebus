@@ -5,6 +5,7 @@
  */
 package com.ymatou.messagebus.facade.rest;
 
+import com.ymatou.messagebus.facade.model.CompensateReq;
 import com.ymatou.messagebus.facade.model.ListLockResp;
 
 /**
@@ -15,7 +16,26 @@ import com.ymatou.messagebus.facade.model.ListLockResp;
  */
 public interface CompensateResource {
 
+    /**
+     * 列出分布式锁
+     * 
+     * @return
+     */
     public ListLockResp listLock();
 
+    /**
+     * 删除分布式锁
+     * 
+     * @param lockType
+     * @return
+     */
     public RestResp deleteLock(String lockType);
+
+    /**
+     * 补单
+     * 
+     * @param req
+     * @return
+     */
+    public RestResp compensate(CompensateReq req);
 }

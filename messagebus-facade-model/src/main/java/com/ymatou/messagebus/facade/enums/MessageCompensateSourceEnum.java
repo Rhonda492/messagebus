@@ -24,7 +24,7 @@ public enum MessageCompensateSourceEnum {
     Dispatch(2),
 
     /**
-     * 来自补偿站（定时查询 NewStatus == 0的消息）
+     * 来自补偿站（定时查询 NewStatus == 0, ProcessStatus=0 的消息）
      */
     Compensate(3);
 

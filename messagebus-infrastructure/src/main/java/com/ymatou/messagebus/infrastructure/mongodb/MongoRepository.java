@@ -15,6 +15,7 @@ import org.mongodb.morphia.query.QueryFactory;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
+import com.mongodb.ReadPreference;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.result.UpdateResult;
@@ -56,8 +57,11 @@ public abstract class MongoRepository {
      * @param fieldValue
      * @return
      */
-    protected <T> T getEntity(Class<T> c, String dbName, String fieldName, String fieldValue) {
+    protected <T> T getEntity(Class<T> c, String dbName, String fieldName, String fieldValue,
+            ReadPreference readPreference) {
         Datastore datastore = getDatastore(dbName);
+
+        datastore.getMongo().setReadPreference(readPreference);
 
         return datastore.find(c).field(fieldName).equal(fieldValue).get();
     }
@@ -115,8 +119,11 @@ public abstract class MongoRepository {
      * @param collectionName
      * @return
      */
-    protected <T> Query<T> newQuery(final Class<T> type, String dbName, String collectionName) {
+    protected <T> Query<T> newQuery(final Class<T> type, String dbName, String collectionName,
+            ReadPreference readPreference) {
         Datastore datastore = getDatastore(dbName);
+        datastore.getMongo().setReadPreference(readPreference);
+
         DBCollection collection = datastore.getDB().getCollection(collectionName);
         QueryFactory queryFactory = datastore.getQueryFactory();
 

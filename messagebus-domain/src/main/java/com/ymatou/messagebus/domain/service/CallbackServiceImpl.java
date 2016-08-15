@@ -144,7 +144,8 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
             messageRepository.updateMessageStatusAndPublishTime(appId, code, uuid, MessageNewStatusEnum.InRabbitMQ,
                     MessageProcessStatusEnum.Success);
         } else {
-            publishToCompensate(appId, code, uuid, messageId, messageBody, callbackInfoList);
+            publishToCompensate(appId, code, uuid, messageId, messageBody,
+                    MessageCompensateSourceEnum.Dispatch, callbackInfoList);
             messageRepository.updateMessageStatusAndPublishTime(appId, code, uuid,
                     MessageNewStatusEnum.DispatchToCompensate, MessageProcessStatusEnum.Compensate);
         }
@@ -271,12 +272,12 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
      * @param appConfig
      * @param message
      */
-    private void publishToCompensate(String appId, String code, String uuid, String messageId, String body,
-            List<CallbackInfo> listCallbackInfo) {
+    public void publishToCompensate(String appId, String code, String uuid, String messageId, String body,
+            MessageCompensateSourceEnum sourceEnum, List<CallbackInfo> listCallbackInfo) {
         try {
             MessageCompensate messageCompensate =
                     MessageCompensate.newInstance(appId, code, uuid, messageId, body, listCallbackInfo);
-            messageCompensate.setSource(MessageCompensateSourceEnum.Dispatch.code());
+            messageCompensate.setSource(sourceEnum.code());
             messageCompensateRepository.insert(messageCompensate);
         } catch (Exception ex) {
             logger.error("publish to mongodb failed with appcode:" + appId + "_" + code, ex);

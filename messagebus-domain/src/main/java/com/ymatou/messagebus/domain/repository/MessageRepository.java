@@ -9,15 +9,20 @@ import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Updates.combine;
 import static com.mongodb.client.model.Updates.set;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
 import javax.annotation.Resource;
 
 import org.bson.conversions.Bson;
+import org.mongodb.morphia.query.Query;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
 
 import com.mongodb.MongoClient;
+import com.mongodb.ReadPreference;
 import com.ymatou.messagebus.domain.model.Message;
 import com.ymatou.messagebus.facade.enums.MessageNewStatusEnum;
 import com.ymatou.messagebus.facade.enums.MessageProcessStatusEnum;
@@ -34,6 +39,7 @@ public class MessageRepository extends MongoRepository implements InitializingBe
     @Resource(name = "messageMongoClient")
     private MongoClient mongoClient;
 
+    private SimpleDateFormat simpleDateFormat;
 
     @Override
     protected MongoClient getMongoClient() {
@@ -66,7 +72,8 @@ public class MessageRepository extends MongoRepository implements InitializingBe
         String dbName = "MQ_Message_" + appId + "_" + uuid.substring(0, 6);
         String collectionName = "Message_" + code;
 
-        return newQuery(Message.class, dbName, collectionName).field("uuid").equal(uuid).get();
+        return newQuery(Message.class, dbName, collectionName, ReadPreference.primaryPreferred()).field("uuid")
+                .equal(uuid).get();
     }
 
     /**
@@ -127,6 +134,70 @@ public class MessageRepository extends MongoRepository implements InitializingBe
         updateOne(dbName, collectionName, doc, set);
     }
 
+    /**
+     * 检测出需要补单的消息
+     * 
+     * @param appId
+     * @param code
+     * @return
+     */
+    public List<Message> getNeedToCompensate(String appId, String code) {
+        String dbName = "MQ_Message_" + appId + "_";
+        String collectionName = "Message_" + code;
+
+        Calendar calendarNow = Calendar.getInstance();
+        calendarNow.add(Calendar.MINUTE, -5);
+
+        Query<Message> query =
+                newQuery(Message.class, dbName + getTableSuffix(), collectionName, ReadPreference.primaryPreferred());
+        query.and(
+                query.criteria("nstatus").equal(MessageNewStatusEnum.InRabbitMQ.code()),
+                query.criteria("pstatus").equal(MessageProcessStatusEnum.Init.code()),
+                query.criteria("ctime").lessThan(calendarNow.getTime()));
+        List<Message> curMonthList = query.asList();
+
+        // 如果是跨月第一天，则补单需要查询上月的数据
+        if (calendarNow.get(Calendar.DATE) == 1) {
+            Query<Message> queryLast =
+                    newQuery(Message.class, dbName + getTableSuffixLastMonth(), collectionName,
+                            ReadPreference.primaryPreferred());
+            queryLast.and(
+                    queryLast.criteria("nstatus").equal(MessageNewStatusEnum.InRabbitMQ.code()),
+                    queryLast.criteria("pstatus").equal(MessageProcessStatusEnum.Init.code()),
+                    queryLast.criteria("ctime").lessThan(calendarNow.getTime()));
+            List<Message> lastMonthList = queryLast.asList();
+
+            curMonthList.addAll(lastMonthList);
+        }
+
+        return curMonthList;
+    }
+
+    /**
+     * 获得当月表后缀
+     * 
+     * @return
+     */
+    public String getTableSuffix() {
+        Calendar calendarNow = Calendar.getInstance();
+        return simpleDateFormat.format(calendarNow.getTime());
+    }
+
+    /**
+     * 获取到上月表后缀
+     * 
+     * @return
+     */
+    public String getTableSuffixLastMonth() {
+        Calendar calendarNow = Calendar.getInstance();
+        calendarNow.add(Calendar.MONTH, -1);
+
+        return simpleDateFormat.format(calendarNow.getTime());
+    }
+
+
     @Override
-    public void afterPropertiesSet() throws Exception {}
+    public void afterPropertiesSet() throws Exception {
+        simpleDateFormat = new SimpleDateFormat("yyyyMM");
+    }
 }

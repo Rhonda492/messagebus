@@ -17,4 +17,36 @@ public class CheckToCompensateReq extends BaseRequest {
 
     private static final long serialVersionUID = -5129679946217628080L;
 
+    private String appId;
+
+    private String code;
+
+    /**
+     * @return the appId
+     */
+    public final String getAppId() {
+        return appId;
+    }
+
+    /**
+     * @param appId the appId to set
+     */
+    public final void setAppId(String appId) {
+        this.appId = appId;
+    }
+
+    /**
+     * @return the code
+     */
+    public final String getCode() {
+        return code;
+    }
+
+    /**
+     * @param code the code to set
+     */
+    public final void setCode(String code) {
+        this.code = code;
+    }
+
 }

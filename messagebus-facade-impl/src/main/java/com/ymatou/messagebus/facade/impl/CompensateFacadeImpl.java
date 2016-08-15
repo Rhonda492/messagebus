@@ -14,9 +14,12 @@ import org.springframework.stereotype.Component;
 
 import com.ymatou.messagebus.domain.model.DistributedLock;
 import com.ymatou.messagebus.domain.repository.DistributedLockRepository;
+import com.ymatou.messagebus.domain.service.CompensateService;
 import com.ymatou.messagebus.facade.CompensateFacade;
 import com.ymatou.messagebus.facade.model.CheckToCompensateReq;
 import com.ymatou.messagebus.facade.model.CheckToCompensateResp;
+import com.ymatou.messagebus.facade.model.CompensateReq;
+import com.ymatou.messagebus.facade.model.CompensateResp;
 import com.ymatou.messagebus.facade.model.DeleteLockReq;
 import com.ymatou.messagebus.facade.model.DeleteLockResp;
 import com.ymatou.messagebus.facade.model.DistributedLockVO;
@@ -34,6 +37,9 @@ public class CompensateFacadeImpl implements CompensateFacade {
 
     @Resource
     private DistributedLockRepository distributedLockRepository;
+
+    @Resource
+    private CompensateService compensateService;
 
     @Override
     public ListLockResp listLock(ListLockReq req) {
@@ -90,7 +96,18 @@ public class CompensateFacadeImpl implements CompensateFacade {
      */
     @Override
     public CheckToCompensateResp checkToCompensate(CheckToCompensateReq req) {
+        compensateService.checkToCompensate(req.getAppId(), req.getCode());
+
         CheckToCompensateResp resp = new CheckToCompensateResp();
+        resp.setSuccess(true);
+        return resp;
+    }
+
+    @Override
+    public CompensateResp compensate(CompensateReq req) {
+        compensateService.compensate(req.getAppId(), req.getCode());
+
+        CompensateResp resp = new CompensateResp();
         resp.setSuccess(true);
         return resp;
     }

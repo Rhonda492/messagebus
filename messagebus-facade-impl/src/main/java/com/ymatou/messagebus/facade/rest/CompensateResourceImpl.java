@@ -7,6 +7,7 @@ package com.ymatou.messagebus.facade.rest;
 
 import javax.annotation.Resource;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -15,6 +16,8 @@ import javax.ws.rs.core.MediaType;
 import org.springframework.stereotype.Component;
 
 import com.ymatou.messagebus.facade.CompensateFacade;
+import com.ymatou.messagebus.facade.model.CompensateReq;
+import com.ymatou.messagebus.facade.model.CompensateResp;
 import com.ymatou.messagebus.facade.model.DeleteLockReq;
 import com.ymatou.messagebus.facade.model.DeleteLockResp;
 import com.ymatou.messagebus.facade.model.ListLockReq;
@@ -51,6 +54,15 @@ public class CompensateResourceImpl implements CompensateResource {
         req.setLockType(lockType);
 
         DeleteLockResp resp = compensateFacade.deleteLock(req);
+
+        return RestResp.newInstance(resp);
+    }
+
+    @POST
+    @Path("/{message:(?i:message)}/{compensate:(?i:compensate)}")
+    @Override
+    public RestResp compensate(CompensateReq req) {
+        CompensateResp resp = compensateFacade.compensate(req);
 
         return RestResp.newInstance(resp);
     }

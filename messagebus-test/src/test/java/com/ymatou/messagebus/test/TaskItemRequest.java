@@ -8,6 +8,8 @@ package com.ymatou.messagebus.test;
 import java.util.Date;
 import java.util.Map;
 
+import com.alibaba.fastjson.JSON;
+
 /**
  * 定时任务请求体
  * 
@@ -15,6 +17,8 @@ import java.util.Map;
  *
  */
 public class TaskItemRequest {
+    private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
+
     private String taskName;
 
     private String id;
@@ -92,4 +96,16 @@ public class TaskItemRequest {
 
         return taskItemRequest;
     }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        return JSON.toJSONStringWithDateFormat(this, DATE_FORMAT);
+    }
+
+
 }

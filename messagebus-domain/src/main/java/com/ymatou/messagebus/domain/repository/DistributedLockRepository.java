@@ -17,6 +17,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
 
 import com.mongodb.MongoClient;
+import com.mongodb.ReadPreference;
 import com.ymatou.messagebus.domain.model.DistributedLock;
 import com.ymatou.messagebus.infrastructure.mongodb.MongoRepository;
 import com.ymatou.messagebus.infrastructure.net.NetUtil;
@@ -83,7 +84,7 @@ public class DistributedLockRepository extends MongoRepository implements Initia
      * @return
      */
     public DistributedLock getByLockType(String lockType) {
-        return getEntity(DistributedLock.class, dbName, "lockType", lockType);
+        return getEntity(DistributedLock.class, dbName, "lockType", lockType, ReadPreference.primaryPreferred());
     }
 
     /**
