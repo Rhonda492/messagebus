@@ -1,5 +1,0 @@
-com\ymatou\messagebus\infrastructure\config\RabbitMQConfig.class
-com\ymatou\messagebus\infrastructure\rabbitmq\EndPoint.class
-com\ymatou\messagebus\infrastructure\thread\LogRejectedPolicy.class
-com\ymatou\messagebus\infrastructure\serialize\JacksonConfig.class
-com\ymatou\messagebus\infrastructure\serialize\BigCamelPropertyNamingStrategy.class

@@ -1,8 +1,0 @@
-D:\JavaProject\messagebus\messagebus-facade-impl\src\main\java\com\ymatou\messagebus\facade\impl\FacadeAspect.java
-D:\JavaProject\messagebus\messagebus-facade-impl\src\main\java\com\ymatou\messagebus\facade\rest\PublishMessageResource.java
-D:\JavaProject\messagebus\messagebus-facade-impl\src\main\java\com\ymatou\messagebus\facade\impl\PublishMessageFacadeImpl.java
-D:\JavaProject\messagebus\messagebus-facade-impl\src\main\java\com\ymatou\messagebus\facade\rest\PublishMessageResourceImpl.java
-D:\JavaProject\messagebus\messagebus-facade-impl\src\main\java\com\ymatou\messagebus\facade\servlet\MessageDispatchServlet.java
-D:\JavaProject\messagebus\messagebus-facade-impl\src\main\java\com\ymatou\messagebus\facade\rest\SystemResourceImpl.java
-D:\JavaProject\messagebus\messagebus-facade-impl\src\main\java\com\ymatou\messagebus\facade\rest\SystemResource.java
-D:\JavaProject\messagebus\messagebus-facade-impl\src\main\java\com\ymatou\messagebus\facade\servlet\MessageCompensateServlet.java
