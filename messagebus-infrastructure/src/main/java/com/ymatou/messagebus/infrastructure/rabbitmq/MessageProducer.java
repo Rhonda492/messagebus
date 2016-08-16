@@ -118,19 +118,31 @@ public class MessageProducer implements HealthService {
             throws RabbitMQPublishException {
         setBroken(false);
 
-        BasicProperties basicProperties = new BasicProperties.Builder()
-                .messageId(messageId).correlationId(correlationId).build();
 
         if (healthProxy.primaryHealth()) {
             try {
+
+                BasicProperties basicProperties = new BasicProperties.Builder()
+                        .messageId(messageId).correlationId(correlationId)
+                        .type("primary")
+                        .build();
+
                 primary.publish(object, basicProperties);
                 usePrimary = true;
             } catch (Exception e) {
                 logger.error("primary publish failed:" + e.getMessage(), e);
-                logger.warn("primary publish failed, try secondary.");
+
+                BasicProperties basicProperties = new BasicProperties.Builder()
+                        .messageId(messageId).correlationId(correlationId)
+                        .type("secondary")
+                        .build();
                 publishMessageSecondary(object, basicProperties);
             }
         } else if (healthProxy.secondaryHealth()) {
+            BasicProperties basicProperties = new BasicProperties.Builder()
+                    .messageId(messageId).correlationId(correlationId)
+                    .type("secondary")
+                    .build();
             publishMessageSecondary(object, basicProperties);
         } else {
             throw new RabbitMQPublishException();

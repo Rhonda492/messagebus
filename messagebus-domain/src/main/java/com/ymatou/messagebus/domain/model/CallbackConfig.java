@@ -58,6 +58,11 @@ public class CallbackConfig {
     @Property("CallbackTimeOut")
     private Integer callbackTimeOut;
 
+    /**
+     * 并发度，用于保护业务系统
+     */
+    @Property("ParallelismNum")
+    private Integer parallelismNum;
 
     /**
      * @return the callbackKey
@@ -155,5 +160,19 @@ public class CallbackConfig {
      */
     public void setCallbackTimeOut(Integer callbackTimeOut) {
         this.callbackTimeOut = callbackTimeOut;
+    }
+
+    /**
+     * @return the parallelismNum
+     */
+    public final Integer getParallelismNum() {
+        return parallelismNum;
+    }
+
+    /**
+     * @param parallelismNum the parallelismNum to set
+     */
+    public final void setParallelismNum(Integer parallelismNum) {
+        this.parallelismNum = parallelismNum;
     }
 }

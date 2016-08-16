@@ -57,7 +57,7 @@ public class HumanTest extends BaseTest {
         req.setIp(NetUtil.getHostIp());
 
 
-        for (int i = 0; i < 50; i++) {
+        for (int i = 0; i < 10; i++) {
             MessageBody messageBody = MessageBody.newInstance();
             req.setMsgUniqueId(messageBody.getBizId());
             req.setBody(messageBody);
@@ -65,6 +65,8 @@ public class HumanTest extends BaseTest {
             PublishMessageResp resp = publishMessageFacade.publish(req);
             System.out.println(String.format("isSuccess:%s, message:%s", resp.isSuccess(), resp.getErrorMessage()));
         }
+
+        Thread.sleep(1000 * 30);
     }
 
     @Test
@@ -75,7 +77,7 @@ public class HumanTest extends BaseTest {
 
         dispatchService.start();
 
-        Thread.sleep(1000 * 10);
+        Thread.sleep(1000 * 100);
     }
 
     @Test

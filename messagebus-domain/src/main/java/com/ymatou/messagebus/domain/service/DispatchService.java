@@ -10,6 +10,7 @@ import java.net.URISyntaxException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeoutException;
 
 import javax.annotation.Resource;
@@ -21,11 +22,13 @@ import org.springframework.stereotype.Component;
 
 import com.ymatou.messagebus.domain.config.DispatchConfig;
 import com.ymatou.messagebus.domain.model.AppConfig;
+import com.ymatou.messagebus.domain.model.CallbackConfig;
 import com.ymatou.messagebus.domain.model.MessageConfig;
 import com.ymatou.messagebus.domain.repository.AppConfigRepository;
 import com.ymatou.messagebus.infrastructure.config.RabbitMQConfig;
 import com.ymatou.messagebus.infrastructure.rabbitmq.CallbackService;
 import com.ymatou.messagebus.infrastructure.rabbitmq.MessageConsumer;
+import com.ymatou.messagebus.infrastructure.thread.SemaphorManager;
 
 /**
  * 分发服务
@@ -116,6 +119,27 @@ public class DispatchService {
                 consumer.setCallbackService(callbackService);
                 consumer.run();
                 logger.info("init consumer {} success.", consumer.getConsumerId());
+            }
+        }
+    }
+
+    /**
+     * 初始化信号量
+     * 
+     * @param messageConfig
+     */
+    private void initSemaphore(MessageConfig messageConfig) {
+        for (CallbackConfig callbackConfig : messageConfig.getCallbackCfgList()) {
+            String consumerId = callbackConfig.getCallbackKey();
+            int parallelismNum =
+                    (callbackConfig.getParallelismNum() == null || callbackConfig.getParallelismNum().intValue() < 2)
+                            ? 2 : callbackConfig.getParallelismNum().intValue();
+            Semaphore semaphore = SemaphorManager.get(consumerId);
+            if (semaphore == null) {
+                semaphore = new Semaphore(parallelismNum);
+                SemaphorManager.put(consumerId, semaphore);
+            } else {
+                // semaphore.get
             }
         }
     }

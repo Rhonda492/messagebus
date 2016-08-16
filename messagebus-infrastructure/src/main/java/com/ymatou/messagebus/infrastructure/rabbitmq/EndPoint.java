@@ -190,6 +190,8 @@ public class EndPoint implements HealthService {
         consumerChannel.exchangeDeclare(exchange, "direct", true);
         consumerChannel.queueDeclare(queue, true, false, false, null);
         consumerChannel.queueBind(queue, exchange, queue);
+
+        consumerChannel.basicQos(1);
     }
 
     /**
@@ -231,7 +233,7 @@ public class EndPoint implements HealthService {
      * @throws IOException
      */
     public void consume(Consumer consumer) throws IOException {
-        consumerChannel.basicConsume(queue, true, consumer);
+        consumerChannel.basicConsume(queue, false, consumer);
     }
 
     /**

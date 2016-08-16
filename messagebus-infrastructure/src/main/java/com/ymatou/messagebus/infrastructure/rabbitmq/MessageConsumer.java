@@ -212,15 +212,20 @@ public class MessageConsumer implements Runnable, Consumer {
         String message = (String) SerializationUtils.deserialize(body);
         String messageId = props.getMessageId();
         String correlationId = props.getCorrelationId();
+        String type = props.getType();
 
-        logger.info("consumer {} receive rabbitmq messageId:{}, correlationId:{}, message:{}", getConsumerId(),
-                messageId, correlationId, message);
+        logger.info("consumer [{}] receive rabbitmq[{}] messageId:{}, correlationId:{}, message:{}",
+                getConsumerId(), type, messageId, correlationId, message);
 
-        if (callbackService != null) {
-            try {
-                callbackService.invoke(exchange, queue, message, messageId, correlationId);
-            } catch (Exception e) {
-                logger.error(String.format("consumer %s callback failed", getConsumerId()), e);
+        try {
+            callbackService.invoke(exchange, queue, message, messageId, correlationId);
+        } catch (Exception e) {
+            logger.error(String.format("consumer %s callback failed", getConsumerId()), e);
+        } finally {
+            if (type.equals("primary")) {
+                primary.getChannel().basicAck(env.getDeliveryTag(), true);
+            } else {
+                secondary.getChannel().basicAck(env.getDeliveryTag(), true);
             }
         }
     }
