@@ -7,7 +7,6 @@ package com.ymatou.messagebus.infrastructure.thread;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Semaphore;
 
 
 /**
@@ -21,7 +20,7 @@ public class SemaphorManager {
     /**
      * 信号量列表：key = {consumerId}
      */
-    private static Map<String, Semaphore> semaphoreMap = new HashMap<String, Semaphore>();
+    private static Map<String, AdjustableSemaphore> semaphoreMap = new HashMap<String, AdjustableSemaphore>();
 
 
     /**
@@ -30,7 +29,7 @@ public class SemaphorManager {
      * @param key
      * @return
      */
-    public static Semaphore get(String key) {
+    public static AdjustableSemaphore get(String key) {
         return semaphoreMap.get(key);
     }
 
@@ -40,7 +39,7 @@ public class SemaphorManager {
      * @param key
      * @param semaphore
      */
-    public static void put(String key, Semaphore semaphore) {
+    public static void put(String key, AdjustableSemaphore semaphore) {
         semaphoreMap.put(key, semaphore);
     }
 }

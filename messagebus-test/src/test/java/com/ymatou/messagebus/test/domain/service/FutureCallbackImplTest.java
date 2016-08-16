@@ -14,6 +14,7 @@ import org.apache.http.impl.nio.conn.PoolingNHttpClientConnectionManager;
 import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
 import org.apache.http.nio.reactor.ConnectingIOReactor;
 import org.apache.http.nio.reactor.IOReactorException;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.ymatou.messagebus.domain.service.FutureCallbackImpl;
@@ -38,6 +39,7 @@ public class FutureCallbackImplTest extends BaseTest {
     }
 
     @Test
+    @Ignore
     public void testSend() throws UnsupportedEncodingException, InterruptedException {
         Semaphore semaphore = new Semaphore(10);
 

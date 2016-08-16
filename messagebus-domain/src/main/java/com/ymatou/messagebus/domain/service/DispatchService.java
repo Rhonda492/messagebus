@@ -10,7 +10,6 @@ import java.net.URISyntaxException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeoutException;
 
 import javax.annotation.Resource;
@@ -28,6 +27,7 @@ import com.ymatou.messagebus.domain.repository.AppConfigRepository;
 import com.ymatou.messagebus.infrastructure.config.RabbitMQConfig;
 import com.ymatou.messagebus.infrastructure.rabbitmq.CallbackService;
 import com.ymatou.messagebus.infrastructure.rabbitmq.MessageConsumer;
+import com.ymatou.messagebus.infrastructure.thread.AdjustableSemaphore;
 import com.ymatou.messagebus.infrastructure.thread.SemaphorManager;
 
 /**
@@ -110,8 +110,8 @@ public class DispatchService {
      */
     private void initConsumer(AppConfig appConfig)
             throws KeyManagementException, NoSuchAlgorithmException, IOException, TimeoutException, URISyntaxException {
-        for (MessageConfig callbackConfig : appConfig.getMessageCfgList()) {
-            String appCode = appConfig.getAppCode(callbackConfig.getCode());
+        for (MessageConfig messageConfig : appConfig.getMessageCfgList()) {
+            String appCode = appConfig.getAppCode(messageConfig.getCode());
             String appId = appConfig.getAppId();
 
             if (!MessageConsumer.contains(appId, appCode)) {
@@ -120,6 +120,8 @@ public class DispatchService {
                 consumer.run();
                 logger.info("init consumer {} success.", consumer.getConsumerId());
             }
+
+            initSemaphore(messageConfig);
         }
     }
 
@@ -134,12 +136,12 @@ public class DispatchService {
             int parallelismNum =
                     (callbackConfig.getParallelismNum() == null || callbackConfig.getParallelismNum().intValue() < 2)
                             ? 2 : callbackConfig.getParallelismNum().intValue();
-            Semaphore semaphore = SemaphorManager.get(consumerId);
+            AdjustableSemaphore semaphore = SemaphorManager.get(consumerId);
             if (semaphore == null) {
-                semaphore = new Semaphore(parallelismNum);
+                semaphore = new AdjustableSemaphore(parallelismNum);
                 SemaphorManager.put(consumerId, semaphore);
             } else {
-                // semaphore.get
+                semaphore.setMaxPermits(parallelismNum);
             }
         }
     }
