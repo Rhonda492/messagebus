@@ -5,6 +5,7 @@
  */
 package com.ymatou.messagebus.facade.rest;
 
+import com.ymatou.messagebus.facade.model.CheckToCompensateReq;
 import com.ymatou.messagebus.facade.model.CompensateReq;
 import com.ymatou.messagebus.facade.model.ListLockResp;
 
@@ -38,4 +39,12 @@ public interface CompensateResource {
      * @return
      */
     public RestResp compensate(CompensateReq req);
+
+    /**
+     * 检测需要补单的消息入库
+     * 
+     * @param req
+     * @return
+     */
+    public RestResp checkToCompensate(CheckToCompensateReq req);
 }

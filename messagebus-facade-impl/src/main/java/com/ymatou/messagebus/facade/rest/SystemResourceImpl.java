@@ -28,7 +28,7 @@ public class SystemResourceImpl implements SystemResource {
     @Path("/version")
     @Override
     public String version() {
-        return "2016-08-15.1";
+        return "2016-08-16.1";
     }
 
 

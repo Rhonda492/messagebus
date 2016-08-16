@@ -16,6 +16,8 @@ import javax.ws.rs.core.MediaType;
 import org.springframework.stereotype.Component;
 
 import com.ymatou.messagebus.facade.CompensateFacade;
+import com.ymatou.messagebus.facade.model.CheckToCompensateReq;
+import com.ymatou.messagebus.facade.model.CheckToCompensateResp;
 import com.ymatou.messagebus.facade.model.CompensateReq;
 import com.ymatou.messagebus.facade.model.CompensateResp;
 import com.ymatou.messagebus.facade.model.DeleteLockReq;
@@ -67,4 +69,12 @@ public class CompensateResourceImpl implements CompensateResource {
         return RestResp.newInstance(resp);
     }
 
+    @POST
+    @Path("/{message:(?i:message)}/{checkToCompensate:(?i:checkToCompensate)}")
+    @Override
+    public RestResp checkToCompensate(CheckToCompensateReq req) {
+        CheckToCompensateResp resp = compensateFacade.checkToCompensate(req);
+
+        return RestResp.newInstance(resp);
+    }
 }
