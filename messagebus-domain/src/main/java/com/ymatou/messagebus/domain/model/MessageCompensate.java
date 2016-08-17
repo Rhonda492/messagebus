@@ -5,16 +5,15 @@
  */
 package com.ymatou.messagebus.domain.model;
 
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
+import java.util.UUID;
 
-import org.mongodb.morphia.annotations.Embedded;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Property;
 
 import com.ymatou.messagebus.facade.PrintFriendliness;
+import com.ymatou.messagebus.facade.enums.MessageCompensateSourceEnum;
 import com.ymatou.messagebus.facade.enums.MessageCompensateStatusEnum;
 
 /**
@@ -33,6 +32,18 @@ public class MessageCompensate extends PrintFriendliness {
      */
     @Property("_id")
     private String id;
+
+    /**
+     * Message UUID
+     */
+    @Property("uuid")
+    private String messageUuid;
+
+    /**
+     * 消费者Id
+     */
+    @Property("cid")
+    private String consumerId;
 
     /**
      * 状态
@@ -89,12 +100,6 @@ public class MessageCompensate extends PrintFriendliness {
      */
     @Property("retrycount")
     private Integer retryCount;
-
-    /**
-     * 消费者列表
-     */
-    @Embedded("callback")
-    private List<CallbackInfo> callbackList = new ArrayList<CallbackInfo>();
 
     /**
      * 补单状态 JAVA版
@@ -249,29 +254,17 @@ public class MessageCompensate extends PrintFriendliness {
     }
 
     /**
-     * @return the callbackList
-     */
-    public List<CallbackInfo> getCallbackList() {
-        return callbackList;
-    }
-
-    /**
-     * @param callbackList the callbackList to set
-     */
-    public void setCallbackList(List<CallbackInfo> callbackList) {
-        this.callbackList = callbackList;
-    }
-
-    /**
      * 从消息到补偿的模型装换
      * 
      * @param appConfig
      * @param message
      * @return
      */
-    public static MessageCompensate from(AppConfig appConfig, Message message) {
+    public static MessageCompensate from(Message message, CallbackConfig callbackConfig,
+            MessageCompensateSourceEnum sourceEnum) {
         MessageCompensate compensate = new MessageCompensate();
-        compensate.setId(message.getUuid());
+        compensate.setId(UUID.randomUUID().toString());
+        compensate.setMessageUuid(message.getUuid());
         compensate.setStatus(MessageCompensateStatusEnum.RetryOk.code()); // 避免.NET补单
         compensate.setNewStatus(MessageCompensateStatusEnum.NotRetry.code());
         compensate.setAppId(message.getAppId());
@@ -279,59 +272,14 @@ public class MessageCompensate extends PrintFriendliness {
         compensate.setMessageId(message.getMessageId());
         compensate.setBody(message.getBody());
         compensate.setCreateTime(new Date());
+        compensate.setConsumerId(callbackConfig.getCallbackKey());
+        compensate.setRetryCount(0);
+        compensate.setSource(sourceEnum.code());
 
         // 计算重试截止时间
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.MINUTE, 10);
         compensate.setRetryTimeout(calendar.getTime());
-
-        compensate.setAppKey("*");
-        compensate.setRetryCount(0);
-
-        for (CallbackConfig config : appConfig.getMessageConfigByAppCode(message.getCode()).getCallbackCfgList()) {
-            CallbackInfo callbackInfo = new CallbackInfo();
-            callbackInfo.setCallbackKey(config.getCallbackKey());
-            callbackInfo.setStatus(MessageCompensateStatusEnum.RetryOk.code());// 避免.NET补单
-            callbackInfo.setNewStatus(MessageCompensateStatusEnum.NotRetry.code());
-            compensate.callbackList.add(callbackInfo);
-        }
-
-        return compensate;
-    }
-
-
-    /**
-     * 构建消息补偿实例
-     * 
-     * @param appId
-     * @param code
-     * @param messageId
-     * @param body
-     * @param consumerId
-     * @return
-     */
-    public static MessageCompensate newInstance(String appId, String code, String uuid, String messageId, String body,
-            List<CallbackInfo> listCallbackInfo) {
-        MessageCompensate compensate = new MessageCompensate();
-        compensate.setId(uuid);
-        compensate.setStatus(MessageCompensateStatusEnum.RetryOk.code()); // 避免.NET补单
-        compensate.setNewStatus(MessageCompensateStatusEnum.NotRetry.code());
-        compensate.setAppId(appId);
-        compensate.setCode(code);
-        compensate.setMessageId(messageId);
-        compensate.setBody(body);
-        compensate.setCreateTime(new Date());
-
-        // 计算重试截止时间
-        Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.MINUTE, 10);
-        compensate.setRetryTimeout(calendar.getTime());
-
-        compensate.setAppKey("*");
-        compensate.setRetryCount(0);
-
-        // 添加消费者信息
-        compensate.setCallbackList(listCallbackInfo);
 
         return compensate;
     }
@@ -364,37 +312,6 @@ public class MessageCompensate extends PrintFriendliness {
         this.newStatus = newStatus;
     }
 
-    /**
-     * 计算出补偿消息的状态
-     * 
-     * @return
-     */
-    public MessageCompensateStatusEnum calNewStatus() {
-        if (callbackList == null) {
-            return MessageCompensateStatusEnum.RetryOk;
-        }
-
-        long countOK = callbackList.stream()
-                .filter(callback -> MessageCompensateStatusEnum.RetryOk.code().equals(callback.getNewStatus())).count();
-        if (countOK == callbackList.size()) {
-            return MessageCompensateStatusEnum.RetryOk;
-        }
-
-        long countFail = callbackList.stream()
-                .filter(callback -> MessageCompensateStatusEnum.RetryFail.code().equals(callback.getNewStatus()))
-                .count();
-        if (countFail == callbackList.size()) {
-            return MessageCompensateStatusEnum.RetryFail;
-        }
-
-        boolean anyRetrying = callbackList.stream()
-                .anyMatch(callback -> MessageCompensateStatusEnum.Retrying.code().equals(callback.getNewStatus()));
-        if (anyRetrying) {
-            return MessageCompensateStatusEnum.Retrying;
-        }
-
-        return MessageCompensateStatusEnum.Retrying;
-    }
 
     /**
      * 判断是否已经过了失效时间
@@ -414,5 +331,33 @@ public class MessageCompensate extends PrintFriendliness {
         } else {
             this.retryCount = this.retryCount.intValue() + 1;
         }
+    }
+
+    /**
+     * @return the messageUuid
+     */
+    public final String getMessageUuid() {
+        return messageUuid;
+    }
+
+    /**
+     * @param messageUuid the messageUuid to set
+     */
+    public final void setMessageUuid(String messageUuid) {
+        this.messageUuid = messageUuid;
+    }
+
+    /**
+     * @return the consumerId
+     */
+    public final String getConsumerId() {
+        return consumerId;
+    }
+
+    /**
+     * @param consumerId the consumerId to set
+     */
+    public final void setConsumerId(String consumerId) {
+        this.consumerId = consumerId;
     }
 }

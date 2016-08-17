@@ -5,16 +5,18 @@
  */
 package com.ymatou.messagebus.domain.service;
 
-import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.annotation.Resource;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.config.RequestConfig;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
+import org.apache.http.impl.nio.client.HttpAsyncClients;
+import org.apache.http.impl.nio.conn.PoolingNHttpClientConnectionManager;
+import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
+import org.apache.http.nio.reactor.ConnectingIOReactor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -23,7 +25,7 @@ import org.springframework.stereotype.Component;
 import com.ymatou.messagebus.domain.model.Alarm;
 import com.ymatou.messagebus.domain.model.AppConfig;
 import com.ymatou.messagebus.domain.model.CallbackConfig;
-import com.ymatou.messagebus.domain.model.CallbackInfo;
+import com.ymatou.messagebus.domain.model.Message;
 import com.ymatou.messagebus.domain.model.MessageCompensate;
 import com.ymatou.messagebus.domain.model.MessageConfig;
 import com.ymatou.messagebus.domain.model.MessageStatus;
@@ -41,8 +43,6 @@ import com.ymatou.messagebus.facade.enums.MessageProcessStatusEnum;
 import com.ymatou.messagebus.facade.enums.MessageStatusEnum;
 import com.ymatou.messagebus.facade.enums.MessageStatusSourceEnum;
 import com.ymatou.messagebus.infrastructure.logger.ErrorReportClient;
-import com.ymatou.messagebus.infrastructure.net.HttpClientUtil;
-import com.ymatou.messagebus.infrastructure.net.HttpResult;
 import com.ymatou.messagebus.infrastructure.rabbitmq.CallbackService;
 
 /**
@@ -56,7 +56,7 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
 
     private static Logger logger = LoggerFactory.getLogger(CallbackServiceImpl.class);
 
-    private CloseableHttpClient httpClient;
+    private CloseableHttpAsyncClient httpClient;
 
     @Resource
     private AppConfigRepository appConfigRepository;
@@ -108,141 +108,130 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
             throw new BizException(ErrorCode.ILLEGAL_ARGUMENT, "messageUuid can not be empty.");
         }
 
-        invokeCore(appConfig.getAppId(), messageConfig.getCode(), messageId, messageUuid, messageBody, callbackCfgList);
+        Message message = new Message();
+        message.setAppId(appConfig.getAppId());
+        message.setCode(messageConfig.getCode());
+        message.setBody(messageBody);
+        message.setMessageId(messageId);
+        message.setUuid(messageUuid);
+
+        invokeCore(message, messageConfig);
     }
 
     /**
      * 回调核心逻辑
      * 
-     * @param appId
-     * @param code
-     * @param messageId
-     * @param uuid
-     * @param messageBody
-     * @param callbackCfgList
+     * @param message
+     * @param messageConfig
      */
-    private void invokeCore(String appId, String code, String messageId, String uuid, String messageBody,
-            List<CallbackConfig> callbackCfgList) {
-        List<CallbackInfo> callbackInfoList = new ArrayList<CallbackInfo>();
-        MessageStatus messageStatus =
-                new MessageStatus(uuid, messageId, MessageStatusEnum.PushOk, MessageStatusSourceEnum.RabbitMQ);
-
-        for (CallbackConfig callbackConfig : callbackCfgList) {
+    private void invokeCore(Message message, MessageConfig messageConfig) {
+        for (CallbackConfig callbackConfig : messageConfig.getCallbackCfgList()) {
             if (callbackConfig.getEnable() == null || callbackConfig.getEnable() == true) {
 
-                if (!invokeBizSystem(messageStatus, callbackConfig, appId, code, uuid, messageId, messageBody)) {
-                    CallbackInfo callbackInfo = new CallbackInfo();
-                    callbackInfo.setCallbackKey(callbackConfig.getCallbackKey());
-                    callbackInfo.setStatus(MessageCompensateStatusEnum.RetryOk.code());// 避免.NET补单
-                    callbackInfo.setNewStatus(MessageCompensateStatusEnum.NotRetry.code());
-                    callbackInfoList.add(callbackInfo);
+                try {
+                    new BizSystemCallback(httpClient, message, null, callbackConfig, this).send();
+                } catch (Exception e) {
+                    logger.error(String.format("invoke biz system fail,appCode:%s, messageUuid:%s",
+                            message.getAppCode(), message.getUuid()), e);
                 }
             }
         }
-
-        if (callbackInfoList.size() == 0) {
-            messageRepository.updateMessageStatusAndPublishTime(appId, code, uuid, MessageNewStatusEnum.InRabbitMQ,
-                    MessageProcessStatusEnum.Success);
-        } else {
-            publishToCompensate(appId, code, uuid, messageId, messageBody,
-                    MessageCompensateSourceEnum.Dispatch, callbackInfoList);
-            messageRepository.updateMessageStatusAndPublishTime(appId, code, uuid,
-                    MessageNewStatusEnum.DispatchToCompensate, MessageProcessStatusEnum.Compensate);
-        }
-
-        messageStatusRepository.insert(messageStatus, appId);
     }
 
     /**
-     * 回调业务系统
+     * 回写成功结果
      * 
-     * @param messageStatus
-     * @param callbackConfig
-     * @param appId
-     * @param code
-     * @param uuid
-     * @param messageId
      * @param message
-     * @return
+     * @param callbackConfig
+     * @param duration
      */
-    public boolean invokeBizSystem(MessageStatus messageStatus, CallbackConfig callbackConfig, String appId,
-            String code, String uuid, String messageId, String message) {
-        String consumerId = callbackConfig.getCallbackKey();
-        String callbackUrl = callbackConfig.getUrl();
-        String contentType = getContentType(callbackConfig);
-        int timeout = getTimeout(callbackConfig);
+    public void writeSuccessResult(Message message, MessageCompensate messageCompensate, CallbackConfig callbackConfig,
+            long duration) {
+        MessageStatus messageStatus = MessageStatus.from(message, callbackConfig);
+        if (messageCompensate == null) {
+            messageStatus.setSource(MessageStatusSourceEnum.Dispatch.toString());
+        } else {
+            messageStatus.setSource(MessageStatusSourceEnum.Compensate.toString());
+        }
+        messageStatus.setStatus(MessageStatusEnum.PushOk.toString());
+        messageStatus.setSuccessResult(callbackConfig.getCallbackKey(), duration, callbackConfig.getUrl());
 
-        long duration;
-        long startMill = System.currentTimeMillis();
-        boolean callbackStatus = false;
+        messageStatusRepository.insert(messageStatus, message.getAppId());
+
+        if (messageCompensate != null) {
+            messageCompensate.incRetryCount();
+            messageCompensate.setNewStatus(MessageCompensateStatusEnum.RetryOk.code());
+            messageCompensateRepository.update(messageCompensate);
+        }
+
+
+        // TODO 处理多条结果
+        messageRepository.updateMessageProcessStatus(message.getAppId(), message.getCode(), message.getUuid(),
+                MessageProcessStatusEnum.Success);
+    }
+
+    /**
+     * 回写失败结果
+     * 
+     * @param message
+     * @param callbackConfig
+     * @param response
+     * @param duration
+     * @param throwable
+     */
+    public void writeFailResult(Message message, MessageCompensate messageCompensate, CallbackConfig callbackConfig,
+            String response, long duration, Throwable throwable) {
         try {
-            HttpResult result =
-                    HttpClientUtil.sendPost(callbackUrl, message, contentType, null, httpClient, timeout);
-            duration = System.currentTimeMillis() - startMill;
+            MessageStatus messageStatus = MessageStatus.from(message, callbackConfig);
+            Boolean isFromDispatch = (messageCompensate == null); // 判断回调请求是否来自分发站
 
-            logger.info("consumerId:{} callback http, duration:{}ms, result:{}",
-                    callbackConfig.getCallbackKey(), duration, result);
-
-            callbackStatus = isCallbackSuccess(result);
-            if (callbackStatus == true) {
-                messageStatus.addSuccessResult(consumerId, duration, callbackUrl);
+            if (isFromDispatch) {
+                messageStatus.setSource(MessageStatusSourceEnum.Dispatch.toString());
             } else {
-                messageStatus.addFailResult(consumerId, null, duration, result.getBody(), callbackUrl);
+                messageStatus.setSource(MessageStatusSourceEnum.Compensate.toString());
+            }
+            messageStatus.setStatus(MessageStatusEnum.PushFail.toString());
+            messageStatus.setFailResult(callbackConfig.getCallbackKey(), throwable, duration, response,
+                    callbackConfig.getUrl());
+            messageStatusRepository.insert(messageStatus, message.getAppId());
+
+            if (isFromDispatch) {
+                messageCompensate =
+                        MessageCompensate.from(message, callbackConfig, MessageCompensateSourceEnum.Dispatch);
+                messageCompensateRepository.insert(messageCompensate);
+            } else {
+                messageCompensate.incRetryCount();
+                if (new Date().after(messageCompensate.getRetryTimeout())) {
+                    messageCompensate.setNewStatus(MessageCompensateStatusEnum.RetryFail.code());
+                } else {
+                    messageCompensate.setNewStatus(MessageCompensateStatusEnum.Retrying.code());
+                }
+
+                messageCompensateRepository.update(messageCompensate);
             }
 
+            if (isFromDispatch) {
+                messageRepository.updateMessageStatusAndPublishTime(message.getAppId(), message.getCode(),
+                        message.getUuid(), MessageNewStatusEnum.DispatchToCompensate,
+                        MessageProcessStatusEnum.Compensate);
+            } else {
+                if (messageCompensate.getNewStatus() == MessageCompensateStatusEnum.RetryFail.code()) {
+                    messageRepository.updateMessageProcessStatus(message.getAppId(), message.getCode(),
+                            message.getUuid(), MessageProcessStatusEnum.Fail);
+                } else {
+                    messageRepository.updateMessageProcessStatus(message.getAppId(), message.getCode(),
+                            message.getUuid(), MessageProcessStatusEnum.Compensate);
+                }
+            }
+            sendErrorReport(message, callbackConfig, throwable);
+
         } catch (Exception e) {
-            duration = System.currentTimeMillis() - startMill;
-            sendErrorReport(appId, code, callbackConfig, messageId, uuid, e);
-
-            messageStatus.addFailResult(consumerId, e.getMessage(), duration, "", callbackUrl);
-        }
-
-        return callbackStatus;
-    }
-
-    /**
-     * 从配置中获取ContentType
-     * 
-     * @param callbackConfig
-     * @return
-     */
-    private String getContentType(CallbackConfig callbackConfig) {
-        String contentType = callbackConfig.getContentType();
-        if (StringUtils.isEmpty(contentType)) {
-            return "application/json;charset=utf-8";
-        } else {
-            return String.format("%s;charset=utf-8", contentType);
+            logger.error(String.format("write callback fail result fail, appcode:%s, messageid:%s",
+                    message.getAppCode(), message.getUuid()), e);
         }
     }
 
-    /**
-     * 从配置中获取Timeout
-     * 
-     * @param callbackConfig
-     * @return
-     */
-    private int getTimeout(CallbackConfig callbackConfig) {
-        int timeout = 5000;
-        if (callbackConfig.getCallbackTimeOut() != null && callbackConfig.getCallbackTimeOut() > 0) {
-            timeout = callbackConfig.getCallbackTimeOut().intValue();
-        }
-        return timeout;
-    }
 
-    /**
-     * 判断回调是否成功
-     * 
-     * @param result
-     * @return
-     */
-    private boolean isCallbackSuccess(HttpResult result) {
-        if (result.getStatusCode() == 200 && result.getBody() != null
-                && (result.getBody().equalsIgnoreCase("ok") || result.getBody().equalsIgnoreCase("\"ok\""))) {
-            return true;
-        } else {
-            return false;
-        }
-    }
 
     /**
      * 发送回调错误报告
@@ -254,39 +243,27 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
      * @param uuid
      * @param ex
      */
-    private void sendErrorReport(String appId, String code, CallbackConfig callbackConfig, String messageId,
-            String uuid, Throwable ex) {
+    private void sendErrorReport(Message message, CallbackConfig callbackConfig, Throwable ex) {
         String consumerId = callbackConfig.getCallbackKey();
         Alarm alarm = alarmRepository.getByConsumerId(consumerId);
 
         String title = String.format(
                 "messagebus callback Exception, appid:%s, code:%s, consumerId:%s, url:%s, messageId:%s, uuid:%s",
-                appId, code, consumerId, callbackConfig.getUrl(), messageId, uuid);
+                message.getAppId(), message.getCode(), consumerId, callbackConfig.getUrl(), message.getMessageId(),
+                message.getUuid());
         logger.error(title, ex);
-        errorReportClient.report(title, ex, alarm.getAlarmAppId());
-    }
 
-    /**
-     * 发布消息到补偿库
-     * 
-     * @param appConfig
-     * @param message
-     */
-    public void publishToCompensate(String appId, String code, String uuid, String messageId, String body,
-            MessageCompensateSourceEnum sourceEnum, List<CallbackInfo> listCallbackInfo) {
-        try {
-            MessageCompensate messageCompensate =
-                    MessageCompensate.newInstance(appId, code, uuid, messageId, body, listCallbackInfo);
-            messageCompensate.setSource(sourceEnum.code());
-            messageCompensateRepository.insert(messageCompensate);
-        } catch (Exception ex) {
-            logger.error("publish to mongodb failed with appcode:" + appId + "_" + code, ex);
+        if (alarm != null) {
+            errorReportClient.report(title, ex, alarm.getAlarmAppId());
         }
     }
 
+
+
     @Override
     public void afterPropertiesSet() throws Exception {
-        PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager();
+        ConnectingIOReactor ioReactor = new DefaultConnectingIOReactor();
+        PoolingNHttpClientConnectionManager cm = new PoolingNHttpClientConnectionManager(ioReactor);
         cm.setDefaultMaxPerRoute(20);
         cm.setMaxTotal(100);
 
@@ -296,8 +273,9 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
                 .setConnectionRequestTimeout(5000)
                 .build();
 
-        httpClient =
-                HttpClients.custom().setDefaultRequestConfig(defaultRequestConfig).setConnectionManager(cm).build();
+        httpClient = HttpAsyncClients.custom().setDefaultRequestConfig(defaultRequestConfig)
+                .setConnectionManager(cm).build();
+        httpClient.start();
     }
 
 }

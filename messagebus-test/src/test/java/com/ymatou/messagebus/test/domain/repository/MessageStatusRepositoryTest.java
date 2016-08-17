@@ -36,9 +36,7 @@ public class MessageStatusRepositoryTest extends BaseTest {
         messageStatus.setSource("rabbitmq");
         messageStatus.setStatus("PushOK");
         messageStatus.setProccessIp(NetUtil.getHostIp());
-        messageStatus.addSuccessResult("testjava_hello_c1", 300, "http://www.baidu.com");
-        messageStatus.addFailResult("testjava_hello_c1", "Timeout", 300, "fail", "http://www.yamtou.com");
-        messageStatus.addFailResult("testjava_hello_c1", "exception", 300, "fail-exception", "http://www.yamtou.com");
+        messageStatus.setSuccessResult("testjava_hello_c1", 300, "http://www.baidu.com");
 
         messageStatusRepository.insert(messageStatus, "testjava");
     }

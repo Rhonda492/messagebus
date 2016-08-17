@@ -6,7 +6,6 @@
 package com.ymatou.messagebus.test.domain.service;
 
 import java.io.UnsupportedEncodingException;
-import java.util.concurrent.Semaphore;
 
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.apache.http.impl.nio.client.HttpAsyncClients;
@@ -17,7 +16,6 @@ import org.apache.http.nio.reactor.IOReactorException;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import com.ymatou.messagebus.domain.service.FutureCallbackImpl;
 import com.ymatou.messagebus.test.BaseTest;
 
 /**
@@ -41,13 +39,6 @@ public class FutureCallbackImplTest extends BaseTest {
     @Test
     @Ignore
     public void testSend() throws UnsupportedEncodingException, InterruptedException {
-        Semaphore semaphore = new Semaphore(10);
 
-        String url = "http://mockforpay.iapi.ymatou.com/api/messagebus/delay/5000";
-        for (int i = 0; i < 10; i++) {
-            new FutureCallbackImpl(httpClient, url, semaphore).setTimeout(7000).send(null);
-        }
-
-        Thread.sleep(1000 * 60);
     }
 }

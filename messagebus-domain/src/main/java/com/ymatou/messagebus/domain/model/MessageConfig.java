@@ -144,7 +144,7 @@ public class MessageConfig {
      * @param consumerId
      * @return
      */
-    public CallbackConfig getByConsumerId(String consumerId) {
+    public CallbackConfig getCallbackConfig(String consumerId) {
         if (callbackCfgList == null) {
             return null;
         }

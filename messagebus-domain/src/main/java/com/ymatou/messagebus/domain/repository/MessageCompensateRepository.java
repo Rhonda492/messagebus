@@ -73,7 +73,7 @@ public class MessageCompensateRepository extends MongoRepository {
         String collectionName = String.format("Mq_%s_%s", appId, code);
 
         return newQuery(MessageCompensate.class, dbName, collectionName, ReadPreference.primaryPreferred())
-                .field("_id").equal(messageUuid).get();
+                .field("uuid").equal(messageUuid).get();
     }
 
     /**

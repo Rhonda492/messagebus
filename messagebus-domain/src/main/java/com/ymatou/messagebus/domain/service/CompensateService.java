@@ -5,23 +5,27 @@
  */
 package com.ymatou.messagebus.domain.service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.Resource;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
+import org.apache.http.impl.nio.client.HttpAsyncClients;
+import org.apache.http.impl.nio.conn.PoolingNHttpClientConnectionManager;
+import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
+import org.apache.http.nio.reactor.ConnectingIOReactor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
 
 import com.ymatou.messagebus.domain.model.AppConfig;
 import com.ymatou.messagebus.domain.model.CallbackConfig;
-import com.ymatou.messagebus.domain.model.CallbackInfo;
 import com.ymatou.messagebus.domain.model.Message;
 import com.ymatou.messagebus.domain.model.MessageCompensate;
 import com.ymatou.messagebus.domain.model.MessageConfig;
-import com.ymatou.messagebus.domain.model.MessageStatus;
 import com.ymatou.messagebus.domain.repository.AppConfigRepository;
 import com.ymatou.messagebus.domain.repository.MessageCompensateRepository;
 import com.ymatou.messagebus.domain.repository.MessageRepository;
@@ -29,11 +33,10 @@ import com.ymatou.messagebus.domain.repository.MessageStatusRepository;
 import com.ymatou.messagebus.facade.BizException;
 import com.ymatou.messagebus.facade.ErrorCode;
 import com.ymatou.messagebus.facade.enums.MessageCompensateSourceEnum;
-import com.ymatou.messagebus.facade.enums.MessageCompensateStatusEnum;
 import com.ymatou.messagebus.facade.enums.MessageNewStatusEnum;
 import com.ymatou.messagebus.facade.enums.MessageProcessStatusEnum;
-import com.ymatou.messagebus.facade.enums.MessageStatusEnum;
-import com.ymatou.messagebus.facade.enums.MessageStatusSourceEnum;
+import com.ymatou.messagebus.infrastructure.thread.AdjustableSemaphore;
+import com.ymatou.messagebus.infrastructure.thread.SemaphorManager;
 
 /**
  * 补单服务
@@ -42,9 +45,11 @@ import com.ymatou.messagebus.facade.enums.MessageStatusSourceEnum;
  *
  */
 @Component
-public class CompensateService {
+public class CompensateService implements InitializingBean {
 
     private static Logger logger = LoggerFactory.getLogger(CompensateService.class);
+
+    private CloseableHttpAsyncClient httpClient;
 
     @Resource
     private MessageCompensateRepository messageCompensateRepository;
@@ -60,6 +65,42 @@ public class CompensateService {
 
     @Resource
     private CallbackServiceImpl callbackServiceImpl;
+
+
+    /**
+     * 初始化信号量
+     */
+    public void initSemaphore() {
+        List<AppConfig> allAppConfig = appConfigRepository.getAllAppConfig();
+        for (AppConfig appConfig : allAppConfig) {
+            if (!StringUtils.isEmpty(appConfig.getDispatchGroup())) {
+                for (MessageConfig messageConfig : appConfig.getMessageCfgList()) {
+                    initSemaphore(messageConfig);
+                }
+            }
+        }
+    }
+
+    /**
+     * 初始化信号量，供调度使用
+     * 
+     * @param messageConfig
+     */
+    private void initSemaphore(MessageConfig messageConfig) {
+        for (CallbackConfig callbackConfig : messageConfig.getCallbackCfgList()) {
+            String consumerId = callbackConfig.getCallbackKey();
+            int parallelismNum =
+                    (callbackConfig.getParallelismNum() == null || callbackConfig.getParallelismNum().intValue() < 2)
+                            ? 2 : callbackConfig.getParallelismNum().intValue();
+            AdjustableSemaphore semaphore = SemaphorManager.get(consumerId);
+            if (semaphore == null) {
+                semaphore = new AdjustableSemaphore(parallelismNum);
+                SemaphorManager.put(consumerId, semaphore);
+            } else {
+                semaphore.setMaxPermits(parallelismNum);
+            }
+        }
+    }
 
     /**
      * 检测补单合并逻辑，供调度使用
@@ -113,20 +154,11 @@ public class CompensateService {
             logger.error("check need to compensate,appId{}, code:{}, num:{}", appId, code, needToCompensate.size());
 
             for (Message message : needToCompensate) {
-                List<CallbackInfo> callbackInfoList = new ArrayList<CallbackInfo>();
-
                 for (CallbackConfig callbackConfig : messageConfig.getCallbackCfgList()) {
-                    if (callbackConfig.getEnable() == null || callbackConfig.getEnable() == true) {
-                        CallbackInfo callbackInfo = new CallbackInfo();
-                        callbackInfo.setCallbackKey(callbackConfig.getCallbackKey());
-                        callbackInfo.setStatus(MessageCompensateStatusEnum.RetryOk.code());// 避免.NET补单
-                        callbackInfo.setNewStatus(MessageCompensateStatusEnum.NotRetry.code());
-                        callbackInfoList.add(callbackInfo);
-                    }
+                    MessageCompensate messageCompensate =
+                            MessageCompensate.from(message, callbackConfig, MessageCompensateSourceEnum.Compensate);
+                    messageCompensateRepository.insert(messageCompensate);
                 }
-                callbackServiceImpl.publishToCompensate(appId, code, message.getUuid(), message.getMessageId(),
-                        message.getBody(), MessageCompensateSourceEnum.Compensate, callbackInfoList);
-
                 messageRepository.updateMessageStatus(appId, code, message.getUuid(),
                         MessageNewStatusEnum.CheckToCompensate, MessageProcessStatusEnum.Init);
             }
@@ -171,41 +203,34 @@ public class CompensateService {
     private void compensateCallback(MessageCompensate messageCompensate, MessageConfig messageConfig) {
         String appId = messageCompensate.getAppId();
         String code = messageCompensate.getCode();
-        String uuid = messageCompensate.getId();
-        String messageId = messageCompensate.getMessageId();
+        String uuid = messageCompensate.getMessageUuid();
 
-        MessageStatus messageStatus =
-                new MessageStatus(uuid, messageId, MessageStatusEnum.PushOk, MessageStatusSourceEnum.Compensate);
+        CallbackConfig callbackConfig = messageConfig.getCallbackConfig(messageCompensate.getConsumerId());
+        Message message = messageRepository.getByUuid(appId, code, uuid);
 
-        for (CallbackInfo callbackInfo : messageCompensate.getCallbackList()) {
-            CallbackConfig callbackConfig = messageConfig.getByConsumerId(callbackInfo.getCallbackKey());
-            boolean result =
-                    callbackServiceImpl.invokeBizSystem(messageStatus, callbackConfig, appId,
-                            code, uuid, messageId, messageCompensate.getBody());
-            if (result == true) {
-                callbackInfo.setNewStatus(MessageCompensateStatusEnum.RetryOk.code());
-            } else {
-                if (messageCompensate.isRetryTimeout()) {
-                    callbackInfo.setNewStatus(MessageCompensateStatusEnum.RetryFail.code());
-                } else {
-                    callbackInfo.setNewStatus(MessageCompensateStatusEnum.Retrying.code());
-                }
-            }
-            callbackInfo.incRetryCount();
+        try {
+            new BizSystemCallback(httpClient, message, messageCompensate, callbackConfig, callbackServiceImpl).send();
+        } catch (Exception e) {
+            logger.error(String.format("compensate call biz system fail,appCode:%s, messageUuid:%s",
+                    message.getAppCode(), message.getUuid()), e);
         }
-        messageCompensate.incRetryCount();
-        MessageCompensateStatusEnum compensateStatusEnum = messageCompensate.calNewStatus();
-        messageCompensate.setNewStatus(compensateStatusEnum.code());
-        messageCompensateRepository.update(messageCompensate);
+    }
 
-        // 来自分发站和发布站的消息没有被分发过，所以需要记录状态
-        if (messageCompensate.getSource() == MessageCompensateSourceEnum.Compensate.code()
-                || messageCompensate.getSource() == MessageCompensateSourceEnum.Publish.code()) {
-            messageStatusRepository.insert(messageStatus, appId);
-        }
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        ConnectingIOReactor ioReactor = new DefaultConnectingIOReactor();
+        PoolingNHttpClientConnectionManager cm = new PoolingNHttpClientConnectionManager(ioReactor);
+        cm.setDefaultMaxPerRoute(20);
+        cm.setMaxTotal(100);
 
-        // 刷新消息的状态
-        messageRepository.updateMessageProcessStatus(appId, code, uuid,
-                MessageProcessStatusEnum.from(compensateStatusEnum));
+        RequestConfig defaultRequestConfig = RequestConfig.custom()
+                .setSocketTimeout(5000)
+                .setConnectTimeout(5000)
+                .setConnectionRequestTimeout(5000)
+                .build();
+
+        httpClient = HttpAsyncClients.custom().setDefaultRequestConfig(defaultRequestConfig)
+                .setConnectionManager(cm).build();
+        httpClient.start();
     }
 }

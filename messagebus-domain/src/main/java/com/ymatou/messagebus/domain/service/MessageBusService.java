@@ -19,6 +19,7 @@ import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Component;
 
 import com.ymatou.messagebus.domain.model.AppConfig;
+import com.ymatou.messagebus.domain.model.CallbackConfig;
 import com.ymatou.messagebus.domain.model.Message;
 import com.ymatou.messagebus.domain.model.MessageCompensate;
 import com.ymatou.messagebus.domain.model.MessageConfig;
@@ -28,8 +29,6 @@ import com.ymatou.messagebus.domain.repository.MessageRepository;
 import com.ymatou.messagebus.facade.BizException;
 import com.ymatou.messagebus.facade.ErrorCode;
 import com.ymatou.messagebus.facade.enums.MessageCompensateSourceEnum;
-import com.ymatou.messagebus.facade.enums.MessageNewStatusEnum;
-import com.ymatou.messagebus.facade.enums.MessageProcessStatusEnum;
 import com.ymatou.messagebus.infrastructure.config.RabbitMQConfig;
 import com.ymatou.messagebus.infrastructure.rabbitmq.MessageProducer;
 import com.ymatou.messagebus.infrastructure.rabbitmq.RabbitMQPublishException;
@@ -78,11 +77,11 @@ public class MessageBusService {
             messageRepository.insert(message);
 
             // 异步发送消息
-            publishToMQAsync(appConfig, message);
+            publishToMQAsync(message, messageConfig);
 
         } catch (Exception ex) {
             // 记录消息日志失败，同步发布MQ，出现问题返回客户端异常
-            publishToMQ(appConfig, message);
+            publishToMQ(message, messageConfig);
         }
     }
 
@@ -92,14 +91,14 @@ public class MessageBusService {
      * @param appConfig
      * @param message
      */
-    private void publishToMQAsync(AppConfig appConfig, Message message) {
+    private void publishToMQAsync(Message message, MessageConfig messageConfig) {
         taskExecutor.execute(() -> {
 
             logger.info(
                     "----------------------------- async publish message begin -------------------------------");
 
             try {
-                publishToMQ(appConfig, message);
+                publishToMQ(message, messageConfig);
 
             } catch (Exception e) {
                 logger.error("async publish message failed, appcode:" + message.getAppCode(), e);
@@ -123,7 +122,7 @@ public class MessageBusService {
      * @throws KeyManagementException
      * @throws RabbitMQPublishException
      */
-    public void publishToMQ(AppConfig appConfig, Message message) {
+    public void publishToMQ(Message message, MessageConfig messageConfig) {
         try {
             MessageProducer producer =
                     MessageProducer.newInstance(rabbitMQConfig, message.getAppId(), message.getAppCode());
@@ -135,7 +134,7 @@ public class MessageBusService {
                     producer.setBroken(true);
                     logger.error("rabbitmq is broken, change to mongodb, appcode:{}", message.getAppCode());
                 }
-                publishToCompensate(appConfig, message);
+                publishToCompensate(message, messageConfig);
             }
 
         } catch (Exception e) {
@@ -149,12 +148,12 @@ public class MessageBusService {
      * @param appConfig
      * @param message
      */
-    private void publishToCompensate(AppConfig appConfig, Message message) {
-        MessageCompensate messageCompensate = MessageCompensate.from(appConfig, message);
-        messageCompensate.setSource(MessageCompensateSourceEnum.Publish.code());
-        compensateRepository.insert(messageCompensate);
+    private void publishToCompensate(Message message, MessageConfig messageConfig) {
+        for (CallbackConfig callbackConfig : messageConfig.getCallbackCfgList()) {
+            MessageCompensate messageCompensate =
+                    MessageCompensate.from(message, callbackConfig, MessageCompensateSourceEnum.Publish);
 
-        messageRepository.updateMessageStatus(appConfig.getAppId(), message.getCode(), message.getUuid(),
-                MessageNewStatusEnum.PublishToCompensate, MessageProcessStatusEnum.Init);
+            compensateRepository.insert(messageCompensate);
+        }
     }
 }

@@ -5,9 +5,7 @@
  */
 package com.ymatou.messagebus.domain.service;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.concurrent.Semaphore;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
@@ -21,15 +19,22 @@ import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.ymatou.messagebus.domain.model.CallbackConfig;
+import com.ymatou.messagebus.domain.model.Message;
+import com.ymatou.messagebus.domain.model.MessageCompensate;
+import com.ymatou.messagebus.infrastructure.thread.AdjustableSemaphore;
+import com.ymatou.messagebus.infrastructure.thread.SemaphorManager;
+
+
 /**
  * 调用业务系统
  * 
  * @author wangxudong 2016年8月16日 下午3:18:40
  *
  */
-public class FutureCallbackImpl implements FutureCallback<HttpResponse> {
+public class BizSystemCallback implements FutureCallback<HttpResponse> {
 
-    private static Logger logger = LoggerFactory.getLogger(FutureCallbackImpl.class);
+    private static Logger logger = LoggerFactory.getLogger(BizSystemCallback.class);
 
     public static final Integer CONN_TIME_OUT = 5000;
     public static final Integer SOCKET_TIME_OUT = 5000;
@@ -45,7 +50,17 @@ public class FutureCallbackImpl implements FutureCallback<HttpResponse> {
 
     private HttpPost httpPost;
 
-    private Semaphore semaphore;
+    private AdjustableSemaphore semaphore;
+
+    private Message message;
+
+    private MessageCompensate messageCompensate;
+
+    private CallbackConfig callbackConfig;
+
+    private CallbackServiceImpl callbackServiceImpl;
+
+    private long beginTime;
 
     /**
      * 构造异步回调实例
@@ -55,14 +70,21 @@ public class FutureCallbackImpl implements FutureCallback<HttpResponse> {
      * @param body
      * @throws UnsupportedEncodingException
      */
-    public FutureCallbackImpl(CloseableHttpAsyncClient httpClient, String url, Semaphore semaphore)
+    public BizSystemCallback(CloseableHttpAsyncClient httpClient, Message message, MessageCompensate messageCompensate,
+            CallbackConfig callbackConfig, CallbackServiceImpl callbackServiceImpl)
             throws UnsupportedEncodingException {
         this.httpClient = httpClient;
-        this.httpPost = new HttpPost(url);
-        this.semaphore = semaphore;
+        this.message = message;
+        this.messageCompensate = messageCompensate;
+        this.callbackConfig = callbackConfig;
+        this.callbackServiceImpl = callbackServiceImpl;
+        this.httpPost = new HttpPost(callbackConfig.getUrl());
+        this.semaphore = SemaphorManager.get(callbackConfig.getCallbackKey());
 
-        httpPost.setHeader("Content-Type", "application/json;charset=utf-8");
+        setContentType(callbackConfig.getContentType());
+        setTimeout(callbackConfig.getTimeout());
     }
+
 
     /**
      * 设置超时
@@ -70,7 +92,7 @@ public class FutureCallbackImpl implements FutureCallback<HttpResponse> {
      * @param timeout
      * @return
      */
-    public FutureCallbackImpl setTimeout(int timeout) {
+    public BizSystemCallback setTimeout(int timeout) {
         RequestConfig requestConfig = RequestConfig.copy(DEFAULT_REQUEST_CONFIG)
                 // .setConnectionRequestTimeout(timeout)
                 .setSocketTimeout(timeout)
@@ -86,34 +108,63 @@ public class FutureCallbackImpl implements FutureCallback<HttpResponse> {
      * @param contentType
      * @return
      */
-    public FutureCallbackImpl setContentType(String contentType) {
-        httpPost.setHeader("Content-Type", String.format("%s;charset=utf-8", contentType));
+    public BizSystemCallback setContentType(String contentType) {
+        if (StringUtils.isEmpty(contentType)) {
+            httpPost.setHeader("Content-Type", "application/json;charset=utf-8");
+        } else {
+            httpPost.setHeader("Content-Type", String.format("%s;charset=utf-8", contentType));
+        }
 
         return this;
     }
 
     /**
-     * 发送POST请求
+     * 判断回调是否成功
+     * 
+     * @param result
+     * @return
      */
-    public void send(String body) {
-        try {
-            semaphore.acquire();
-        } catch (InterruptedException e) {
-            logger.error("feature callback accquire semaphore fail.", e);
+    private boolean isCallbackSuccess(int statusCode, String body) {
+        if (statusCode == 200 && body != null
+                && (body.equalsIgnoreCase("ok") || body.equalsIgnoreCase("\"ok\""))) {
+            return true;
+        } else {
+            return false;
         }
-
-        logger.info("executing request" + httpPost.getRequestLine());
-
-        if (StringUtils.isEmpty(body) == false) {
-            StringEntity postEntity = new StringEntity(body, "UTF-8");
-            httpPost.setEntity(postEntity);
-
-            logger.info("request body: " + body);
-        }
-
-        httpClient.execute(httpPost, this);
     }
 
+    /**
+     * 发送POST请求
+     */
+    public void send() {
+        try {
+            beginTime = System.currentTimeMillis();
+
+            logger.info("appcode:{}, messageUuid:{}, executing request:{}.", message.getAppCode(), message.getUuid(),
+                    httpPost.getRequestLine());
+
+            semaphore.acquire();
+
+            String body = message.getBody();
+            if (StringUtils.isEmpty(body) == false) {
+                StringEntity postEntity = new StringEntity(body, "UTF-8");
+                httpPost.setEntity(postEntity);
+
+                logger.info("appcode:{}, messageUuid:{}, request body:{}.", message.getAppCode(), message.getUuid(),
+                        httpPost.getRequestLine());;
+            }
+            httpClient.execute(httpPost, this);
+
+        } catch (Exception e) {
+            logger.error(String.format("biz callback accquire semaphore fail, appcode:%s, messageUuid:%s",
+                    message.getAppCode(), message.getUuid()), e);
+        }
+
+    }
+
+    /**
+     * 释放资源
+     */
     private void clear() {
         semaphore.release();
         httpPost.releaseConnection();
@@ -124,11 +175,22 @@ public class FutureCallbackImpl implements FutureCallback<HttpResponse> {
         try {
             HttpEntity entity = result.getEntity();
             String reponseStr = EntityUtils.toString(entity, "UTF-8");
-            logger.info("async response message:" + reponseStr);
-        } catch (org.apache.http.ParseException e) {
-            logger.error("async response message parse occur error.", e);
-        } catch (IOException e) {
-            logger.error("async response message read occur error.", e);
+            int statusCode = result.getStatusLine().getStatusCode();
+            long duration = System.currentTimeMillis() - beginTime;
+
+            logger.info("appcode:{}, messageUuid:{}, async response code:{}, duration:{}ms, message{}.",
+                    message.getAppCode(), message.getUuid(), statusCode, duration, reponseStr);
+
+            if (isCallbackSuccess(statusCode, reponseStr)) {
+                callbackServiceImpl.writeSuccessResult(message, messageCompensate, callbackConfig, duration);
+            } else {
+                callbackServiceImpl.writeFailResult(message, messageCompensate, callbackConfig, reponseStr, duration,
+                        null);
+            }
+
+        } catch (Exception e) {
+            logger.error(String.format("appcode:{}, messageUuid:{}, {} completed.", message.getAppCode(),
+                    message.getUuid(), httpPost.getRequestLine()), e);
         } finally {
             clear();
         }
@@ -136,15 +198,27 @@ public class FutureCallbackImpl implements FutureCallback<HttpResponse> {
 
     @Override
     public void failed(Exception ex) {
-        logger.error(httpPost.getRequestLine() + " failed.", ex);
+        logger.error(String.format("appcode:{}, messageUuid:{}, {} cancelled.", message.getAppCode(),
+                message.getUuid(), httpPost.getRequestLine()), ex);
+
+        long duration = System.currentTimeMillis() - beginTime;
+        callbackServiceImpl.writeFailResult(message, messageCompensate, callbackConfig, null, duration, ex);
+
         clear();
 
     }
 
     @Override
     public void cancelled() {
-        logger.error("{} cancelled.", httpPost.getRequestLine());
+        logger.error("appcode:{}, messageUuid:{}, {} cancelled.", message.getAppCode(),
+                message.getUuid(), httpPost.getRequestLine());
+
+        long duration = System.currentTimeMillis() - beginTime;
+        callbackServiceImpl.writeFailResult(message, messageCompensate, callbackConfig, "http cancelled", duration,
+                null);
+
         clear();
     }
+
 
 }

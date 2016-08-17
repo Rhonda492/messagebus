@@ -22,6 +22,7 @@ import com.ymatou.messagebus.domain.model.MessageStatus;
 import com.ymatou.messagebus.domain.repository.MessageCompensateRepository;
 import com.ymatou.messagebus.domain.repository.MessageRepository;
 import com.ymatou.messagebus.domain.repository.MessageStatusRepository;
+import com.ymatou.messagebus.domain.service.CompensateService;
 import com.ymatou.messagebus.facade.CompensateFacade;
 import com.ymatou.messagebus.facade.enums.MessageCompensateSourceEnum;
 import com.ymatou.messagebus.facade.enums.MessageCompensateStatusEnum;
@@ -45,6 +46,9 @@ public class CompensateFacadeTest extends BaseTest {
 
     @Resource
     private CompensateFacade compensateFacade;
+
+    @Resource
+    private CompensateService compensateService;
 
     @Resource
     private MessageRepository messageRepository;
@@ -110,7 +114,7 @@ public class CompensateFacadeTest extends BaseTest {
     }
 
     @Test
-    public void testCompensate() {
+    public void testCompensate() throws InterruptedException {
         String appId = "testjava";
         String code = "hello";
         Calendar calendar = Calendar.getInstance();
@@ -137,12 +141,16 @@ public class CompensateFacadeTest extends BaseTest {
         assertEquals(MessageCompensateSourceEnum.Compensate.code(), compensate.getSource());
 
         // 执行补单
+        compensateService.initSemaphore();
+
         CompensateReq compensateReq = new CompensateReq();
         compensateReq.setAppId(appId);
         compensateReq.setCode(code);
 
         CompensateResp compensateResp = compensateFacade.compensate(compensateReq);
         assertEquals(true, compensateResp.isSuccess());
+
+        Thread.sleep(100 * 2);
 
         compensate = messageCompensateRepository.getByUuid(appId, code, message.getUuid());
         assertNotNull(compensate);
@@ -154,14 +162,14 @@ public class CompensateFacadeTest extends BaseTest {
         assertEquals(MessageNewStatusEnum.CheckToCompensate.code(), msgAssert.getNewStatus());
         assertEquals(MessageProcessStatusEnum.Compensate.code(), msgAssert.getProcessStatus());
 
-        MessageStatus messageStatus = messageStatusRepository.getByUuid(appId, message.getUuid());
+        MessageStatus messageStatus = messageStatusRepository.getByUuid(appId, message.getUuid(), "testjava_hello_c0");
         assertNotNull(messageStatus);
         assertEquals(MessageStatusSourceEnum.Compensate.toString(), messageStatus.getSource());
-        assertEquals(1, messageStatus.getCallbackResult().size());
+        assertEquals(true, messageStatus.getResult().startsWith("fail"));
     }
 
     @Test
-    public void testCompensateSuccess() {
+    public void testCompensateSuccess() throws InterruptedException {
         String appId = "testjava";
         String code = "hello";
         Calendar calendar = Calendar.getInstance();
@@ -188,12 +196,16 @@ public class CompensateFacadeTest extends BaseTest {
         assertEquals(MessageCompensateSourceEnum.Compensate.code(), compensate.getSource());
 
         // 执行补单
+        compensateService.initSemaphore();
+
         CompensateReq compensateReq = new CompensateReq();
         compensateReq.setAppId(appId);
         compensateReq.setCode(code);
 
         CompensateResp compensateResp = compensateFacade.compensate(compensateReq);
         assertEquals(true, compensateResp.isSuccess());
+
+        Thread.sleep(100 * 2);
 
         compensate = messageCompensateRepository.getByUuid(appId, code, message.getUuid());
         assertNotNull(compensate);
@@ -205,9 +217,9 @@ public class CompensateFacadeTest extends BaseTest {
         assertEquals(MessageNewStatusEnum.CheckToCompensate.code(), msgAssert.getNewStatus());
         assertEquals(MessageProcessStatusEnum.Success.code(), msgAssert.getProcessStatus());
 
-        MessageStatus messageStatus = messageStatusRepository.getByUuid(appId, message.getUuid());
+        MessageStatus messageStatus = messageStatusRepository.getByUuid(appId, message.getUuid(), "testjava_hello_c0");
         assertNotNull(messageStatus);
         assertEquals(MessageStatusSourceEnum.Compensate.toString(), messageStatus.getSource());
-        assertEquals(1, messageStatus.getCallbackResult().size());
+        assertEquals(true, messageStatus.getResult().startsWith("ok"));
     }
 }

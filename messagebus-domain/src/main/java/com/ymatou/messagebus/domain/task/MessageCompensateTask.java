@@ -54,6 +54,9 @@ public class MessageCompensateTask extends TimerTask {
                 logger.info("acquireLock fail exit task.");
             } else {
                 logger.info("acquireLock success in task.");
+
+                compensateService.initSemaphore();
+
                 compensateService.checkAndCompensate();
             }
 

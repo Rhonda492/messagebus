@@ -65,6 +65,12 @@ public class CallbackConfig {
     private Integer parallelismNum;
 
     /**
+     * 超时时间，默认10分钟，单位分钟
+     */
+    @Property("RetryTimeout")
+    private Integer retryTimeout;
+
+    /**
      * @return the callbackKey
      */
     public String getCallbackKey() {
@@ -174,5 +180,33 @@ public class CallbackConfig {
      */
     public final void setParallelismNum(Integer parallelismNum) {
         this.parallelismNum = parallelismNum;
+    }
+
+    /**
+     * 获取到超时时间（没填或者<50,返回默认值5000）
+     * 
+     * @return
+     */
+    public int getTimeout() {
+        Integer timeout = getCallbackTimeOut();
+        if (timeout == null || timeout.intValue() < 50) {
+            return 5000;
+        } else {
+            return timeout.intValue();
+        }
+    }
+
+    /**
+     * @return the retryTimeout
+     */
+    public final Integer getRetryTimeout() {
+        return retryTimeout;
+    }
+
+    /**
+     * @param retryTimeout the retryTimeout to set
+     */
+    public final void setRetryTimeout(Integer retryTimeout) {
+        this.retryTimeout = retryTimeout;
     }
 }

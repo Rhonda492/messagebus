@@ -13,7 +13,9 @@ package com.ymatou.messagebus.facade.enums;
  */
 public enum MessageStatusSourceEnum {
 
-    RabbitMQ,
+    // 分发站
+    Dispatch,
 
+    // 补单站
     Compensate
 }

@@ -8,22 +8,22 @@ package com.ymatou.messagebus.test.facade;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import java.util.List;
 import java.util.UUID;
 
 import javax.annotation.Resource;
 
 import org.junit.Test;
 
-import com.ymatou.messagebus.domain.model.CallbackInfo;
 import com.ymatou.messagebus.domain.model.Message;
 import com.ymatou.messagebus.domain.model.MessageCompensate;
 import com.ymatou.messagebus.domain.model.MessageStatus;
 import com.ymatou.messagebus.domain.repository.MessageCompensateRepository;
 import com.ymatou.messagebus.domain.repository.MessageRepository;
 import com.ymatou.messagebus.domain.repository.MessageStatusRepository;
+import com.ymatou.messagebus.domain.service.CompensateService;
 import com.ymatou.messagebus.facade.DispatchMessageFacade;
 import com.ymatou.messagebus.facade.ErrorCode;
+import com.ymatou.messagebus.facade.enums.MessageCompensateSourceEnum;
 import com.ymatou.messagebus.facade.enums.MessageNewStatusEnum;
 import com.ymatou.messagebus.facade.enums.MessageProcessStatusEnum;
 import com.ymatou.messagebus.facade.model.DispatchMessageReq;
@@ -48,6 +48,9 @@ public class DispatchMessageFacadeTest extends BaseTest {
     @Resource
     private MessageCompensateRepository messageCompensateRepository;
 
+    @Resource
+    private CompensateService compensateService;
+
     private Message buildMessage(String code, String body) {
         Message message = new Message();
         message.setAppId("testjava");
@@ -59,7 +62,7 @@ public class DispatchMessageFacadeTest extends BaseTest {
 
         messageRepository.insert(message);
         messageRepository.updateMessageStatus(message.getAppId(), message.getCode(), message.getUuid(),
-                MessageNewStatusEnum.CheckToCompensate, MessageProcessStatusEnum.Init);
+                MessageNewStatusEnum.InRabbitMQ, MessageProcessStatusEnum.Init);
 
         return message;
     }
@@ -75,18 +78,23 @@ public class DispatchMessageFacadeTest extends BaseTest {
         req.setMessageId(message.getMessageId());
         req.setMessageUuid(message.getUuid());
 
+
+        compensateService.initSemaphore();
+
+
         DispatchMessageResp resp = dispatchMessageFacade.dipatch(req);
         assertEquals(true, resp.isSuccess());
 
         Thread.sleep(100);
 
-        MessageStatus messageStatus = messageStatusRepository.getByUuid(req.getAppId(), req.getMessageUuid());
+        MessageStatus messageStatus =
+                messageStatusRepository.getByUuid(req.getAppId(), req.getMessageUuid(), "testjava_hello_c0");
         assertNotNull(messageStatus);
-        assertEquals("RabbitMQ", messageStatus.getSource());
+        assertEquals("Dispatch", messageStatus.getSource());
         assertEquals(req.getMessageUuid(), messageStatus.getMessageUuid());
         assertEquals(req.getMessageId(), messageStatus.getMessageId());
-        assertEquals(1, messageStatus.getCallbackResult().size());
-        assertEquals("PushOk", messageStatus.getStatus());
+        assertEquals(true, messageStatus.getResult().startsWith("fail"));
+        assertEquals("PushFail", messageStatus.getStatus());
 
         MessageCompensate messageCompensate = messageCompensateRepository.getByUuid(message.getAppId(),
                 message.getCode(), message.getUuid());
@@ -97,14 +105,10 @@ public class DispatchMessageFacadeTest extends BaseTest {
         assertEquals(0, messageCompensate.getNewStatus().intValue());
         assertEquals(2, messageCompensate.getSource().intValue());
 
-        List<CallbackInfo> callbackList = messageCompensate.getCallbackList();
-        assertEquals(1, callbackList.size());
-        assertEquals(2, callbackList.get(0).getStatus().intValue());
-        assertEquals(0, callbackList.get(0).getNewStatus().intValue());
-
         Message messageAssert =
                 messageRepository.getByUuid(message.getAppId(), message.getCode(), message.getUuid());
-        assertEquals(2, messageAssert.getNewStatus().intValue());
+        assertEquals(MessageNewStatusEnum.DispatchToCompensate.code(), messageAssert.getNewStatus());
+        assertEquals(MessageProcessStatusEnum.Compensate.code(), messageAssert.getProcessStatus());
     }
 
     @Test
@@ -118,18 +122,21 @@ public class DispatchMessageFacadeTest extends BaseTest {
         req.setMessageId(message.getMessageId());
         req.setMessageUuid(message.getUuid());
 
+        compensateService.initSemaphore();
+
         DispatchMessageResp resp = dispatchMessageFacade.dipatch(req);
         assertEquals(true, resp.isSuccess());
 
-        Thread.sleep(100);
+        Thread.sleep(200);
 
-        MessageStatus messageStatus = messageStatusRepository.getByUuid(req.getAppId(), req.getMessageUuid());
+        MessageStatus messageStatus =
+                messageStatusRepository.getByUuid(req.getAppId(), req.getMessageUuid(), "testjava_hello2_c0");
         assertNotNull(messageStatus);
-        assertEquals("RabbitMQ", messageStatus.getSource());
+        assertEquals("Dispatch", messageStatus.getSource());
         assertEquals(req.getMessageUuid(), messageStatus.getMessageUuid());
         assertEquals(req.getMessageId(), messageStatus.getMessageId());
-        assertEquals(2, messageStatus.getCallbackResult().size());
-        assertEquals("PushOk", messageStatus.getStatus());
+        assertEquals(true, messageStatus.getResult().startsWith("fail"));
+        assertEquals("PushFail", messageStatus.getStatus());
 
         MessageCompensate messageCompensate = messageCompensateRepository.getByUuid(message.getAppId(),
                 message.getCode(), message.getUuid());
@@ -138,16 +145,13 @@ public class DispatchMessageFacadeTest extends BaseTest {
         assertEquals(message.getMessageId(), messageCompensate.getMessageId());
         assertEquals(message.getBody(), messageCompensate.getBody());
         assertEquals(0, messageCompensate.getNewStatus().intValue());
-        assertEquals(2, messageCompensate.getSource().intValue());
-
-        List<CallbackInfo> callbackList = messageCompensate.getCallbackList();
-        assertEquals(2, callbackList.size());
-        assertEquals(2, callbackList.get(0).getStatus().intValue());
-        assertEquals(0, callbackList.get(0).getNewStatus().intValue());
+        assertEquals(MessageCompensateSourceEnum.Dispatch.code(), messageCompensate.getSource());
 
         Message messageAssert =
                 messageRepository.getByUuid(message.getAppId(), message.getCode(), message.getUuid());
-        assertEquals(2, messageAssert.getNewStatus().intValue());
+        assertEquals(MessageNewStatusEnum.DispatchToCompensate.code(), messageAssert.getNewStatus());
+        assertEquals(MessageProcessStatusEnum.Compensate.code(), messageAssert.getProcessStatus());
+
     }
 
     @Test

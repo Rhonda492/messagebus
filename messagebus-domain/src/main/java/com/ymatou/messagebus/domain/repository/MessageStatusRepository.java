@@ -53,12 +53,12 @@ public class MessageStatusRepository extends MongoRepository implements Initiali
      * @param messageId
      * @return
      */
-    public MessageStatus getByUuid(String appId, String uuid) {
+    public MessageStatus getByUuid(String appId, String uuid, String consumerId) {
         String dbName = "MQ_Message_Status_" + uuid.substring(0, 6);
         String collectionName = "mq_subscribe_" + appId;
 
         return newQuery(MessageStatus.class, dbName, collectionName, ReadPreference.primaryPreferred()).field("uuid")
-                .equal(uuid).get();
+                .equal(uuid).field("cid").equal(consumerId).get();
     }
 
     @Override

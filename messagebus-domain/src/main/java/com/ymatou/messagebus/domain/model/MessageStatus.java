@@ -5,17 +5,14 @@
  */
 package com.ymatou.messagebus.domain.model;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
+import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Property;
 
 import com.ymatou.messagebus.facade.PrintFriendliness;
-import com.ymatou.messagebus.facade.enums.MessageStatusEnum;
-import com.ymatou.messagebus.facade.enums.MessageStatusSourceEnum;
 import com.ymatou.messagebus.infrastructure.net.NetUtil;
 
 /**
@@ -35,8 +32,11 @@ public class MessageStatus extends PrintFriendliness {
     @Property("uuid")
     private String messageUuid;
 
-    @Property("_mid")
+    @Property("mid")
     private String messageId;
+
+    @Property("cid")
+    private String consumerId;
 
     @Property("status")
     private String status;
@@ -47,24 +47,14 @@ public class MessageStatus extends PrintFriendliness {
     @Property("ctime")
     private Date createTime;
 
-    @Property("_cid")
-    private List<String> callbackResult = new ArrayList<String>();
+    @Property("result")
+    private String result;
 
     @Property("r_ip")
     private String proccessIp;
 
     public MessageStatus() {
 
-    }
-
-    public MessageStatus(String uuid, String messageId, MessageStatusEnum status, MessageStatusSourceEnum source) {
-        this.id = uuid;
-        this.messageUuid = uuid;
-        this.messageId = messageId;
-        this.status = status.toString();
-        this.source = source.toString();
-        this.createTime = new Date();
-        this.proccessIp = NetUtil.getHostIp();
     }
 
     /**
@@ -138,20 +128,6 @@ public class MessageStatus extends PrintFriendliness {
     }
 
     /**
-     * @return the callbackResult
-     */
-    public List<String> getCallbackResult() {
-        return callbackResult;
-    }
-
-    /**
-     * @param callbackResult the callbackResult to set
-     */
-    public void setCallbackResult(List<String> callbackResult) {
-        this.callbackResult = callbackResult;
-    }
-
-    /**
      * @return the proccessIp
      */
     public String getProccessIp() {
@@ -184,8 +160,8 @@ public class MessageStatus extends PrintFriendliness {
      * 
      * @param callbackResult
      */
-    public void addSuccessResult(String consumerId, long duration, String callbackUrl) {
-        this.callbackResult.add(String.format("ok, %s, %dms, %s", consumerId, duration, callbackUrl));
+    public void setSuccessResult(String consumerId, long duration, String callbackUrl) {
+        this.result = String.format("ok, %s, %dms, %s", consumerId, duration, callbackUrl);
     }
 
     /**
@@ -196,19 +172,64 @@ public class MessageStatus extends PrintFriendliness {
      * @param response
      * @param callbackUrl
      */
-    public void addFailResult(String consumerId, String exceptionMessage, long duration, String response,
+    public void setFailResult(String consumerId, Throwable throwable, long duration, String response,
             String callbackUrl) {
         if (StringUtils.isEmpty(response) || response.equals("fail") || response.equals("\"fail\"")) {
             response = "";
         }
 
-        if (StringUtils.isEmpty(exceptionMessage)) {
-            this.callbackResult
-                    .add(String.format("fail, %s, %dms, %s, %s", consumerId, duration, exceptionMessage,
-                            callbackUrl));
+        if (throwable != null) {
+            this.result = String.format("fail, %s, %dms, %s, %s", consumerId, duration, throwable.getMessage(),
+                    callbackUrl);
         } else {
-            this.callbackResult
-                    .add(String.format("fail, %s, %dms, %s, %s", consumerId, duration, response, callbackUrl));
+            this.result = String.format("fail, %s, %dms, %s, %s", consumerId, duration, response, callbackUrl);
         }
+    }
+
+    /**
+     * @return the consumerId
+     */
+    public final String getConsumerId() {
+        return consumerId;
+    }
+
+    /**
+     * @param consumerId the consumerId to set
+     */
+    public final void setConsumerId(String consumerId) {
+        this.consumerId = consumerId;
+    }
+
+    /**
+     * @return the result
+     */
+    public final String getResult() {
+        return result;
+    }
+
+    /**
+     * @param result the result to set
+     */
+    public final void setResult(String result) {
+        this.result = result;
+    }
+
+    /**
+     * 转换成消息转态
+     * 
+     * @param message
+     * @param callbackConfig
+     * @return
+     */
+    public static MessageStatus from(Message message, CallbackConfig callbackConfig) {
+        MessageStatus messageStatus = new MessageStatus();
+        messageStatus.setConsumerId(callbackConfig.getCallbackKey());
+        messageStatus.setCreateTime(new Date());
+        messageStatus.setId(UUID.randomUUID().toString());
+        messageStatus.setMessageId(message.getMessageId());
+        messageStatus.setMessageUuid(message.getUuid());
+        messageStatus.setProccessIp(NetUtil.getHostIp());
+
+        return messageStatus;
     }
 }
