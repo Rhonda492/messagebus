@@ -6,9 +6,11 @@
 package com.ymatou.messagebus.domain.task;
 
 import java.util.TimerTask;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.web.context.ContextLoader;
 import org.springframework.web.context.WebApplicationContext;
 
@@ -48,6 +50,8 @@ public class MessageCompensateTask extends TimerTask {
     @Override
     public void run() {
         try {
+            MDC.put("logPrefix", "MessageCompensateTask|" + UUID.randomUUID().toString().replaceAll("-", ""));
+
             logger.info("----------------------compensate task begin-------------------------------");
             boolean acquireLock = distributedLockRepository.AcquireLock(lockType, lockLifeTimeMinute);
             if (acquireLock == false) {

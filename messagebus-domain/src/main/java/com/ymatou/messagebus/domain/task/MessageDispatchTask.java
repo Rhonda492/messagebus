@@ -6,9 +6,11 @@
 package com.ymatou.messagebus.domain.task;
 
 import java.util.TimerTask;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.web.context.ContextLoader;
 import org.springframework.web.context.WebApplicationContext;
 
@@ -35,6 +37,8 @@ public class MessageDispatchTask extends TimerTask {
     @Override
     public void run() {
         try {
+            MDC.put("logPrefix", "MessageDispatchTask|" + UUID.randomUUID().toString().replaceAll("-", ""));
+
             dispatchService.checkReload();
             logger.info("dispatch service check reload.");
         } catch (Exception e) {

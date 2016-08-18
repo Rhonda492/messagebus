@@ -16,6 +16,7 @@ import java.util.concurrent.TimeoutException;
 import org.apache.commons.lang.SerializationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Consumer;
@@ -213,6 +214,8 @@ public class MessageConsumer implements Runnable, Consumer {
         String messageId = props.getMessageId();
         String correlationId = props.getCorrelationId();
         String type = props.getType();
+
+        MDC.put("logPrefix", "MessageConsumer|" + correlationId);
 
         logger.info("consumer [{}] receive rabbitmq[{}] messageId:{}, correlationId:{}, message:{}",
                 getConsumerId(), type, messageId, correlationId, message);
