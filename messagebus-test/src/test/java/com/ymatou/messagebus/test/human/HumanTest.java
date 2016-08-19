@@ -27,7 +27,6 @@ import com.ymatou.messagebus.facade.model.PublishMessageReq;
 import com.ymatou.messagebus.facade.model.PublishMessageResp;
 import com.ymatou.messagebus.infrastructure.net.NetUtil;
 import com.ymatou.messagebus.test.BaseTest;
-import com.ymatou.messagebus.test.MessageBody;
 import com.ymatou.messagebus.test.TaskItemRequest;
 
 /**
@@ -57,13 +56,15 @@ public class HumanTest extends BaseTest {
         req.setIp(NetUtil.getHostIp());
 
 
-        for (int i = 0; i < 10; i++) {
-            MessageBody messageBody = MessageBody.newInstance();
-            req.setMsgUniqueId(messageBody.getBizId());
-            req.setBody(messageBody);
+        for (int i = 0; i < 1; i++) {
+            req.setMsgUniqueId(UUID.randomUUID().toString());
+            req.setBody(TaskItemRequest.newInstance());
 
             PublishMessageResp resp = publishMessageFacade.publish(req);
             System.out.println(String.format("isSuccess:%s, message:%s", resp.isSuccess(), resp.getErrorMessage()));
+
+
+            Thread.sleep(1000 * 10);
         }
 
         Thread.sleep(1000 * 30);

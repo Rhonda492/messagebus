@@ -12,6 +12,7 @@ import javax.annotation.Resource;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 
+import com.ymatou.messagebus.domain.model.Message;
 import com.ymatou.messagebus.domain.model.MessageStatus;
 import com.ymatou.messagebus.domain.repository.MessageStatusRepository;
 import com.ymatou.messagebus.infrastructure.net.NetUtil;
@@ -31,7 +32,7 @@ public class MessageStatusRepositoryTest extends BaseTest {
         MessageStatus messageStatus = new MessageStatus();
         messageStatus.setId(ObjectId.get().toString());
         messageStatus.setMessageId("xxx-mid");
-        messageStatus.setMessageUuid("xxx-uuid");
+        messageStatus.setMessageUuid(Message.newUuid());
         messageStatus.setCreateTime(new Date());
         messageStatus.setSource("rabbitmq");
         messageStatus.setStatus("PushOK");

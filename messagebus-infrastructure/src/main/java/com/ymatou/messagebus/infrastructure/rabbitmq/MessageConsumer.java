@@ -254,7 +254,6 @@ public class MessageConsumer implements Runnable, Consumer {
     @Override
     public void handleShutdownSignal(String consumerTag, ShutdownSignalException sig) {
         logger.info("Consumer " + consumerTag + " shutdown.");
-
     }
 
     @Override

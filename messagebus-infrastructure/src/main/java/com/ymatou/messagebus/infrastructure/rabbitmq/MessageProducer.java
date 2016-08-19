@@ -18,7 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
-import com.ymatou.messagebus.infrastructure.cluster.HealthProxy;
+import com.ymatou.messagebus.infrastructure.cluster.PSHealthProxy;
 import com.ymatou.messagebus.infrastructure.cluster.HealthService;
 import com.ymatou.messagebus.infrastructure.config.RabbitMQConfig;
 
@@ -33,7 +33,7 @@ public class MessageProducer implements HealthService {
 
     private EndPoint primary;
     private EndPoint secondary;
-    private HealthProxy healthProxy;
+    private PSHealthProxy healthProxy;
 
     private boolean usePrimary = true;
     private boolean broken = false;
@@ -70,7 +70,7 @@ public class MessageProducer implements HealthService {
         this.queue = queue;
         this.primary = EndPoint.newInstance(EndPointEnum.PRODUCER, rabbitMQConfig.getPrimaryUri(), exchange, queue);
         this.secondary = EndPoint.newInstance(EndPointEnum.PRODUCER, rabbitMQConfig.getSecondaryUri(), exchange, queue);
-        this.healthProxy = new HealthProxy(primary, secondary);
+        this.healthProxy = new PSHealthProxy(primary, secondary);
     }
 
     /**

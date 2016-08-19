@@ -23,7 +23,7 @@ import com.ymatou.messagebus.infrastructure.mongodb.MongoRepository;
  */
 @Component
 public class MessageStatusRepository extends MongoRepository implements InitializingBean {
-    @Resource(name = "messageMongoClient")
+    @Resource(name = "messageLogMongoClient")
     private MongoClient mongoClient;
 
 

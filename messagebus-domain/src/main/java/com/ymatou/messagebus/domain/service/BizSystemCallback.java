@@ -151,7 +151,7 @@ public class BizSystemCallback implements FutureCallback<HttpResponse> {
                 httpPost.setEntity(postEntity);
 
                 logger.info("appcode:{}, messageUuid:{}, request body:{}.", message.getAppCode(), message.getUuid(),
-                        httpPost.getRequestLine());;
+                        body);;
             }
             httpClient.execute(httpPost, this);
 

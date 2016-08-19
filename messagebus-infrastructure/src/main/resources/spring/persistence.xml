@@ -24,6 +24,16 @@
 	<bean id="messageMongoClient" class="com.mongodb.MongoClient">
 		<constructor-arg ref="messageMongoUri"></constructor-arg>
 	</bean>
+	
+
+	<bean id="messageLogMongoUri" class="com.mongodb.MongoClientURI">
+		<constructor-arg value="${mongo.log.uri}"></constructor-arg>
+	</bean>
+
+	<bean id="messageLogMongoClient" class="com.mongodb.MongoClient">
+		<constructor-arg ref="messageLogMongoUri"></constructor-arg>
+	</bean>
+	
 
 	<bean id="messageCompensateMongoUri" class="com.mongodb.MongoClientURI">
 		<constructor-arg value="${mongo.compensate.uri}"></constructor-arg>

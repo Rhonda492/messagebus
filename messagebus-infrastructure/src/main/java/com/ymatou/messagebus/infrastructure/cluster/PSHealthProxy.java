@@ -11,7 +11,7 @@ package com.ymatou.messagebus.infrastructure.cluster;
  * @author wangxudong 2016年8月4日 下午2:07:27
  *
  */
-public class HealthProxy implements HealthService {
+public class PSHealthProxy implements HealthService {
 
     /**
      * 主服务
@@ -29,7 +29,7 @@ public class HealthProxy implements HealthService {
      * @param primary
      * @param secondary
      */
-    public HealthProxy(HealthService primary, HealthService secondary) {
+    public PSHealthProxy(HealthService primary, HealthService secondary) {
         this.primaryService = primary;
         this.secondaryService = secondary;
     }

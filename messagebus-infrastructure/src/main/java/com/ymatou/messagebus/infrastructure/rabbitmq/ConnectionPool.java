@@ -27,10 +27,17 @@ import com.rabbitmq.client.ConnectionFactory;
  * @author wangxudong 2016年8月3日 下午5:02:16
  *
  */
+/**
+ * @author wangxudong 2016年8月19日 上午11:09:02
+ *
+ */
 public class ConnectionPool {
 
     private static Logger logger = LoggerFactory.getLogger(ConnectionPool.class);
 
+    /**
+     * key:{uri},主备有不同的URI
+     */
     private static HashMap<String, ConnectionPool> instanceMap = new HashMap<String, ConnectionPool>();
 
     /**
@@ -148,25 +155,25 @@ public class ConnectionPool {
                 connList.add(new ConnectionInfo(connection));
             }
             return connection;
+        }
+
+        // 获取连接池中Channel数量最小的连接
+        ConnectionInfo connectionInfo = connList.stream()
+                .sorted(Comparator.comparing(ConnectionInfo::getCount))
+                .findFirst().get();
+
+        int channelNum = connectionInfo.getCount();
+        if (channelNum < maxChannelNumPerConn) {
+            connectionInfo.incCount();
+            return connectionInfo.getConnection();
         } else {
-            ConnectionInfo connectionInfo = connList.stream()
-                    .sorted(Comparator.comparing(ConnectionInfo::getCount))
-                    .findFirst().get();
-
-            int channelNum = connectionInfo.getCount();
-            if (channelNum < maxChannelNumPerConn) {
-                connectionInfo.incCount();
-                return connectionInfo.getConnection();
-            } else {
-                Connection connection = factory.newConnection();
-                synchronized (connList) {
-                    ConnectionInfo connInfo = new ConnectionInfo(connection);
-                    connInfo.incCount();
-                    connList.add(connInfo);
-                }
-                return connection;
+            Connection connection = factory.newConnection();
+            synchronized (connList) {
+                ConnectionInfo connInfo = new ConnectionInfo(connection);
+                connInfo.incCount();
+                connList.add(connInfo);
             }
-
+            return connection;
         }
     }
 

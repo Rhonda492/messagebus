@@ -17,7 +17,7 @@ import javax.annotation.Resource;
 
 import org.junit.Test;
 
-import com.ymatou.messagebus.infrastructure.cluster.HealthProxy;
+import com.ymatou.messagebus.infrastructure.cluster.PSHealthProxy;
 import com.ymatou.messagebus.infrastructure.config.RabbitMQConfig;
 import com.ymatou.messagebus.infrastructure.rabbitmq.EndPoint;
 import com.ymatou.messagebus.infrastructure.rabbitmq.EndPointEnum;
@@ -28,7 +28,7 @@ import com.ymatou.messagebus.test.BaseTest;
  * @author wangxudong 2016年8月4日 下午2:22:20
  *
  */
-public class HealthProxyTest extends BaseTest {
+public class PSHealthProxyTest extends BaseTest {
 
     @Resource
     private RabbitMQConfig rabbitMQConfig;
@@ -41,7 +41,7 @@ public class HealthProxyTest extends BaseTest {
         EndPoint secondary = EndPoint.newInstance(EndPointEnum.CONSUMER, rabbitMQConfig.getPrimaryUri(), "testjava",
                 "testjava_hello");
 
-        HealthProxy healthProxy = new HealthProxy(primary, secondary);
+        PSHealthProxy healthProxy = new PSHealthProxy(primary, secondary);
 
         assertEquals(true, healthProxy.isHealth());
         assertEquals(true, healthProxy.primaryHealth());

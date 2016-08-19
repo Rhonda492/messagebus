@@ -47,7 +47,7 @@ public class EndPoint implements HealthService {
     /**
      * 生产者Channel
      */
-    private static ThreadLocal<Channel> producerChannel = new ThreadLocal<Channel>();
+    private static ThreadLocal<ChannelInfo> producerChannel = new ThreadLocal<ChannelInfo>();
 
     /**
      * 终结点列表：key = {endPointEnum}_{uri}_{exchange}_{queue}
@@ -202,16 +202,19 @@ public class EndPoint implements HealthService {
      * @throws TimeoutException
      */
     private Channel getProducerChannel() throws IOException, TimeoutException {
-        Channel channel = producerChannel.get();
-        if (channel == null) {
+        ChannelInfo channelInfo = producerChannel.get();
+
+        if (channelInfo == null || !channelInfo.getUri().equals(uri)) {
             connection = connectionPool.getConnection();
-            channel = connection.createChannel();
+            Channel channel = connection.createChannel();
             channel.exchangeDeclare(exchange, "direct", true);
             channel.queueDeclare(queue, true, false, false, null);
-            producerChannel.set(channel);
-        }
+            producerChannel.set(new ChannelInfo(channel, uri));
 
-        return channel;
+            return channel;
+        } else {
+            return channelInfo.getChannel();
+        }
     }
 
     /**
@@ -289,9 +292,9 @@ public class EndPoint implements HealthService {
 
         Channel channel = getChannel();
         if (channel != null && channel.isOpen()) {
-            remove(this);
             channel.close();
             channel = null;
         }
+        remove(this);
     }
 }
