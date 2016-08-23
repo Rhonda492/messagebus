@@ -5,8 +5,7 @@
  */
 package com.ymatou.messagebus.test.facade;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.util.UUID;
 
@@ -109,6 +108,45 @@ public class DispatchMessageFacadeTest extends BaseTest {
                 messageRepository.getByUuid(message.getAppId(), message.getCode(), message.getUuid());
         assertEquals(MessageNewStatusEnum.DispatchToCompensate.code(), messageAssert.getNewStatus());
         assertEquals(MessageProcessStatusEnum.Compensate.code(), messageAssert.getProcessStatus());
+    }
+
+    @Test
+    public void testDispatchNoRetry() throws InterruptedException {
+        Message message = buildMessage("noretry", "hello");
+
+        DispatchMessageReq req = new DispatchMessageReq();
+        req.setAppId(message.getAppId());
+        req.setCode(message.getCode());
+        req.setMessageBody(message.getBody());
+        req.setMessageId(message.getMessageId());
+        req.setMessageUuid(message.getUuid());
+
+
+        compensateService.initSemaphore();
+
+
+        DispatchMessageResp resp = dispatchMessageFacade.dipatch(req);
+        assertEquals(true, resp.isSuccess());
+
+        Thread.sleep(100);
+
+        MessageStatus messageStatus =
+                messageStatusRepository.getByUuid(req.getAppId(), req.getMessageUuid(), "testjava_noretry_c0");
+        assertNotNull(messageStatus);
+        assertEquals("Dispatch", messageStatus.getSource());
+        assertEquals(req.getMessageUuid(), messageStatus.getMessageUuid());
+        assertEquals(req.getMessageId(), messageStatus.getMessageId());
+        assertEquals(true, messageStatus.getResult().startsWith("fail"));
+        assertEquals("PushFail", messageStatus.getStatus());
+
+        MessageCompensate messageCompensate = messageCompensateRepository.getByUuid(message.getAppId(),
+                message.getCode(), message.getUuid());
+        assertNull(messageCompensate);
+
+        Message messageAssert =
+                messageRepository.getByUuid(message.getAppId(), message.getCode(), message.getUuid());
+        assertEquals(MessageNewStatusEnum.InRabbitMQ.code(), messageAssert.getNewStatus());
+        assertEquals(MessageProcessStatusEnum.Fail.code(), messageAssert.getProcessStatus());
     }
 
     @Test

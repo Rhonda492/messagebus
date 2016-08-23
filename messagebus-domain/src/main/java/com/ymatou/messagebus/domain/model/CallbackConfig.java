@@ -71,6 +71,12 @@ public class CallbackConfig {
     private Integer retryTimeout;
 
     /**
+     * 订阅者AppId
+     */
+    @Property("CallbackAppId")
+    private String callbackAppId;
+
+    /**
      * @return the callbackKey
      */
     public String getCallbackKey() {
@@ -212,5 +218,19 @@ public class CallbackConfig {
      */
     public final void setRetryTimeout(Integer retryTimeout) {
         this.retryTimeout = retryTimeout;
+    }
+
+    /**
+     * @return the callbackAppId
+     */
+    public final String getCallbackAppId() {
+        return callbackAppId;
+    }
+
+    /**
+     * @param callbackAppId the callbackAppId to set
+     */
+    public final void setCallbackAppId(String callbackAppId) {
+        this.callbackAppId = callbackAppId;
     }
 }

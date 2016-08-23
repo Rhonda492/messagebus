@@ -22,7 +22,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
 
-import com.ymatou.messagebus.domain.model.Alarm;
 import com.ymatou.messagebus.domain.model.AppConfig;
 import com.ymatou.messagebus.domain.model.CallbackConfig;
 import com.ymatou.messagebus.domain.model.Message;
@@ -196,9 +195,11 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
             messageStatusRepository.insert(messageStatus, message.getAppId());
 
             if (isFromDispatch) {
-                messageCompensate =
-                        MessageCompensate.from(message, callbackConfig, MessageCompensateSourceEnum.Dispatch);
-                messageCompensateRepository.insert(messageCompensate);
+                if (callbackConfig.getIsRetry() == null || callbackConfig.getIsRetry().intValue() > 0) {
+                    messageCompensate =
+                            MessageCompensate.from(message, callbackConfig, MessageCompensateSourceEnum.Dispatch);
+                    messageCompensateRepository.insert(messageCompensate);
+                }
             } else {
                 messageCompensate.incRetryCount();
                 if (new Date().after(messageCompensate.getRetryTimeout())) {
@@ -211,9 +212,15 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
             }
 
             if (isFromDispatch) {
-                messageRepository.updateMessageStatusAndPublishTime(message.getAppId(), message.getCode(),
-                        message.getUuid(), MessageNewStatusEnum.DispatchToCompensate,
-                        MessageProcessStatusEnum.Compensate);
+                if (callbackConfig.getIsRetry() == null || callbackConfig.getIsRetry().intValue() > 0) {
+                    messageRepository.updateMessageStatusAndPublishTime(message.getAppId(), message.getCode(),
+                            message.getUuid(), MessageNewStatusEnum.DispatchToCompensate,
+                            MessageProcessStatusEnum.Compensate);
+                } else {
+                    messageRepository.updateMessageStatusAndPublishTime(message.getAppId(), message.getCode(),
+                            message.getUuid(), MessageNewStatusEnum.InRabbitMQ,
+                            MessageProcessStatusEnum.Fail);
+                }
             } else {
                 if (messageCompensate.getNewStatus() == MessageCompensateStatusEnum.RetryFail.code()) {
                     messageRepository.updateMessageProcessStatus(message.getAppId(), message.getCode(),
@@ -245,7 +252,7 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
      */
     private void sendErrorReport(Message message, CallbackConfig callbackConfig, Throwable ex) {
         String consumerId = callbackConfig.getCallbackKey();
-        Alarm alarm = alarmRepository.getByConsumerId(consumerId);
+        String callbackAppId = callbackConfig.getCallbackAppId();
 
         String title = String.format(
                 "messagebus callback Exception, appid:%s, code:%s, consumerId:%s, url:%s, messageId:%s, uuid:%s",
@@ -253,8 +260,8 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
                 message.getUuid());
         logger.error(title, ex);
 
-        if (alarm != null) {
-            errorReportClient.report(title, ex, alarm.getAlarmAppId());
+        if (!StringUtils.isEmpty(callbackAppId)) {
+            errorReportClient.report(title, ex, callbackAppId);
         }
     }
 
