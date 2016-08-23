@@ -278,7 +278,7 @@ public class MessageCompensate extends PrintFriendliness {
 
         // 计算重试截止时间
         Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.MINUTE, 10);
+        calendar.add(Calendar.MINUTE, callbackConfig.getRetryTimeout());
         compensate.setRetryTimeout(calendar.getTime());
 
         return compensate;

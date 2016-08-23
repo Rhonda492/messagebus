@@ -6,6 +6,7 @@
 package com.ymatou.messagebus.domain.model;
 
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -96,6 +97,10 @@ public class AppConfig extends PrintFriendliness {
      * @return the messageCfgList
      */
     public List<MessageConfig> getMessageCfgList() {
+        if (messageCfgList == null) {
+            messageCfgList = new ArrayList<MessageConfig>();
+        }
+
         return messageCfgList;
     }
 

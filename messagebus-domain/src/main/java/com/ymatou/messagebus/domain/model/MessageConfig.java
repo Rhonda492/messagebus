@@ -5,6 +5,7 @@
  */
 package com.ymatou.messagebus.domain.model;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.mongodb.morphia.annotations.Embedded;
@@ -72,6 +73,10 @@ public class MessageConfig {
      * @return the callbackCfgList
      */
     public List<CallbackConfig> getCallbackCfgList() {
+        if (callbackCfgList == null) {
+            callbackCfgList = new ArrayList<CallbackConfig>();
+        }
+
         return callbackCfgList;
     }
 

@@ -58,7 +58,7 @@ public class PublishMessageFacadeTest extends BaseTest {
     @Test
     public void testPublishAppidInvalid() {
         PublishMessageReq req = new PublishMessageReq();
-        req.setAppId("testjava1");
+        req.setAppId("testjavaxx");
         req.setCode("hello");
         req.setMsgUniqueId(UUID.randomUUID().toString());
         req.setBody(MessageBody.newInstance());

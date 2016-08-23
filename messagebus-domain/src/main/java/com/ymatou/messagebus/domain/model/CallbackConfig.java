@@ -200,7 +200,11 @@ public class CallbackConfig {
      * @return the retryTimeout
      */
     public final Integer getRetryTimeout() {
-        return retryTimeout;
+        if (retryTimeout == null) {
+            return 30;
+        } else {
+            return retryTimeout;
+        }
     }
 
     /**

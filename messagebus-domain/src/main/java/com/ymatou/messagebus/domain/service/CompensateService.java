@@ -87,7 +87,16 @@ public class CompensateService implements InitializingBean {
      * @param messageConfig
      */
     private void initSemaphore(MessageConfig messageConfig) {
-        for (CallbackConfig callbackConfig : messageConfig.getCallbackCfgList()) {
+        if (messageConfig == null) {
+            return;
+        }
+
+        List<CallbackConfig> callbackCfgList = messageConfig.getCallbackCfgList();
+        if (callbackCfgList == null) {
+            return;
+        }
+
+        for (CallbackConfig callbackConfig : callbackCfgList) {
             String consumerId = callbackConfig.getCallbackKey();
             int parallelismNum =
                     (callbackConfig.getParallelismNum() == null || callbackConfig.getParallelismNum().intValue() < 2)
