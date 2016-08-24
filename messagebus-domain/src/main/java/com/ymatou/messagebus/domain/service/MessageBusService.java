@@ -84,7 +84,7 @@ public class MessageBusService implements InitializingBean {
                 messageRepository.insert(message);
 
                 // 异步发送消息
-                publishToMQAsync(message, messageConfig);
+                // publishToMQAsync(message, messageConfig);
             } else {
                 publishToMQ(message, messageConfig, false);
             }
