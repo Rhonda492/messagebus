@@ -23,7 +23,7 @@ public class AppConfigRepository extends MongoRepository {
     @Resource(name = "configMongoClient")
     private MongoClient mongoClient;
 
-    private final String dbName = "MQ_Configuration_201505";
+    private final String dbName = "MQ_Configuration_201609";
 
     /*
      * (non-Javadoc)

@@ -34,7 +34,7 @@ public class DistributedLockRepository extends MongoRepository implements Initia
     @Resource(name = "configMongoClient")
     private MongoClient mongoClient;
 
-    private final String dbName = "MQ_Configuration_201505";
+    private final String dbName = "MQ_Configuration_201609";
 
     @Override
     protected MongoClient getMongoClient() {

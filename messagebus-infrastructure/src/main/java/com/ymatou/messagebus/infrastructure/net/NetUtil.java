@@ -6,7 +6,11 @@
 package com.ymatou.messagebus.infrastructure.net;
 
 import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Enumeration;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,13 +26,34 @@ public class NetUtil {
     private static Logger logger = LoggerFactory.getLogger(NetUtil.class);
 
     public static InetAddress getInetAddress() {
-        try {
-            return InetAddress.getLocalHost();
-        } catch (UnknownHostException e) {
-            System.out.println("unknown host!");
-            logger.warn("get InetAddress failed because unknow host!", e);
+        Collection<InetAddress> colInetAddress = getAllHostAddress();
+        for (InetAddress address : colInetAddress) {
+            if (!address.isLoopbackAddress()) {
+                return address;
+            }
         }
         return null;
+    }
+
+    public static Collection<InetAddress> getAllHostAddress() {
+        try {
+            Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
+            Collection<InetAddress> addresses = new ArrayList<InetAddress>();
+
+            while (networkInterfaces.hasMoreElements()) {
+                NetworkInterface networkInterface = networkInterfaces.nextElement();
+                Enumeration<InetAddress> inetAddresses = networkInterface.getInetAddresses();
+                while (inetAddresses.hasMoreElements()) {
+                    InetAddress inetAddress = inetAddresses.nextElement();
+                    addresses.add(inetAddress);
+                }
+            }
+
+            return addresses;
+        } catch (SocketException e) {
+            logger.warn("get InetAddress failed because unknow host!", e);
+            return new ArrayList<InetAddress>();
+        }
     }
 
     public static String getHostIp() {
