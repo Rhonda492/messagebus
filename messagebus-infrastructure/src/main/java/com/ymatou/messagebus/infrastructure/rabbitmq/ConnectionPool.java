@@ -12,6 +12,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
@@ -38,7 +39,7 @@ public class ConnectionPool {
     /**
      * key:{uri},主备有不同的URI
      */
-    private static HashMap<String, ConnectionPool> instanceMap = new HashMap<String, ConnectionPool>();
+    private static HashMap<String, ConnectionPool> connPoolMap = new HashMap<String, ConnectionPool>();
 
     /**
      * 连接工厂
@@ -101,14 +102,14 @@ public class ConnectionPool {
      */
     public static ConnectionPool newInstance(String uri)
             throws KeyManagementException, NoSuchAlgorithmException, URISyntaxException, IOException, TimeoutException {
-        ConnectionPool connectionPool = instanceMap.get(uri);
+        ConnectionPool connectionPool = connPoolMap.get(uri);
         if (connectionPool == null) {
-            synchronized (instanceMap) {
-                if (instanceMap.containsKey(uri)) {
-                    connectionPool = instanceMap.get(uri);
+            synchronized (connPoolMap) {
+                if (connPoolMap.containsKey(uri)) {
+                    connectionPool = connPoolMap.get(uri);
                 } else {
                     connectionPool = new ConnectionPool(uri);
-                    instanceMap.put(uri, connectionPool);
+                    connPoolMap.put(uri, connectionPool);
                 }
             }
         }
@@ -116,12 +117,36 @@ public class ConnectionPool {
     }
 
     /**
-     * 清理连接池
+     * 清空所有连接池
+     * 
+     * @throws IOException
      */
-    public static void clear() {
-        instanceMap.clear();
+    public static void clearAll() throws IOException {
+        synchronized (connPoolMap) {
+            Iterator<ConnectionPool> iterator = connPoolMap.values().iterator();
+            while (iterator.hasNext()) {
+                ConnectionPool connectionPool = iterator.next();
+                connectionPool.clear();
+            }
+        }
     }
 
+    /**
+     * 清空连接池
+     * 
+     * @throws IOException
+     */
+    public void clear() throws IOException {
+        Iterator<ConnectionInfo> iterator = connList.iterator();
+        while (iterator.hasNext()) {
+            ConnectionInfo connectionInfo = iterator.next();
+            Connection connection = connectionInfo.getConnection();
+            if (connection.isOpen()) {
+                connection.close();
+            }
+            iterator.remove();
+        }
+    }
 
     /**
      * 初始化连接列表

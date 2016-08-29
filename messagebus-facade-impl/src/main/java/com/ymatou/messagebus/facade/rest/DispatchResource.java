@@ -22,6 +22,21 @@ public interface DispatchResource {
      */
     public DispatchServerVO status();
 
+
+    /**
+     * 停止分发服务
+     * 
+     * @return
+     */
+    public RestResp stop();
+
+    /**
+     * 启动分发服务
+     * 
+     * @return
+     */
+    public RestResp start();
+
     /**
      * 分发消息
      * 

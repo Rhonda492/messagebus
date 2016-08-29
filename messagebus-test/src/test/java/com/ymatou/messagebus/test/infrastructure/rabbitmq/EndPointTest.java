@@ -88,7 +88,7 @@ public class EndPointTest extends BaseTest {
                     EndPoint endPoint4 =
                             EndPoint.newInstance(EndPointEnum.PRODUCER, rabbitMQConfig.getPrimaryUri(), "testjava",
                                     "testjava_hello");
-                    channel4 = endPoint4.getChannel();
+                    channel4 = endPoint4.acquireChannel();
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -101,8 +101,8 @@ public class EndPointTest extends BaseTest {
         assertEquals(false, endPoint1 == endPoint3);
         assertEquals(2, EndPoint.getEndPointMap().size());
 
-        assertEquals(true, endPoint1.getChannel() == endPoint2.getChannel());
-        assertEquals(true, endPoint1.getChannel() == endPoint3.getChannel());
-        assertEquals(false, endPoint1.getChannel() == channel4);
+        assertEquals(true, endPoint1.acquireChannel() == endPoint2.acquireChannel());
+        assertEquals(true, endPoint1.acquireChannel() == endPoint3.acquireChannel());
+        assertEquals(false, endPoint1.acquireChannel() == channel4);
     }
 }

@@ -24,6 +24,22 @@ public class DispatchServerVO {
     private String hostName;
 
     /**
+     * 消费列表
+     */
+    private Object consumerMap;
+
+
+    /**
+     * 终结点列表
+     */
+    private Object endPointMap;
+
+    /**
+     * 信号量列表
+     */
+    private Object semaphoreMap;
+
+    /**
      * @return the groupId
      */
     public String getGroupId() {
@@ -63,5 +79,47 @@ public class DispatchServerVO {
      */
     public void setHostName(String hostName) {
         this.hostName = hostName;
+    }
+
+    /**
+     * @return the consumerMap
+     */
+    public Object getConsumerMap() {
+        return consumerMap;
+    }
+
+    /**
+     * @param consumerMap the consumerMap to set
+     */
+    public void setConsumerMap(Object consumerMap) {
+        this.consumerMap = consumerMap;
+    }
+
+    /**
+     * @return the endPointMap
+     */
+    public Object getEndPointMap() {
+        return endPointMap;
+    }
+
+    /**
+     * @param endPointMap the endPointMap to set
+     */
+    public void setEndPointMap(Object endPointMap) {
+        this.endPointMap = endPointMap;
+    }
+
+    /**
+     * @return the semaphoreMap
+     */
+    public Object getSemaphoreMap() {
+        return semaphoreMap;
+    }
+
+    /**
+     * @param semaphoreMap the semaphoreMap to set
+     */
+    public void setSemaphoreMap(Object semaphoreMap) {
+        this.semaphoreMap = semaphoreMap;
     }
 }

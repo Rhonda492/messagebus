@@ -81,7 +81,7 @@ public class FacadeAspect {
             logger.error("Unknown error in executing request:{}", req, e);
         } finally {
             logger.info("Resp:" + resp);
-            MDC.clear();
+            // MDC.clear();
         }
 
         long consumedTime = System.currentTimeMillis() - startTime;

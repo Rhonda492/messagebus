@@ -5,6 +5,7 @@
  */
 package com.ymatou.messagebus.infrastructure.thread;
 
+import java.io.Serializable;
 import java.util.concurrent.Semaphore;
 
 /**
@@ -13,7 +14,10 @@ import java.util.concurrent.Semaphore;
  * @author tony 2016年8月16日 下午11:17:50
  *
  */
-final public class AdjustableSemaphore {
+final public class AdjustableSemaphore implements Serializable {
+
+    private static final long serialVersionUID = -3816594668972551560L;
+
     private final ResizeableSemaphore semaphore;
     private int maxPermits = 0;
 
@@ -58,5 +62,12 @@ final public class AdjustableSemaphore {
         protected void reducePermits(int reduction) {
             super.reducePermits(reduction);
         }
+    }
+
+    /**
+     * @return the maxPermits
+     */
+    public int getMaxPermits() {
+        return maxPermits;
     }
 }

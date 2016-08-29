@@ -11,6 +11,7 @@ import java.net.URISyntaxException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
@@ -163,6 +164,15 @@ public class EndPoint implements HealthService {
     }
 
     /**
+     * 返回连接列表
+     * 
+     * @return
+     */
+    public List<ConnectionInfo> getConnectionInfoList() {
+        return connectionPool.getConnList();
+    }
+
+    /**
      * 获取终结点Id
      * 
      * @param uri
@@ -245,7 +255,7 @@ public class EndPoint implements HealthService {
      * @return
      * @throws Exception
      */
-    public Channel getChannel() {
+    public Channel acquireChannel() {
         try {
             switch (endPointEnum) {
                 case PRODUCER:
@@ -269,7 +279,7 @@ public class EndPoint implements HealthService {
      */
     @Override
     public boolean isHealth() {
-        Channel channel = getChannel();
+        Channel channel = acquireChannel();
 
         if (channel != null && channel.isOpen()) {
             return true;
@@ -290,7 +300,7 @@ public class EndPoint implements HealthService {
             return;
         }
 
-        Channel channel = getChannel();
+        Channel channel = acquireChannel();
         if (channel != null && channel.isOpen()) {
             channel.close();
             channel = null;

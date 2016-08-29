@@ -58,7 +58,7 @@ public class MessageConsumerTest extends BaseTest {
     @Test
     public void testStop()
             throws KeyManagementException, NoSuchAlgorithmException, IOException, TimeoutException, URISyntaxException {
-        MessageConsumer.clear();
+        MessageConsumer.clearAll();
         EndPoint.clear();
 
         MessageConsumer consumer = MessageConsumer.newInstance(rabbitMQConfig, "testjava", "testjava_hello");

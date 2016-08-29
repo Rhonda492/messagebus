@@ -7,6 +7,7 @@ package com.ymatou.messagebus.infrastructure.rabbitmq;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.rabbitmq.client.Connection;
 
 /**
@@ -40,8 +41,13 @@ public class ConnectionInfo {
      * 
      * @return
      */
+    @JsonIgnore
     public Connection getConnection() {
         return connection;
+    }
+
+    public String getConnectionInfo() {
+        return connection.toString();
     }
 
     /**

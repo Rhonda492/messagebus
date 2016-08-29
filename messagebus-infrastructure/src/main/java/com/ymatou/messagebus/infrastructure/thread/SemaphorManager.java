@@ -42,4 +42,13 @@ public class SemaphorManager {
     public static void put(String key, AdjustableSemaphore semaphore) {
         semaphoreMap.put(key, semaphore);
     }
+
+    /**
+     * 获取信号量列表
+     * 
+     * @return
+     */
+    public static Map<String, AdjustableSemaphore> getSemaphoreMap() {
+        return semaphoreMap;
+    }
 }

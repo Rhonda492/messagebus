@@ -6,10 +6,10 @@
 		<artifactId>messagebus</artifactId>
 		<version>1.0.0</version>
 	</parent>
-	<artifactId>messagebus-facade-impl</artifactId>
-	<name>messagebus-facade-impl</name>
-	<description>消息总线API实现</description>
-	
+	<artifactId>messagebus-client</artifactId>
+	<name>messagebus-client</name>
+	<description>消息总线JAVA客户端</description>
+
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
@@ -20,8 +20,8 @@
 			<artifactId>messagebus-facade</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>com.ymatou.messagebus</groupId>
-			<artifactId>messagebus-domain</artifactId>
+			<groupId>org.mapdb</groupId>
+			<artifactId>mapdb</artifactId>
 		</dependency>
 	</dependencies>
 </project>

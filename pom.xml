@@ -63,7 +63,7 @@
 		<junit-toolbox.version>1.5</junit-toolbox.version>
 		<fastjson.version>1.2.11</fastjson.version>
 		<beanutils.version>1.9.2</beanutils.version>
-		
+		<mapdb.version>3.0.1</mapdb.version>
 
 		<!-- self version -->
 		<messagebus.version>1.0.0</messagebus.version>
@@ -177,30 +177,30 @@
 				<groupId>org.springframework</groupId>
 				<artifactId>spring-aspects</artifactId>
 				<version>${spring.version}</version>
-			</dependency>			
-		
-			<dependency>
-			    <groupId>org.springframework.data</groupId>
-			    <artifactId>spring-data-mongodb</artifactId>
-			    <version>${spring.data.version}</version>
-			</dependency>		
-		
-			<dependency>
-			    <groupId>org.springframework.data</groupId>
-			    <artifactId>spring-data-mongodb-cross-store</artifactId>
-			    <version>${spring.data.version}</version>
-			</dependency>		
-		
-			<dependency>
-			    <groupId>org.springframework.data</groupId>
-			    <artifactId>spring-data-mongodb</artifactId>
-			    <version>${spring.data.version}</version>
 			</dependency>
-			
+
 			<dependency>
-			    <groupId>org.mongodb.morphia</groupId>
-			    <artifactId>morphia</artifactId>
-			    <version>${morphia.version}</version>
+				<groupId>org.springframework.data</groupId>
+				<artifactId>spring-data-mongodb</artifactId>
+				<version>${spring.data.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.springframework.data</groupId>
+				<artifactId>spring-data-mongodb-cross-store</artifactId>
+				<version>${spring.data.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.springframework.data</groupId>
+				<artifactId>spring-data-mongodb</artifactId>
+				<version>${spring.data.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.mongodb.morphia</groupId>
+				<artifactId>morphia</artifactId>
+				<version>${morphia.version}</version>
 			</dependency>
 
 			<dependency>
@@ -332,11 +332,11 @@
 				<artifactId>mongo-java-driver</artifactId>
 				<version>${mongo-driver.version}</version>
 			</dependency>
-			
+
 			<dependency>
-			    <groupId>com.rabbitmq</groupId>
-			    <artifactId>amqp-client</artifactId>
-			    <version>${rabbitmq-driver.version}</version>
+				<groupId>com.rabbitmq</groupId>
+				<artifactId>amqp-client</artifactId>
+				<version>${rabbitmq-driver.version}</version>
 			</dependency>
 
 			<dependency>
@@ -391,6 +391,12 @@
 				<version>${beanutils.version}</version>
 			</dependency>
 
+			<dependency>
+				<groupId>org.mapdb</groupId>
+				<artifactId>mapdb</artifactId>
+				<version>${mapdb.version}</version>
+			</dependency>
+
 			<!-- self -->
 			<dependency>
 				<groupId>com.ymatou.messagebus</groupId>
@@ -400,6 +406,11 @@
 			<dependency>
 				<groupId>com.ymatou.messagebus</groupId>
 				<artifactId>messagebus-facade-model</artifactId>
+				<version>${messagebus-facade.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.ymatou.messagebus</groupId>
+				<artifactId>messagebus-client</artifactId>
 				<version>${messagebus-facade.version}</version>
 			</dependency>
 			<dependency>
@@ -467,6 +478,7 @@
 		<module>messagebus-web-publish</module>
 		<module>messagebus-web-dispatch</module>
 		<module>messagebus-web-compensate</module>
+		<module>messagebus-client</module>
 	</modules>
 
 	<distributionManagement>

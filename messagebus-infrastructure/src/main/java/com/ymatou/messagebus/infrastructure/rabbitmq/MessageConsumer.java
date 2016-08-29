@@ -10,6 +10,7 @@ import java.net.URISyntaxException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
@@ -127,8 +128,15 @@ public class MessageConsumer implements Runnable, Consumer {
     /**
      * 清空消费者列表
      */
-    public static void clear() {
-        messageConsumerMap.clear();
+    public static void clearAll() {
+        synchronized (messageConsumerMap) {
+            Iterator<MessageConsumer> iterator = messageConsumerMap.values().iterator();
+            while (iterator.hasNext()) {
+                MessageConsumer consumer = iterator.next();
+                consumer.stop(false);
+                iterator.remove();
+            }
+        }
     }
 
     /**
@@ -183,7 +191,7 @@ public class MessageConsumer implements Runnable, Consumer {
     /**
      * 停止消费
      */
-    public void stop() {
+    public void stop(boolean remove) {
         try {
             primary.close();
             secondary.close();
@@ -191,10 +199,19 @@ public class MessageConsumer implements Runnable, Consumer {
             logger.error(String.format("message consumer: %s stop", getConsumerId()), e);
         } finally {
             String key = getConsumerId(exchange, queue);
-            synchronized (messageConsumerMap) {
-                messageConsumerMap.remove(key);
+            if (remove) {
+                synchronized (messageConsumerMap) {
+                    messageConsumerMap.remove(key);
+                }
             }
         }
+    }
+
+    /**
+     * 停止消费
+     */
+    public void stop() {
+        stop(true);
     }
 
     /**
@@ -226,9 +243,9 @@ public class MessageConsumer implements Runnable, Consumer {
             logger.error(String.format("consumer %s callback failed", getConsumerId()), e);
         } finally {
             if (type.equals("primary")) {
-                primary.getChannel().basicAck(env.getDeliveryTag(), true);
+                primary.acquireChannel().basicAck(env.getDeliveryTag(), true);
             } else {
-                secondary.getChannel().basicAck(env.getDeliveryTag(), true);
+                secondary.acquireChannel().basicAck(env.getDeliveryTag(), true);
             }
         }
     }

@@ -37,7 +37,7 @@ public class ConnectionPoolTest extends BaseTest {
     public void testInitConn()
             throws KeyManagementException, NoSuchAlgorithmException, URISyntaxException, IOException, TimeoutException,
             InterruptedException {
-        ConnectionPool.clear();
+        ConnectionPool.clearAll();
 
         ConnectionPool poolPrimary = ConnectionPool.newInstance(rabbitMQConfig.getPrimaryUri());
         poolPrimary.setInitConnNum(2);

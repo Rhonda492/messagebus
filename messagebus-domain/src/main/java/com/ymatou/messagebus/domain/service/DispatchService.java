@@ -26,6 +26,7 @@ import com.ymatou.messagebus.domain.model.MessageConfig;
 import com.ymatou.messagebus.domain.repository.AppConfigRepository;
 import com.ymatou.messagebus.infrastructure.config.RabbitMQConfig;
 import com.ymatou.messagebus.infrastructure.rabbitmq.CallbackService;
+import com.ymatou.messagebus.infrastructure.rabbitmq.ConnectionPool;
 import com.ymatou.messagebus.infrastructure.rabbitmq.MessageConsumer;
 import com.ymatou.messagebus.infrastructure.thread.AdjustableSemaphore;
 import com.ymatou.messagebus.infrastructure.thread.SemaphorManager;
@@ -77,6 +78,19 @@ public class DispatchService {
     }
 
     /**
+     * 停止分发服务
+     * 
+     * @throws IOException
+     */
+    public void stop() throws IOException {
+        logger.info("dispatch {} service clear consumer!", dispatchConfig.getGroupId());
+        MessageConsumer.clearAll();
+
+        logger.info("dispatch {} service clear connection pool!", dispatchConfig.getGroupId());
+        ConnectionPool.clearAll();
+    }
+
+    /**
      * 检查重启
      * 
      * @throws KeyManagementException
@@ -114,14 +128,14 @@ public class DispatchService {
             String appCode = appConfig.getAppCode(messageConfig.getCode());
             String appId = appConfig.getAppId();
 
+            initSemaphore(messageConfig);
+
             if (!MessageConsumer.contains(appId, appCode)) {
                 MessageConsumer consumer = MessageConsumer.newInstance(rabbitMQConfig, appId, appCode);
                 consumer.setCallbackService(callbackService);
                 consumer.run();
                 logger.info("init consumer {} success.", consumer.getConsumerId());
             }
-
-            initSemaphore(messageConfig);
         }
     }
 
