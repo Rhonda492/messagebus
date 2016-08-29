@@ -41,12 +41,6 @@ public class AppConfig extends PrintFriendliness {
     private Integer version;
 
     /**
-     * 连接属性配置
-     */
-    @Property("ConnCfg")
-    private Object connCfg;
-
-    /**
      * 消息配置列表
      */
     @Embedded("MessageCfgList")
@@ -79,19 +73,6 @@ public class AppConfig extends PrintFriendliness {
         this.version = version;
     }
 
-    /**
-     * @return the connCfg
-     */
-    public Object getConnCfg() {
-        return connCfg;
-    }
-
-    /**
-     * @param connCfg the connCfg to set
-     */
-    public void setConnCfg(Object connCfg) {
-        this.connCfg = connCfg;
-    }
 
     /**
      * @return the messageCfgList

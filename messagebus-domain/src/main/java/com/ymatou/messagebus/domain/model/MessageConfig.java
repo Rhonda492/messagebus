@@ -32,15 +32,6 @@ public class MessageConfig {
     @Embedded("ConsumeCfg")
     private ConsumerConfig consumeCfg;
 
-    @Property("ExchangeCfg")
-    private Object exchangeCfg;
-
-    @Property("QueueCfg")
-    private Object queueCfg;
-
-    @Property("PublishCfg")
-    private Object publishCfg;
-
     /**
      * @return the code
      */
@@ -99,48 +90,6 @@ public class MessageConfig {
      */
     public void setConsumeCfg(ConsumerConfig consumeCfg) {
         this.consumeCfg = consumeCfg;
-    }
-
-    /**
-     * @return the exchangeCfg
-     */
-    public Object getExchangeCfg() {
-        return exchangeCfg;
-    }
-
-    /**
-     * @param exchangeCfg the exchangeCfg to set
-     */
-    public void setExchangeCfg(Object exchangeCfg) {
-        this.exchangeCfg = exchangeCfg;
-    }
-
-    /**
-     * @return the queueCfg
-     */
-    public Object getQueueCfg() {
-        return queueCfg;
-    }
-
-    /**
-     * @param queueCfg the queueCfg to set
-     */
-    public void setQueueCfg(Object queueCfg) {
-        this.queueCfg = queueCfg;
-    }
-
-    /**
-     * @return the publishCfg
-     */
-    public Object getPublishCfg() {
-        return publishCfg;
-    }
-
-    /**
-     * @param publishCfg the publishCfg to set
-     */
-    public void setPublishCfg(Object publishCfg) {
-        this.publishCfg = publishCfg;
     }
 
     /**

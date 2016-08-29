@@ -75,9 +75,9 @@
 		<aop:advisor advice-ref="performanceMonitorAdvice"
 			pointcut="execution(* com.ymatou.messagebus.facade.*Facade.*(..))
 						|| execution(* com.ymatou.messagebus.facade.rest.*Resource.*(..))
+						|| execution(* com.ymatou.messagebus.domain.service.MessageBusService.*(..))
 						|| execution(* com.ymatou.messagebus.infrastructure.rabbitmq.EndPoint.*(..))
-						|| execution(* com.ymatou.messagebus..*Repository.*(..))
-						|| execution(* com.ymatou.messagebus.integration.service..*(..))
+						|| execution(* com.ymatou.messagebus..*Repository.*(..)))
 						" />
 	</aop:config>
 

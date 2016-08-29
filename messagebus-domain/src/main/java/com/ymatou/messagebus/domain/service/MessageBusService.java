@@ -15,6 +15,7 @@ import javax.annotation.Resource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Component;
@@ -84,7 +85,7 @@ public class MessageBusService implements InitializingBean {
                 messageRepository.insert(message);
 
                 // 异步发送消息
-                publishToMQAsync(message, messageConfig);
+                publishToMQAsync(message, messageConfig, MDC.get("logPrefix"));
             } else {
                 publishToMQ(message, messageConfig, false);
             }
@@ -105,8 +106,10 @@ public class MessageBusService implements InitializingBean {
      * @param appConfig
      * @param message
      */
-    private void publishToMQAsync(Message message, MessageConfig messageConfig) {
+    private void publishToMQAsync(Message message, MessageConfig messageConfig, String requestId) {
         taskExecutor.execute(() -> {
+
+            MDC.put("logPrefix", requestId);
 
             logger.info(
                     "----------------------------- async publish message begin -------------------------------");
