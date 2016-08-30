@@ -28,7 +28,7 @@ import com.ymatou.messagebus.infrastructure.net.NetUtil;
  * @author wangxudong 2016年7月27日 下午7:08:37
  *
  */
-@Component
+@Component("publishMessageFacade")
 public class PublishMessageFacadeImpl implements PublishMessageFacade {
 
     private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
