@@ -5,7 +5,7 @@
  */
 package com.ymatou.messagebus.facade.rest;
 
-import com.ymatou.messagebus.facade.model.PublishMessageReq;
+import com.ymatou.messagebus.facade.model.PublishMessageRestReq;
 
 public interface PublishMessageResource {
 
@@ -15,5 +15,5 @@ public interface PublishMessageResource {
      * @param req
      * @return
      */
-    public RestResp publish(PublishMessageReq req);
+    public RestResp publish(PublishMessageRestReq req);
 }

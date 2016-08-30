@@ -80,19 +80,9 @@
 	<!-- 用dubbo协议在20880端口暴露服务 -->
 	<dubbo:protocol name="dubbo" port="${dubbo.port}"
 		serialization="kryo" />
-
+ <!--
 	<dubbo:service interface="com.ymatou.messagebus.facade.PublishMessageFacade" 
-		ref="publishMessageFacade" protocol="dubbo" />
-
-	<dubbo:protocol name="rest" server="servlet" port="${rest.port}"
-		extension="com.ymatou.messagebus.infrastructure.serialize.JacksonConfig" />
-
-	<dubbo:service interface="com.ymatou.messagebus.facade.rest.SystemResource"
-		ref="systemResource" protocol="rest" />
-
-	<dubbo:service
-		interface="com.ymatou.messagebus.facade.rest.PublishMessageResource"
-		ref="publishMessageResource" protocol="rest" />
+		ref="publishMessageFacade" protocol="dubbo" /> -->
 
 	<!-- 生成远程服务代理，可以和本地bean一样使用demoFacade -->
 	<dubbo:reference id="publishMessageClient" interface="com.ymatou.messagebus.facade.PublishMessageFacade" retries="1" timeout="10000" />

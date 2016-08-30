@@ -73,7 +73,7 @@ public class DispatchServiceTest extends BaseTest {
         req.setAppId(appId);
         req.setCode(code);
         req.setMsgUniqueId(UUID.randomUUID().toString());
-        req.setBody(TaskItemRequest.newInstance());
+        req.setBody(TaskItemRequest.newInstance().toString());
         req.setIp(NetUtil.getHostIp());
         PublishMessageResp resp = publishMessageFacade.publish(req);
 

@@ -38,7 +38,7 @@ public class PublishMessageFacadeTest extends BaseTest {
         req.setAppId("testjava");
         req.setCode("hello");
         req.setMsgUniqueId(UUID.randomUUID().toString());
-        req.setBody(TaskItemRequest.newInstance());
+        req.setBody(TaskItemRequest.newInstance().toString());
         req.setIp(NetUtil.getHostIp());
         PublishMessageResp resp = publishMessageFacade.publish(req);
 
@@ -61,7 +61,7 @@ public class PublishMessageFacadeTest extends BaseTest {
         req.setAppId("testjavaxx");
         req.setCode("hello");
         req.setMsgUniqueId(UUID.randomUUID().toString());
-        req.setBody(MessageBody.newInstance());
+        req.setBody(MessageBody.newInstance().toString());
         PublishMessageResp resp = publishMessageFacade.publish(req);
 
         System.out.println(resp.getErrorMessage());
@@ -76,7 +76,7 @@ public class PublishMessageFacadeTest extends BaseTest {
         req.setAppId("testjava");
         req.setCode("hello1");
         req.setMsgUniqueId(UUID.randomUUID().toString());
-        req.setBody(MessageBody.newInstance());
+        req.setBody(MessageBody.newInstance().toString());
         PublishMessageResp resp = publishMessageFacade.publish(req);
 
         System.out.println(resp.getErrorMessage());

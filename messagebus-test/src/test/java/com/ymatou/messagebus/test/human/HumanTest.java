@@ -58,7 +58,7 @@ public class HumanTest extends BaseTest {
 
         for (int i = 0; i < 1; i++) {
             req.setMsgUniqueId(UUID.randomUUID().toString());
-            req.setBody(TaskItemRequest.newInstance());
+            req.setBody(TaskItemRequest.newInstance().toString());
 
             PublishMessageResp resp = publishMessageFacade.publish(req);
             System.out.println(String.format("isSuccess:%s, message:%s", resp.isSuccess(), resp.getErrorMessage()));
@@ -87,7 +87,7 @@ public class HumanTest extends BaseTest {
         req.setAppId("testjava");
         req.setCode("hello");
         req.setMsgUniqueId(UUID.randomUUID().toString());
-        req.setBody(TaskItemRequest.newInstance());
+        req.setBody(TaskItemRequest.newInstance().toString());
         req.setIp(NetUtil.getHostIp());
         PublishMessageResp resp = publishMessageFacade.publish(req);
 

@@ -5,6 +5,7 @@
  */
 package com.ymatou.messagebus.test;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.Map;
 
@@ -16,7 +17,12 @@ import com.alibaba.fastjson.JSON;
  * @author wangxudong 2016年8月10日 下午3:44:44
  *
  */
-public class TaskItemRequest {
+public class TaskItemRequest implements Serializable {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = -8195842666494800515L;
+
     private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
     private String taskName;

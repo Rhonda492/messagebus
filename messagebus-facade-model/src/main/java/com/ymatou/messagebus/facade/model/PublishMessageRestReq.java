@@ -17,7 +17,7 @@ import com.ymatou.messagebus.facade.BaseRequest;
  * @author wangxudong 2016年7月27日 下午6:51:48
  *
  */
-public class PublishMessageReq extends BaseRequest {
+public class PublishMessageRestReq extends BaseRequest {
 
     private static final long serialVersionUID = 1L;
 
@@ -51,7 +51,7 @@ public class PublishMessageReq extends BaseRequest {
      * 业务消息体
      */
     @NotNull(message = "body not null")
-    private String body;
+    private Object body;
 
     /**
      * @return the appId
@@ -93,7 +93,6 @@ public class PublishMessageReq extends BaseRequest {
      */
     public void setMsgUniqueId(String msgUniqueId) {
         this.msgUniqueId = msgUniqueId;
-        setRequestId(msgUniqueId);
     }
 
     /**
@@ -113,14 +112,14 @@ public class PublishMessageReq extends BaseRequest {
     /**
      * @return the body
      */
-    public String getBody() {
+    public Object getBody() {
         return body;
     }
 
     /**
      * @param body the body to set
      */
-    public void setBody(String body) {
+    public void setBody(Object body) {
         this.body = body;
     }
 }

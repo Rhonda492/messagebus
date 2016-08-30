@@ -11,7 +11,6 @@ import javax.annotation.Resource;
 
 import org.springframework.stereotype.Component;
 
-import com.alibaba.fastjson.JSON;
 import com.ymatou.messagebus.domain.model.Message;
 import com.ymatou.messagebus.domain.service.MessageBusService;
 import com.ymatou.messagebus.facade.PublishMessageFacade;
@@ -31,8 +30,6 @@ import com.ymatou.messagebus.infrastructure.net.NetUtil;
 @Component("publishMessageFacade")
 public class PublishMessageFacadeImpl implements PublishMessageFacade {
 
-    private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
-
     @Resource
     private MessageBusService messageBusService;
 
@@ -47,7 +44,7 @@ public class PublishMessageFacadeImpl implements PublishMessageFacade {
     public PublishMessageResp publish(PublishMessageReq req) {
         Message message = new Message();
         message.setAppId(req.getAppId());
-        message.setBody(JSON.toJSONStringWithDateFormat(req.getBody(), DATE_FORMAT));
+        message.setBody(req.getBody());
         message.setCode(req.getCode());
         message.setIp(req.getIp());
         message.setCreateTime(new Date());
