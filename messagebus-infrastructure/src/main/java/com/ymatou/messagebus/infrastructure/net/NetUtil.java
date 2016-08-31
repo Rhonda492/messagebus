@@ -28,7 +28,7 @@ public class NetUtil {
     public static InetAddress getInetAddress() {
         Collection<InetAddress> colInetAddress = getAllHostAddress();
         for (InetAddress address : colInetAddress) {
-            if (!address.isLoopbackAddress()) {
+            if (!address.isLoopbackAddress() && address.getHostAddress().indexOf(":") == -1) {
                 return address;
             }
         }
@@ -42,6 +42,10 @@ public class NetUtil {
 
             while (networkInterfaces.hasMoreElements()) {
                 NetworkInterface networkInterface = networkInterfaces.nextElement();
+                if (networkInterface.isLoopback() || networkInterface.isVirtual()) {
+                    continue;
+                }
+
                 Enumeration<InetAddress> inetAddresses = networkInterface.getInetAddresses();
                 while (inetAddresses.hasMoreElements()) {
                     InetAddress inetAddress = inetAddresses.nextElement();

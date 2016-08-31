@@ -31,12 +31,25 @@
 		init-method="init" destroy-method="destroy">
 	</bean>
 
+	<bean id="propertiesDisconf"
+		class="com.baidu.disconf.client.addons.properties.ReloadablePropertiesFactoryBean">
+		<property name="locations">
+			<list>
+				<value>app.properties</value>
+			</list>
+		</property>
+	</bean>
+
 	<bean id="propertyPlaceholderConfigurer"
 		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="propertiesArray">
+            <list>
+                <ref bean="propertiesDisconf"/>
+            </list>
+        </property>
 		<property name="locations">
 			<list>
 				<value>classpath:mongodb.properties</value>
-				<value>classpath:app.properties</value>
 			</list>
 		</property>
 	</bean>
@@ -58,8 +71,7 @@
 			<!-- CallerRunsPolicy:主线程直接执行该任务，执行完之后尝试添加下一个任务到线程池中，可以有效降低向线程池内添加任务的速度 -->
 			<!-- DiscardOldestPolicy:抛弃旧的任务 ；会导致被丢弃的任务无法再次被执行 -->
 			<!-- DiscardPolicy:抛弃当前任务 ；会导致被丢弃的任务无法再次被执行 -->
-			<bean
-				class="com.ymatou.messagebus.infrastructure.thread.LogRejectedPolicy" />
+			<bean class="com.ymatou.messagebus.infrastructure.thread.LogRejectedPolicy" />
 		</property>
 	</bean>
 
@@ -70,7 +82,7 @@
 	</bean>
 
 	<import resource="classpath:spring/persistence.xml" />
-	
+
 	<aop:config>
 		<aop:advisor advice-ref="performanceMonitorAdvice"
 			pointcut="execution(* com.ymatou.messagebus.facade.*Facade.*(..))
@@ -89,7 +101,8 @@
 	<dubbo:registry address="zookeeper://${dubbo.zoo}" />
 
 	<!-- 用dubbo协议在20880端口暴露服务 -->
-	<dubbo:protocol name="dubbo" port="${dubbo.port}" serialization="kryo" />
+	<dubbo:protocol name="dubbo" port="${dubbo.port}"
+		serialization="kryo" />
 
 	<dubbo:protocol name="rest" server="servlet" port="${rest.port}"
 		extension="com.ymatou.messagebus.infrastructure.serialize.JacksonConfig" />

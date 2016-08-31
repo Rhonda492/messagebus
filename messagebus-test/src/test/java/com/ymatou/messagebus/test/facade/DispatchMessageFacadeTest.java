@@ -84,7 +84,7 @@ public class DispatchMessageFacadeTest extends BaseTest {
         DispatchMessageResp resp = dispatchMessageFacade.dipatch(req);
         assertEquals(true, resp.isSuccess());
 
-        Thread.sleep(100);
+        Thread.sleep(200);
 
         MessageStatus messageStatus =
                 messageStatusRepository.getByUuid(req.getAppId(), req.getMessageUuid(), "testjava_hello_c0");
@@ -128,7 +128,7 @@ public class DispatchMessageFacadeTest extends BaseTest {
         DispatchMessageResp resp = dispatchMessageFacade.dipatch(req);
         assertEquals(true, resp.isSuccess());
 
-        Thread.sleep(100);
+        Thread.sleep(200);
 
         MessageStatus messageStatus =
                 messageStatusRepository.getByUuid(req.getAppId(), req.getMessageUuid(), "testjava_noretry_c0");
@@ -165,7 +165,7 @@ public class DispatchMessageFacadeTest extends BaseTest {
         DispatchMessageResp resp = dispatchMessageFacade.dipatch(req);
         assertEquals(true, resp.isSuccess());
 
-        Thread.sleep(200);
+        Thread.sleep(300);
 
         MessageStatus messageStatus =
                 messageStatusRepository.getByUuid(req.getAppId(), req.getMessageUuid(), "testjava_hello2_c0");

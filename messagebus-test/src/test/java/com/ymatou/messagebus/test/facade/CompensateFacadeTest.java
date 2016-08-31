@@ -150,7 +150,7 @@ public class CompensateFacadeTest extends BaseTest {
         CompensateResp compensateResp = compensateFacade.compensate(compensateReq);
         assertEquals(true, compensateResp.isSuccess());
 
-        Thread.sleep(100 * 2);
+        Thread.sleep(1000);
 
         compensate = messageCompensateRepository.getByUuid(appId, code, message.getUuid());
         assertNotNull(compensate);
@@ -205,7 +205,7 @@ public class CompensateFacadeTest extends BaseTest {
         CompensateResp compensateResp = compensateFacade.compensate(compensateReq);
         assertEquals(true, compensateResp.isSuccess());
 
-        Thread.sleep(100 * 2);
+        Thread.sleep(1000);
 
         compensate = messageCompensateRepository.getByUuid(appId, code, message.getUuid());
         assertNotNull(compensate);
