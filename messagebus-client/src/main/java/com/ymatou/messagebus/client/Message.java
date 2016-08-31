@@ -137,7 +137,7 @@ public class Message extends PrintFriendliness {
         publishMessageReq.setAppId(appId);
         publishMessageReq.setCode(code);
         publishMessageReq.setMsgUniqueId(messageId);
-        publishMessageReq.setIp(Util.getHostIp());
+        publishMessageReq.setIp(NetUtil.getHostIp());
         publishMessageReq.setBody(JSON.toJSONStringWithDateFormat(body, DATE_FORMAT));
 
         return publishMessageReq;

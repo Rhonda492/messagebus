@@ -22,8 +22,8 @@ import org.slf4j.LoggerFactory;
  * @author wangxudong 2016年8月30日 下午3:14:04
  *
  */
-public class Util {
-    private static Logger logger = LoggerFactory.getLogger(Util.class);
+public class NetUtil {
+    private static Logger logger = LoggerFactory.getLogger(NetUtil.class);
 
     public static InetAddress getInetAddress() {
         Collection<InetAddress> colInetAddress = getAllHostAddress();

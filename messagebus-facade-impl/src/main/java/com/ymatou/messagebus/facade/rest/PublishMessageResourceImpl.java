@@ -48,7 +48,7 @@ public class PublishMessageResourceImpl implements PublishMessageResource {
     public RestResp publish(PublishMessageRestReq req) {
         PublishMessageReq request = new PublishMessageReq();
         request.setAppId(req.getAppId());
-        request.setCode(request.getCode());
+        request.setCode(req.getCode());
         request.setIp(req.getIp());
         request.setMsgUniqueId(req.getMsgUniqueId());
         request.setBody(JSON.toJSONStringWithDateFormat(req.getBody(), DATE_FORMAT));

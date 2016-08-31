@@ -6,11 +6,13 @@
 package com.ymatou.messagebus.test.client;
 
 import java.io.File;
-import java.util.concurrent.ConcurrentMap;
 
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
+import org.mapdb.HTreeMap;
 import org.mapdb.Serializer;
+
+import com.ymatou.messagebus.client.Message;
 
 public class Demo {
     public static void main(String[] args) {
@@ -23,13 +25,19 @@ public class Demo {
         DB db = DBMaker.fileDB("/usr/local/data/messagebus/message.db").make();
         System.out.println("make success!");
 
-        ConcurrentMap<String, String> map = db.hashMap("message", Serializer.STRING, Serializer.STRING).createOrOpen();
-        if (map.containsKey("hello")) {
-            System.out.println(map.get("hello"));
+        @SuppressWarnings("unchecked")
+        HTreeMap<String, Message> map =
+                db.hashMap("message", Serializer.STRING, Serializer.JAVA).createOrOpen();
 
-        } else {
-            map.put("hello", "tony");
-        }
+        map.put("hello", new Message("java", "code", "xxx", "body"));
+
+        db.close();
+        db = DBMaker.fileDB("/usr/local/data/messagebus/message.db").make();
+        map = db.hashMap("message", Serializer.STRING, Serializer.JAVA).createOrOpen();
+
+        Message message = map.get("hello");
+
+        System.out.println(message.getBody());
 
         db.close();
     }

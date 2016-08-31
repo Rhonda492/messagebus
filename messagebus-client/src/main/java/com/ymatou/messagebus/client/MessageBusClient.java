@@ -5,10 +5,13 @@
  */
 package com.ymatou.messagebus.client;
 
+import java.io.File;
+
 import javax.annotation.Resource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
 
 import com.ymatou.messagebus.facade.ErrorCode;
@@ -23,9 +26,17 @@ import com.ymatou.messagebus.facade.model.PublishMessageResp;
  *
  */
 @Component
-public class MessageBusClient {
+public class MessageBusClient implements InitializingBean {
 
     private Logger logger = LoggerFactory.getLogger(MessageBusClient.class);
+
+    // 默认的本地消息存储路径
+    private final static String DEFUALT_MESSAGE_DB_PATH = "/data/messagebus";
+
+    /**
+     * 消息存储路径
+     */
+    private String messageDbPath;
 
     @Resource(name = "publishMessageClient")
     private PublishMessageFacade publishMessageFacade;
@@ -70,5 +81,28 @@ public class MessageBusClient {
      */
     private void publishLocal(PublishMessageReq req) throws MessageBusException {
 
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        setMessageDbPath(DEFUALT_MESSAGE_DB_PATH);
+        File folder = new File(getMessageDbPath());
+        if (folder.exists() == false) {
+            folder.mkdirs();
+        }
+    }
+
+    /**
+     * @return the messageDbPath
+     */
+    public String getMessageDbPath() {
+        return messageDbPath;
+    }
+
+    /**
+     * @param messageDbPath the messageDbPath to set
+     */
+    public void setMessageDbPath(String messageDbPath) {
+        this.messageDbPath = messageDbPath;
     }
 }
