@@ -5,6 +5,10 @@
  */
 package com.ymatou.messagebus.test.client;
 
+import static org.junit.Assert.*;
+
+import java.util.UUID;
+
 import javax.annotation.Resource;
 
 import org.junit.Rule;
@@ -14,6 +18,8 @@ import org.junit.rules.ExpectedException;
 import com.ymatou.messagebus.client.Message;
 import com.ymatou.messagebus.client.MessageBusClient;
 import com.ymatou.messagebus.client.MessageBusException;
+import com.ymatou.messagebus.client.MessageDB;
+import com.ymatou.messagebus.facade.model.PublishMessageReq;
 import com.ymatou.messagebus.test.BaseTest;
 import com.ymatou.messagebus.test.TaskItemRequest;
 
@@ -30,7 +36,7 @@ public class MessageBusClientTest extends BaseTest {
         Message req = new Message();
         req.setAppId("testjava");
         req.setCode("hello");
-        req.setMessageId("xxx-99");
+        req.setMessageId("xxx-100");
         req.setBody(TaskItemRequest.newInstance());
 
         messageBusClient.sendMessasge(req);
@@ -121,4 +127,28 @@ public class MessageBusClientTest extends BaseTest {
         messageBusClient.sendMessasge(req);
     }
 
+    @Test
+    public void testPublishLocal() throws MessageBusException {
+        PublishMessageReq req = new PublishMessageReq();
+        req.setAppId("testjava");
+        req.setCode("hello-x");
+        req.setMsgUniqueId(UUID.randomUUID().toString());
+        req.setBody("hello");
+
+        MessageDB messageDB = messageBusClient.getMessageDB();
+
+        int beforeNum = messageDB.count("message");
+        messageBusClient.publishLocal(req);
+
+        int afterNum = messageDB.count("message");
+        assertEquals(beforeNum + 1, afterNum);
+
+        String key = req.getAppId() + req.getCode() + req.getMsgUniqueId();
+        PublishMessageReq req2 = messageDB.get("message", key);
+        assertNotNull(req2);
+        assertEquals(req.getAppId(), req2.getAppId());
+        assertEquals(req.getCode(), req2.getCode());
+        assertEquals(req.getIp(), req2.getIp());
+        assertEquals(req.getBody(), req2.getBody());
+    }
 }

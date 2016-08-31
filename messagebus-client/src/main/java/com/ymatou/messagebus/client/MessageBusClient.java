@@ -5,8 +5,6 @@
  */
 package com.ymatou.messagebus.client;
 
-import java.io.File;
-
 import javax.annotation.Resource;
 
 import org.slf4j.Logger;
@@ -30,13 +28,15 @@ public class MessageBusClient implements InitializingBean {
 
     private Logger logger = LoggerFactory.getLogger(MessageBusClient.class);
 
-    // 默认的本地消息存储路径
-    private final static String DEFUALT_MESSAGE_DB_PATH = "/data/messagebus";
-
     /**
      * 消息存储路径
      */
     private String messageDbPath;
+
+    /**
+     * 消息存储
+     */
+    private MessageDB db;
 
     @Resource(name = "publishMessageClient")
     private PublishMessageFacade publishMessageFacade;
@@ -79,17 +79,19 @@ public class MessageBusClient implements InitializingBean {
      * @param req
      * @throws MessageBusException
      */
-    private void publishLocal(PublishMessageReq req) throws MessageBusException {
-
+    public void publishLocal(PublishMessageReq messageReq) throws MessageBusException {
+        try {
+            String key = messageReq.getAppId() + messageReq.getCode() + messageReq.getMsgUniqueId();
+            db.save("message", key, messageReq);
+        } catch (Exception ex) {
+            logger.warn("publish messge local fail, messageId:" + messageReq.getMsgUniqueId(), ex);
+            throw new MessageBusException("publish messge local fail, messageId:" + messageReq.getMsgUniqueId(), ex);
+        }
     }
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        setMessageDbPath(DEFUALT_MESSAGE_DB_PATH);
-        File folder = new File(getMessageDbPath());
-        if (folder.exists() == false) {
-            folder.mkdirs();
-        }
+        db = new MessageDB(getMessageDbPath(), "message");
     }
 
     /**
@@ -104,5 +106,14 @@ public class MessageBusClient implements InitializingBean {
      */
     public void setMessageDbPath(String messageDbPath) {
         this.messageDbPath = messageDbPath;
+    }
+
+    /**
+     * 获取到数据存储
+     * 
+     * @return
+     */
+    public MessageDB getMessageDB() {
+        return db;
     }
 }
