@@ -53,7 +53,7 @@ public class MessageRepository extends MongoRepository implements InitializingBe
      * @param message
      */
     public void insert(Message message) {
-        String dbName = "MQ_Message_" + message.getAppId() + "_" + message.getUuid().substring(0, 6);
+        String dbName = "JMQ_Message_" + message.getAppId() + "_" + message.getUuid().substring(0, 6);
         String collectionName = "Message_" + message.getCode();
 
         insertEntiy(dbName, collectionName, message);
@@ -69,7 +69,7 @@ public class MessageRepository extends MongoRepository implements InitializingBe
      * @return
      */
     public Message getByUuid(String appId, String code, String uuid) {
-        String dbName = "MQ_Message_" + appId + "_" + uuid.substring(0, 6);
+        String dbName = "JMQ_Message_" + appId + "_" + uuid.substring(0, 6);
         String collectionName = "Message_" + code;
 
         return newQuery(Message.class, dbName, collectionName, ReadPreference.primaryPreferred()).field("uuid")
@@ -86,7 +86,7 @@ public class MessageRepository extends MongoRepository implements InitializingBe
      */
     public void updateMessageStatus(String appId, String code, String uuid, MessageNewStatusEnum newStatus,
             MessageProcessStatusEnum processStatusEnum) {
-        String dbName = "MQ_Message_" + appId + "_" + uuid.substring(0, 6);
+        String dbName = "JMQ_Message_" + appId + "_" + uuid.substring(0, 6);
         String collectionName = "Message_" + code;
 
         Bson doc = eq("uuid", uuid);
@@ -105,7 +105,7 @@ public class MessageRepository extends MongoRepository implements InitializingBe
      */
     public void updateMessageStatusAndPublishTime(String appId, String code, String uuid,
             MessageNewStatusEnum newStatus, MessageProcessStatusEnum processStatusEnum) {
-        String dbName = "MQ_Message_" + appId + "_" + uuid.substring(0, 6);
+        String dbName = "JMQ_Message_" + appId + "_" + uuid.substring(0, 6);
         String collectionName = "Message_" + code;
 
         Bson doc = eq("uuid", uuid);
@@ -125,7 +125,7 @@ public class MessageRepository extends MongoRepository implements InitializingBe
      */
     public void updateMessageProcessStatus(String appId, String code, String uuid,
             MessageProcessStatusEnum processStatusEnum) {
-        String dbName = "MQ_Message_" + appId + "_" + uuid.substring(0, 6);
+        String dbName = "JMQ_Message_" + appId + "_" + uuid.substring(0, 6);
         String collectionName = "Message_" + code;
 
         Bson doc = eq("uuid", uuid);
@@ -142,7 +142,7 @@ public class MessageRepository extends MongoRepository implements InitializingBe
      * @return
      */
     public List<Message> getNeedToCompensate(String appId, String code) {
-        String dbName = "MQ_Message_" + appId + "_";
+        String dbName = "JMQ_Message_" + appId + "_";
         String collectionName = "Message_" + code;
 
         Calendar calendarNow = Calendar.getInstance();

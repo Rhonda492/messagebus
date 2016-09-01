@@ -9,6 +9,7 @@ import javax.annotation.Resource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
 
@@ -24,7 +25,7 @@ import com.ymatou.messagebus.facade.model.PublishMessageResp;
  *
  */
 @Component
-public class MessageBusClient implements InitializingBean {
+public class MessageBusClient implements InitializingBean, DisposableBean {
 
     private Logger logger = LoggerFactory.getLogger(MessageBusClient.class);
 
@@ -36,7 +37,13 @@ public class MessageBusClient implements InitializingBean {
     /**
      * 消息存储
      */
-    private MessageDB db;
+    private MessageDB messageDB;
+
+    /**
+     * 消息本地线程
+     */
+    @Resource
+    private MessageLocalConsumer messageLocalConsumer;
 
     @Resource(name = "publishMessageClient")
     private PublishMessageFacade publishMessageFacade;
@@ -82,16 +89,11 @@ public class MessageBusClient implements InitializingBean {
     public void publishLocal(PublishMessageReq messageReq) throws MessageBusException {
         try {
             String key = messageReq.getAppId() + messageReq.getCode() + messageReq.getMsgUniqueId();
-            db.save("message", key, messageReq);
+            messageDB.save("message", key, messageReq);
         } catch (Exception ex) {
             logger.warn("publish messge local fail, messageId:" + messageReq.getMsgUniqueId(), ex);
             throw new MessageBusException("publish messge local fail, messageId:" + messageReq.getMsgUniqueId(), ex);
         }
-    }
-
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        db = new MessageDB(getMessageDbPath(), "message");
     }
 
     /**
@@ -114,6 +116,22 @@ public class MessageBusClient implements InitializingBean {
      * @return
      */
     public MessageDB getMessageDB() {
-        return db;
+        return messageDB;
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        messageDB = new MessageDB(getMessageDbPath(), "message");
+
+        messageLocalConsumer.setMessageDB(messageDB);
+        messageLocalConsumer.setDaemon(true);
+        messageLocalConsumer.start();
+    }
+
+    @Override
+    public void destroy() throws Exception {
+        if (messageDB == null) {
+            messageDB.close();
+        }
     }
 }

@@ -31,7 +31,7 @@ public class MessageCompensateRepository extends MongoRepository {
     @Resource(name = "messageCompensateMongoClient")
     private MongoClient mongoClient;
 
-    private String dbName = "MQ_Message_Compensate";
+    private String dbName = "JMQ_Message_Compensate";
 
     @Override
     protected MongoClient getMongoClient() {
