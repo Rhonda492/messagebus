@@ -73,7 +73,7 @@ public class CompensateResourceImpl implements CompensateResource {
     }
 
 
-    @GET
+    @POST
     @Path("/index")
     @Override
     public String index() {
