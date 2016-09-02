@@ -7,6 +7,7 @@ package com.ymatou.messagebus.domain.repository;
 
 
 import java.util.List;
+import java.util.Set;
 
 import javax.annotation.Resource;
 
@@ -14,6 +15,7 @@ import org.mongodb.morphia.DatastoreImpl;
 import org.mongodb.morphia.query.Query;
 import org.springframework.stereotype.Component;
 
+import com.mongodb.DBCollection;
 import com.mongodb.MongoClient;
 import com.mongodb.ReadPreference;
 import com.ymatou.messagebus.domain.model.MessageCompensate;
@@ -36,6 +38,18 @@ public class MessageCompensateRepository extends MongoRepository {
     @Override
     protected MongoClient getMongoClient() {
         return mongoClient;
+    }
+
+    /**
+     * 重建索引
+     */
+    public void index() {
+        Set<String> collectionNames = getCollectionNames(dbName);
+        for (String collectionName : collectionNames) {
+            DBCollection collection = getCollection(dbName, collectionName);
+            collection.createIndex("uuid");
+            collection.createIndex("ctime");
+        }
     }
 
     /**

@@ -6,6 +6,8 @@
 package com.ymatou.messagebus.infrastructure.mongodb;
 
 
+import java.util.Set;
+
 import org.bson.conversions.Bson;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.Morphia;
@@ -47,6 +49,28 @@ public abstract class MongoRepository {
     protected Datastore getDatastore(String dbName) {
         return morphia.createDatastore(getMongoClient(), dbName);
     }
+
+    /**
+     * 获取到集合名称
+     * 
+     * @param dbName
+     * @return
+     */
+    protected Set<String> getCollectionNames(String dbName) {
+        return getDatastore(dbName).getDB().getCollectionNames();
+    }
+
+    /**
+     * 获取到指定集合
+     * 
+     * @param dbName
+     * @param collectionName
+     * @return
+     */
+    protected DBCollection getCollection(String dbName, String collectionName) {
+        return getDatastore(dbName).getDB().getCollection(collectionName);
+    }
+
 
     /**
      * 获取实体信息

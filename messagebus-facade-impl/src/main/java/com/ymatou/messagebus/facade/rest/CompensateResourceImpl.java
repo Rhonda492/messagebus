@@ -13,8 +13,12 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import com.ymatou.messagebus.domain.repository.MessageCompensateRepository;
+import com.ymatou.messagebus.domain.repository.MessageRepository;
 import com.ymatou.messagebus.facade.CompensateFacade;
 import com.ymatou.messagebus.facade.model.CheckToCompensateReq;
 import com.ymatou.messagebus.facade.model.CheckToCompensateResp;
@@ -36,8 +40,16 @@ import com.ymatou.messagebus.facade.model.ListLockResp;
 @Produces(MediaType.APPLICATION_JSON)
 public class CompensateResourceImpl implements CompensateResource {
 
+    private static Logger logger = LoggerFactory.getLogger(CompensateResourceImpl.class);
+
     @Resource
     private CompensateFacade compensateFacade;
+
+    @Resource
+    private MessageCompensateRepository messageCompensateRepository;
+
+    @Resource
+    private MessageRepository messageRepository;
 
     @GET
     @Path("/lock/list")
@@ -58,6 +70,28 @@ public class CompensateResourceImpl implements CompensateResource {
         DeleteLockResp resp = compensateFacade.deleteLock(req);
 
         return RestResp.newInstance(resp);
+    }
+
+
+    @GET
+    @Path("/index")
+    @Override
+    public String index() {
+        logger.info("-------------------index start------------------------");
+        try {
+            messageCompensateRepository.index();
+            logger.info("message compensate index success.");
+
+            messageRepository.index();
+            logger.info("message and status index success.");
+
+            logger.info("-------------------index success------------------------");
+        } catch (Exception exception) {
+            logger.error("compensate index failed", exception);
+            return exception.getMessage();
+        }
+
+        return "ok";
     }
 
     @POST

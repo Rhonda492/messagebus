@@ -13,16 +13,21 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 import javax.annotation.Resource;
 
 import org.bson.conversions.Bson;
 import org.mongodb.morphia.query.Query;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
 
+import com.mongodb.DBCollection;
 import com.mongodb.MongoClient;
 import com.mongodb.ReadPreference;
+import com.mongodb.client.MongoIterable;
 import com.ymatou.messagebus.domain.model.Message;
 import com.ymatou.messagebus.facade.enums.MessageNewStatusEnum;
 import com.ymatou.messagebus.facade.enums.MessageProcessStatusEnum;
@@ -41,9 +46,34 @@ public class MessageRepository extends MongoRepository implements InitializingBe
 
     private SimpleDateFormat simpleDateFormat;
 
+    private static Logger logger = LoggerFactory.getLogger(MessageRepository.class);
+
+
     @Override
     protected MongoClient getMongoClient() {
         return mongoClient;
+    }
+
+    /**
+     * 重建索引
+     */
+    public void index() {
+        MongoIterable<String> listDatabaseNames = mongoClient.listDatabaseNames();
+        for (String dbName : listDatabaseNames) {
+            if (dbName.startsWith("JMQ_Message_")) {
+                logger.info("index db {}", dbName);
+                Set<String> collectionNames = getCollectionNames(dbName);
+                for (String collectionName : collectionNames) {
+                    DBCollection collection = getCollection(dbName, collectionName);
+                    collection.createIndex("uuid");
+                    collection.createIndex("ctime");
+                    if (!collectionName.startsWith("mq_subscribe")) {
+                        collection.createIndex("aid");
+                        collection.createIndex("code");
+                    }
+                }
+            }
+        }
     }
 
 

@@ -20,6 +20,7 @@ import javax.annotation.Resource;
 import org.junit.Test;
 
 import com.ymatou.messagebus.domain.model.Message;
+import com.ymatou.messagebus.domain.repository.MessageCompensateRepository;
 import com.ymatou.messagebus.domain.repository.MessageRepository;
 import com.ymatou.messagebus.domain.service.DispatchService;
 import com.ymatou.messagebus.facade.PublishMessageFacade;
@@ -46,7 +47,14 @@ public class HumanTest extends BaseTest {
     @Resource
     private DispatchService dispatchService;
 
+    @Resource
+    private MessageCompensateRepository messageCompensateRepository;
 
+
+    @Test
+    public void testMessageCompensateIndex() {
+        messageCompensateRepository.index();
+    }
 
     @Test
     public void testPublishMessage() throws InterruptedException {

@@ -9,6 +9,7 @@ import static org.junit.Assert.*;
 
 import javax.annotation.Resource;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.ymatou.messagebus.domain.model.Alarm;
@@ -25,6 +26,7 @@ public class AlarmRepositoryTest extends BaseTest {
     private AlarmRepository alarmRepository;
 
     @Test
+    @Ignore
     public void testGetByConsumerId() {
         String consumerId = "testjava_hello_c0";
         Alarm alarm = alarmRepository.getByConsumerId(consumerId);

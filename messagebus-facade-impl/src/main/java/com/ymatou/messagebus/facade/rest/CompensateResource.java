@@ -33,6 +33,13 @@ public interface CompensateResource {
     public RestResp deleteLock(String lockType);
 
     /**
+     * 重建索引
+     * 
+     * @return
+     */
+    public String index();
+
+    /**
      * 补单
      * 
      * @param req
