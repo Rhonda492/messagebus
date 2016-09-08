@@ -36,7 +36,7 @@ public class MessageBusClientTest extends BaseTest {
         Message req = new Message();
         req.setAppId("testjava");
         req.setCode("hello");
-        req.setMessageId("xxx-100");
+        req.setMessageId("xxx-200");
         req.setBody(TaskItemRequest.newInstance());
 
         messageBusClient.sendMessasge(req);
@@ -150,5 +150,29 @@ public class MessageBusClientTest extends BaseTest {
         assertEquals(req.getCode(), req2.getCode());
         assertEquals(req.getIp(), req2.getIp());
         assertEquals(req.getBody(), req2.getBody());
+    }
+
+    @Test
+    public void testClearDB() {
+        MessageDB messageDB = messageBusClient.getMessageDB();
+
+        int beforeNum = messageDB.count("message");
+        assertEquals(true, beforeNum >= 0);
+
+        messageDB.clear("message");
+        int afterNum = messageDB.count("message");
+
+        assertEquals(0, afterNum);
+    }
+
+    @Test
+    public void testConsume() {
+        MessageDB messageDB = messageBusClient.getMessageDB();
+        messageDB.clear("message");
+        int afterNum = messageDB.count("message");
+        assertEquals(0, afterNum);
+
+
+
     }
 }

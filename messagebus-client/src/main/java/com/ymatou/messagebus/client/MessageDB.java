@@ -150,6 +150,20 @@ public class MessageDB {
     }
 
     /**
+     * 清空消息
+     * 
+     * @param mapName
+     */
+    @SuppressWarnings("unchecked")
+    public void clear(String mapName) {
+        HTreeMap<String, Serializable> map =
+                db.hashMap(mapName, Serializer.STRING, Serializer.JAVA).createOrOpen();
+
+        map.clear();
+        db.commit();
+    }
+
+    /**
      * 关闭数据库
      */
     public void close() {

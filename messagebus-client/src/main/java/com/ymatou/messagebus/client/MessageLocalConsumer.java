@@ -66,9 +66,11 @@ public class MessageLocalConsumer extends Thread {
                 if (req == null) {
                     continue;
                 }
+
                 logger.debug("messagebus client consumer send message:{}", req);
 
                 PublishMessageResp resp = publishMessageFacade.publish(req);
+
                 logger.debug("messagebus client consumer recv response:{}", resp);
 
                 if (resp.isSuccess()) {
