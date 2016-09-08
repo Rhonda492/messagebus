@@ -20,6 +20,7 @@ import com.mongodb.MongoClient;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 
 /**
@@ -134,6 +135,24 @@ public abstract class MongoRepository {
 
         return collection.updateOne(doc, res);
     }
+
+
+    /**
+     * 删除文档
+     * 
+     * @param dbName
+     * @param collectionName
+     * @param document
+     */
+    protected DeleteResult deleteOne(String dbName, String collectionName, Bson filter) {
+        MongoClient mongoClient = getMongoClient();
+        MongoDatabase database = mongoClient.getDatabase(dbName);
+        MongoCollection<DBObject> collection = database.getCollection(collectionName, DBObject.class);
+
+
+        return collection.deleteOne(filter);
+    }
+
 
     /**
      * 创建查询

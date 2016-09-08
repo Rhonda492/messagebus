@@ -5,8 +5,7 @@
  */
 package com.ymatou.messagebus.test.facade;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -216,6 +215,62 @@ public class CompensateFacadeTest extends BaseTest {
         assertNotNull(msgAssert);
         assertEquals(MessageNewStatusEnum.CheckToCompensate.code(), msgAssert.getNewStatus());
         assertEquals(MessageProcessStatusEnum.Success.code(), msgAssert.getProcessStatus());
+
+        MessageStatus messageStatus = messageStatusRepository.getByUuid(appId, message.getUuid(), "testjava_hello_c0");
+        assertNotNull(messageStatus);
+        assertEquals(MessageStatusSourceEnum.Compensate.toString(), messageStatus.getSource());
+        assertEquals(true, messageStatus.getResult().startsWith("ok"));
+    }
+
+    @Test
+    public void testCompensateSuccessWithNoMessage() throws InterruptedException {
+        String appId = "testjava";
+        String code = "hello";
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.MINUTE, -6);
+
+        Message message = buildMessage(appId, code, TaskItemRequest.newInstance().toString());
+        message.setCreateTime(calendar.getTime());
+        messageRepository.insert(message);
+
+        CheckToCompensateReq req = new CheckToCompensateReq();
+        req.setAppId(appId);
+        req.setCode(code);
+
+        CheckToCompensateResp resp = compensateFacade.checkToCompensate(req);
+        assertEquals(true, resp.isSuccess());
+
+        Message msgAssert = messageRepository.getByUuid(appId, code, message.getUuid());
+        assertNotNull(msgAssert);
+        assertEquals(MessageNewStatusEnum.CheckToCompensate.code(), msgAssert.getNewStatus());
+
+        MessageCompensate compensate = messageCompensateRepository.getByUuid(appId, code, message.getUuid());
+        assertNotNull(compensate);
+        assertEquals(MessageCompensateStatusEnum.NotRetry.code(), compensate.getNewStatus());
+        assertEquals(MessageCompensateSourceEnum.Compensate.code(), compensate.getSource());
+
+        // 删除消息，模拟MongoDB宕机，导致消息没有进入的场景
+        messageRepository.delete(msgAssert);
+        msgAssert = messageRepository.getByUuid(appId, code, message.getUuid());
+        assertNull(msgAssert);
+
+
+        // 执行补单
+        compensateService.initSemaphore();
+
+        CompensateReq compensateReq = new CompensateReq();
+        compensateReq.setAppId(appId);
+        compensateReq.setCode(code);
+
+        CompensateResp compensateResp = compensateFacade.compensate(compensateReq);
+        assertEquals(true, compensateResp.isSuccess());
+
+        Thread.sleep(1000);
+
+        compensate = messageCompensateRepository.getByUuid(appId, code, message.getUuid());
+        assertNotNull(compensate);
+        assertEquals(MessageCompensateStatusEnum.RetryOk.code(), compensate.getNewStatus());
+        assertEquals(MessageCompensateSourceEnum.Compensate.code(), compensate.getSource());
 
         MessageStatus messageStatus = messageStatusRepository.getByUuid(appId, message.getUuid(), "testjava_hello_c0");
         assertNotNull(messageStatus);

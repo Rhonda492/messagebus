@@ -111,6 +111,50 @@ public class DispatchMessageFacadeTest extends BaseTest {
     }
 
     @Test
+    public void testDispatchWithNoMessage() throws InterruptedException {
+        // 此处模拟消息没有进入MongoDB，依然可以分发成功
+        // Message message = buildMessage("hello", "hello");
+
+        DispatchMessageReq req = new DispatchMessageReq();
+        req.setAppId("testjava");
+        req.setCode("hello");
+        req.setMessageBody("hello");
+        req.setMessageId(UUID.randomUUID().toString());
+        req.setMessageUuid(Message.newUuid());
+
+        compensateService.initSemaphore();
+
+        DispatchMessageResp resp = dispatchMessageFacade.dipatch(req);
+        assertEquals(true, resp.isSuccess());
+
+        Thread.sleep(200);
+
+        MessageStatus messageStatus =
+                messageStatusRepository.getByUuid(req.getAppId(), req.getMessageUuid(), "testjava_hello_c0");
+        assertNotNull(messageStatus);
+        assertEquals("Dispatch", messageStatus.getSource());
+        assertEquals(req.getMessageUuid(), messageStatus.getMessageUuid());
+        assertEquals(req.getMessageId(), messageStatus.getMessageId());
+        assertEquals(true, messageStatus.getResult().startsWith("fail"));
+        assertEquals("PushFail", messageStatus.getStatus());
+
+        MessageCompensate messageCompensate = messageCompensateRepository.getByUuid(req.getAppId(),
+                req.getCode(), req.getMessageUuid());
+        assertNotNull(messageCompensate);
+        assertEquals(2, messageCompensate.getStatus().intValue());
+        assertEquals(req.getMessageId(), messageCompensate.getMessageId());
+        assertEquals(req.getMessageBody(), messageCompensate.getBody());
+        assertEquals(0, messageCompensate.getNewStatus().intValue());
+        assertEquals(2, messageCompensate.getSource().intValue());
+
+        Message messageAssert =
+                messageRepository.getByUuid(req.getAppId(), req.getCode(), req.getMessageUuid());
+        assertNull(messageAssert);
+    }
+
+
+
+    @Test
     public void testDispatchNoRetry() throws InterruptedException {
         Message message = buildMessage("noretry", "hello");
 

@@ -127,10 +127,18 @@ public class CompensateService implements InitializingBean {
                         logger.info("check and compensate Start, appId:{}, code:{}.", appId, code);
 
                         logger.info("STEP.1 checkToCompensate");
-                        checkToCompensate(appId, code);
+                        try {
+                            checkToCompensate(appId, code);
+                        } catch (Exception e) {
+                            logger.error("STEP.1 checkToCompensate fail.", e);
+                        }
 
                         logger.info("STEP.2 compensate");
-                        compensate(appId, code);
+                        try {
+                            compensate(appId, code);
+                        } catch (Exception e) {
+                            logger.error("STEP.2 compensate fail.", e);
+                        }
 
                         logger.info("check and compensate end.");
                     }
@@ -210,12 +218,11 @@ public class CompensateService implements InitializingBean {
      * @param messageCompensate
      */
     private void compensateCallback(MessageCompensate messageCompensate, MessageConfig messageConfig) {
-        String appId = messageCompensate.getAppId();
-        String code = messageCompensate.getCode();
-        String uuid = messageCompensate.getMessageUuid();
-
         CallbackConfig callbackConfig = messageConfig.getCallbackConfig(messageCompensate.getConsumerId());
-        Message message = messageRepository.getByUuid(appId, code, uuid);
+
+        // 直接从补单消息转换来，避免因为消息库丢失造成的补单失败
+        // Message message = messageRepository.getByUuid(appId, code, uuid);
+        Message message = Message.from(messageCompensate);
 
         try {
             new BizSystemCallback(httpClient, message, messageCompensate, callbackConfig, callbackServiceImpl).send();

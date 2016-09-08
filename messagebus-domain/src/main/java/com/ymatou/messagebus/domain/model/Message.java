@@ -299,4 +299,21 @@ public class Message extends PrintFriendliness {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMM");
         return String.format("%s.%s", dateFormat.format(new Date()), ObjectId.get().toString());
     }
+
+    /**
+     * 根据补单消息转换
+     * 
+     * @param messageCompensate
+     * @return
+     */
+    public static Message from(MessageCompensate messageCompensate) {
+        Message message = new Message();
+        message.setAppId(messageCompensate.getAppId());
+        message.setCode(messageCompensate.getCode());
+        message.setBody(messageCompensate.getBody());
+        message.setMessageId(messageCompensate.getMessageId());
+        message.setUuid(messageCompensate.getMessageUuid());
+
+        return message;
+    }
 }

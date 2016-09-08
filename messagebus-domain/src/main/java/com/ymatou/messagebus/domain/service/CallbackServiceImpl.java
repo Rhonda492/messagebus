@@ -19,7 +19,9 @@ import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
 import org.apache.http.nio.reactor.ConnectingIOReactor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Component;
 
 import com.ymatou.messagebus.domain.model.AppConfig;
@@ -74,6 +76,9 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
 
     @Resource
     private ErrorReportClient errorReportClient;
+
+    @Resource
+    private TaskExecutor taskExecutor;
 
     /*
      * (non-Javadoc)
@@ -146,27 +151,39 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
      */
     public void writeSuccessResult(Message message, MessageCompensate messageCompensate, CallbackConfig callbackConfig,
             long duration) {
-        MessageStatus messageStatus = MessageStatus.from(message, callbackConfig);
-        if (messageCompensate == null) {
-            messageStatus.setSource(MessageStatusSourceEnum.Dispatch.toString());
-        } else {
-            messageStatus.setSource(MessageStatusSourceEnum.Compensate.toString());
-        }
-        messageStatus.setStatus(MessageStatusEnum.PushOk.toString());
-        messageStatus.setSuccessResult(callbackConfig.getCallbackKey(), duration, callbackConfig.getUrl());
+        String requestId = MDC.get("logPrefix");
 
-        messageStatusRepository.insert(messageStatus, message.getAppId());
+        taskExecutor.execute(() -> {
+            MDC.put("logPrefix", requestId);
 
-        if (messageCompensate != null) {
-            messageCompensate.incRetryCount();
-            messageCompensate.setNewStatus(MessageCompensateStatusEnum.RetryOk.code());
-            messageCompensateRepository.update(messageCompensate);
-        }
+            logger.info("----------------------- callback write success message begin ----------------");
+            try {
+                MessageStatus messageStatus = MessageStatus.from(message, callbackConfig);
+                if (messageCompensate == null) {
+                    messageStatus.setSource(MessageStatusSourceEnum.Dispatch.toString());
+                } else {
+                    messageStatus.setSource(MessageStatusSourceEnum.Compensate.toString());
+                }
+                messageStatus.setStatus(MessageStatusEnum.PushOk.toString());
+                messageStatus.setSuccessResult(callbackConfig.getCallbackKey(), duration, callbackConfig.getUrl());
 
+                messageStatusRepository.insert(messageStatus, message.getAppId());
 
-        // TODO 处理多条结果
-        messageRepository.updateMessageProcessStatus(message.getAppId(), message.getCode(), message.getUuid(),
-                MessageProcessStatusEnum.Success);
+                if (messageCompensate != null) {
+                    messageCompensate.incRetryCount();
+                    messageCompensate.setNewStatus(MessageCompensateStatusEnum.RetryOk.code());
+                    messageCompensateRepository.update(messageCompensate);
+                }
+
+                // TODO 处理多条结果
+                messageRepository.updateMessageProcessStatus(message.getAppId(), message.getCode(), message.getUuid(),
+                        MessageProcessStatusEnum.Success);
+
+            } catch (Exception e) {
+                logger.error("callback writeSuccessResult fail.", e);
+            }
+            logger.info("----------------------- callback write success message end ----------------");
+        });
     }
 
     /**
@@ -180,62 +197,70 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
      */
     public void writeFailResult(Message message, MessageCompensate messageCompensate, CallbackConfig callbackConfig,
             String response, long duration, Throwable throwable) {
-        try {
-            MessageStatus messageStatus = MessageStatus.from(message, callbackConfig);
-            Boolean isFromDispatch = (messageCompensate == null); // 判断回调请求是否来自分发站
+        String requestId = MDC.get("logPrefix");
 
-            if (isFromDispatch) {
-                messageStatus.setSource(MessageStatusSourceEnum.Dispatch.toString());
-            } else {
-                messageStatus.setSource(MessageStatusSourceEnum.Compensate.toString());
-            }
-            messageStatus.setStatus(MessageStatusEnum.PushFail.toString());
-            messageStatus.setFailResult(callbackConfig.getCallbackKey(), throwable, duration, response,
-                    callbackConfig.getUrl());
-            messageStatusRepository.insert(messageStatus, message.getAppId());
+        taskExecutor.execute(() -> {
+            MDC.put("logPrefix", requestId);
 
-            if (isFromDispatch) {
-                if (callbackConfig.getIsRetry() == null || callbackConfig.getIsRetry().intValue() > 0) {
-                    messageCompensate =
-                            MessageCompensate.from(message, callbackConfig, MessageCompensateSourceEnum.Dispatch);
-                    messageCompensateRepository.insert(messageCompensate);
-                }
-            } else {
-                messageCompensate.incRetryCount();
-                if (new Date().after(messageCompensate.getRetryTimeout())) {
-                    messageCompensate.setNewStatus(MessageCompensateStatusEnum.RetryFail.code());
+            logger.info("----------------------- callback write fail message begin ----------------");
+            try {
+                MessageStatus messageStatus = MessageStatus.from(message, callbackConfig);
+                Boolean isFromDispatch = (messageCompensate == null); // 判断回调请求是否来自分发站
+
+                if (isFromDispatch) {
+                    messageStatus.setSource(MessageStatusSourceEnum.Dispatch.toString());
                 } else {
-                    messageCompensate.setNewStatus(MessageCompensateStatusEnum.Retrying.code());
+                    messageStatus.setSource(MessageStatusSourceEnum.Compensate.toString());
                 }
+                messageStatus.setStatus(MessageStatusEnum.PushFail.toString());
+                messageStatus.setFailResult(callbackConfig.getCallbackKey(), throwable, duration, response,
+                        callbackConfig.getUrl());
+                messageStatusRepository.insert(messageStatus, message.getAppId());
 
-                messageCompensateRepository.update(messageCompensate);
-            }
-
-            if (isFromDispatch) {
-                if (callbackConfig.getIsRetry() == null || callbackConfig.getIsRetry().intValue() > 0) {
-                    messageRepository.updateMessageStatusAndPublishTime(message.getAppId(), message.getCode(),
-                            message.getUuid(), MessageNewStatusEnum.DispatchToCompensate,
-                            MessageProcessStatusEnum.Compensate);
+                if (isFromDispatch) {
+                    if (callbackConfig.getIsRetry() == null || callbackConfig.getIsRetry().intValue() > 0) {
+                        MessageCompensate compensate =
+                                MessageCompensate.from(message, callbackConfig, MessageCompensateSourceEnum.Dispatch);
+                        messageCompensateRepository.insert(compensate);
+                    }
                 } else {
-                    messageRepository.updateMessageStatusAndPublishTime(message.getAppId(), message.getCode(),
-                            message.getUuid(), MessageNewStatusEnum.InRabbitMQ,
-                            MessageProcessStatusEnum.Fail);
-                }
-            } else {
-                if (messageCompensate.getNewStatus() == MessageCompensateStatusEnum.RetryFail.code()) {
-                    messageRepository.updateMessageProcessStatus(message.getAppId(), message.getCode(),
-                            message.getUuid(), MessageProcessStatusEnum.Fail);
-                } else {
-                    messageRepository.updateMessageProcessStatus(message.getAppId(), message.getCode(),
-                            message.getUuid(), MessageProcessStatusEnum.Compensate);
-                }
-            }
-            sendErrorReport(message, callbackConfig, throwable);
+                    messageCompensate.incRetryCount();
+                    if (new Date().after(messageCompensate.getRetryTimeout())) {
+                        messageCompensate.setNewStatus(MessageCompensateStatusEnum.RetryFail.code());
+                    } else {
+                        messageCompensate.setNewStatus(MessageCompensateStatusEnum.Retrying.code());
+                    }
 
-        } catch (Exception e) {
-            logger.error(String.format("write callback fail result fail, appcode:%s, messageid:%s",
-                    message.getAppCode(), message.getUuid()), e);
-        }
+                    messageCompensateRepository.update(messageCompensate);
+                }
+
+                if (isFromDispatch) {
+                    if (callbackConfig.getIsRetry() == null || callbackConfig.getIsRetry().intValue() > 0) {
+                        messageRepository.updateMessageStatusAndPublishTime(message.getAppId(), message.getCode(),
+                                message.getUuid(), MessageNewStatusEnum.DispatchToCompensate,
+                                MessageProcessStatusEnum.Compensate);
+                    } else {
+                        messageRepository.updateMessageStatusAndPublishTime(message.getAppId(), message.getCode(),
+                                message.getUuid(), MessageNewStatusEnum.InRabbitMQ,
+                                MessageProcessStatusEnum.Fail);
+                    }
+                } else {
+                    if (messageCompensate.getNewStatus() == MessageCompensateStatusEnum.RetryFail.code()) {
+                        messageRepository.updateMessageProcessStatus(message.getAppId(), message.getCode(),
+                                message.getUuid(), MessageProcessStatusEnum.Fail);
+                    } else {
+                        messageRepository.updateMessageProcessStatus(message.getAppId(), message.getCode(),
+                                message.getUuid(), MessageProcessStatusEnum.Compensate);
+                    }
+                }
+                sendErrorReport(message, callbackConfig, throwable);
+
+            } catch (Exception e) {
+                logger.error(String.format("write callback fail result fail, appcode:%s, messageid:%s",
+                        message.getAppCode(), message.getUuid()), e);
+            }
+            logger.info("----------------------- callback write fail message end ----------------");
+        });
     }
 
 
@@ -261,6 +286,7 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
         logger.error(title, ex);
 
         if (!StringUtils.isEmpty(callbackAppId)) {
+            logger.info("sendErrorReport subscribe appId:{}", callbackAppId);
             errorReportClient.report(title, ex, callbackAppId);
         }
     }

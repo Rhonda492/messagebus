@@ -89,6 +89,19 @@ public class MessageRepository extends MongoRepository implements InitializingBe
         insertEntiy(dbName, collectionName, message);
     }
 
+    /**
+     * 删除消息
+     * 
+     * @param message
+     */
+    public void delete(Message message) {
+        String dbName = "JMQ_Message_" + message.getAppId() + "_" + message.getUuid().substring(0, 6);
+        String collectionName = "Message_" + message.getCode();
+
+        Bson filter = eq("uuid", message.getUuid());
+        deleteOne(dbName, collectionName, filter);
+    }
+
 
     /**
      * 获取到单条消息
