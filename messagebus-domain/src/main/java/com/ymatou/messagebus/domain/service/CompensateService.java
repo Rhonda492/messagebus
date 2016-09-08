@@ -18,7 +18,9 @@ import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
 import org.apache.http.nio.reactor.ConnectingIOReactor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Component;
 
 import com.ymatou.messagebus.domain.model.AppConfig;
@@ -65,6 +67,9 @@ public class CompensateService implements InitializingBean {
 
     @Resource
     private CallbackServiceImpl callbackServiceImpl;
+
+    @Resource
+    private TaskExecutor taskExecutor;
 
 
     /**
@@ -210,6 +215,44 @@ public class CompensateService implements InitializingBean {
                 }
             }
         }
+    }
+
+    /**
+     * 秒级补单
+     * 
+     * @param message
+     */
+    public void secondCompensate(Message message, String consumerId, int timeSpanSecond) {
+        String requestId = MDC.get("logPrefix");
+
+        taskExecutor.execute(() -> {
+            MDC.put("logPrefix", requestId);
+
+            logger.info("----------------------- second compensate begin ----------------");
+            try {
+                AppConfig appConfig = appConfigRepository.getAppConfig(message.getAppId());
+                if (appConfig == null) {
+                    throw new BizException(ErrorCode.ILLEGAL_ARGUMENT, "invalid appId:" + message.getAppId());
+                }
+
+                MessageConfig messageConfig = appConfig.getMessageConfig(message.getCode());
+                if (messageConfig == null) {
+                    throw new BizException(ErrorCode.ILLEGAL_ARGUMENT, "invalid code:" + message.getCode());
+                }
+
+                CallbackConfig callbackConfig = messageConfig.getCallbackConfig(consumerId);
+                if (callbackConfig == null) {
+                    throw new BizException(ErrorCode.ILLEGAL_ARGUMENT, "invalid consumerId:" + consumerId);
+                }
+
+                new BizSystemCallback(httpClient, message, null, callbackConfig, callbackServiceImpl)
+                        .secondCompensate(timeSpanSecond);
+
+            } catch (Exception e) {
+                logger.error("secondCompensate fail.", e);
+            }
+            logger.info("----------------------- second compensate end ----------------");
+        });
     }
 
     /**

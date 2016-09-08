@@ -37,6 +37,7 @@ import com.ymatou.messagebus.domain.repository.MessageRepository;
 import com.ymatou.messagebus.domain.repository.MessageStatusRepository;
 import com.ymatou.messagebus.facade.BizException;
 import com.ymatou.messagebus.facade.ErrorCode;
+import com.ymatou.messagebus.facade.enums.CallbackModeEnum;
 import com.ymatou.messagebus.facade.enums.MessageCompensateSourceEnum;
 import com.ymatou.messagebus.facade.enums.MessageCompensateStatusEnum;
 import com.ymatou.messagebus.facade.enums.MessageNewStatusEnum;
@@ -149,7 +150,8 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
      * @param callbackConfig
      * @param duration
      */
-    public void writeSuccessResult(Message message, MessageCompensate messageCompensate, CallbackConfig callbackConfig,
+    public void writeSuccessResult(CallbackModeEnum callbackMode, Message message, MessageCompensate messageCompensate,
+            CallbackConfig callbackConfig,
             long duration) {
         String requestId = MDC.get("logPrefix");
 
@@ -159,7 +161,7 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
             logger.info("----------------------- callback write success message begin ----------------");
             try {
                 MessageStatus messageStatus = MessageStatus.from(message, callbackConfig);
-                if (messageCompensate == null) {
+                if (CallbackModeEnum.Dispatch == callbackMode) {
                     messageStatus.setSource(MessageStatusSourceEnum.Dispatch.toString());
                 } else {
                     messageStatus.setSource(MessageStatusSourceEnum.Compensate.toString());
@@ -195,7 +197,8 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
      * @param duration
      * @param throwable
      */
-    public void writeFailResult(Message message, MessageCompensate messageCompensate, CallbackConfig callbackConfig,
+    public void writeFailResult(CallbackModeEnum callbackMode, Message message, MessageCompensate messageCompensate,
+            CallbackConfig callbackConfig,
             String response, long duration, Throwable throwable) {
         String requestId = MDC.get("logPrefix");
 
@@ -205,9 +208,9 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
             logger.info("----------------------- callback write fail message begin ----------------");
             try {
                 MessageStatus messageStatus = MessageStatus.from(message, callbackConfig);
-                Boolean isFromDispatch = (messageCompensate == null); // 判断回调请求是否来自分发站
 
-                if (isFromDispatch) {
+                // 记录调用结果
+                if (CallbackModeEnum.Dispatch == callbackMode) {
                     messageStatus.setSource(MessageStatusSourceEnum.Dispatch.toString());
                 } else {
                     messageStatus.setSource(MessageStatusSourceEnum.Compensate.toString());
@@ -217,8 +220,14 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
                         callbackConfig.getUrl());
                 messageStatusRepository.insert(messageStatus, message.getAppId());
 
-                if (isFromDispatch) {
+                // 记录补单结果
+                if (CallbackModeEnum.Dispatch == callbackMode) {
                     if (callbackConfig.getIsRetry() == null || callbackConfig.getIsRetry().intValue() > 0) {
+                        // 如果需要秒级补单则调用补单站
+                        if (callbackConfig.getSecondCompensateSpan() != null
+                                && callbackConfig.getSecondCompensateSpan().intValue() > 0) {
+
+                        }
                         MessageCompensate compensate =
                                 MessageCompensate.from(message, callbackConfig, MessageCompensateSourceEnum.Dispatch);
                         messageCompensateRepository.insert(compensate);
@@ -230,11 +239,11 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
                     } else {
                         messageCompensate.setNewStatus(MessageCompensateStatusEnum.Retrying.code());
                     }
-
                     messageCompensateRepository.update(messageCompensate);
                 }
 
-                if (isFromDispatch) {
+                // 更改消息状态
+                if (CallbackModeEnum.Dispatch == callbackMode) {
                     if (callbackConfig.getIsRetry() == null || callbackConfig.getIsRetry().intValue() > 0) {
                         messageRepository.updateMessageStatusAndPublishTime(message.getAppId(), message.getCode(),
                                 message.getUuid(), MessageNewStatusEnum.DispatchToCompensate,

@@ -13,6 +13,8 @@ import com.ymatou.messagebus.facade.model.DeleteLockReq;
 import com.ymatou.messagebus.facade.model.DeleteLockResp;
 import com.ymatou.messagebus.facade.model.ListLockReq;
 import com.ymatou.messagebus.facade.model.ListLockResp;
+import com.ymatou.messagebus.facade.model.SecondCompensateReq;
+import com.ymatou.messagebus.facade.model.SecondCompensateResp;
 
 /**
  * 补单站 API
@@ -52,4 +54,12 @@ public interface CompensateFacade {
      * @return
      */
     public CompensateResp compensate(CompensateReq req);
+
+    /**
+     * 秒级补单
+     * 
+     * @param req
+     * @return
+     */
+    public SecondCompensateResp secondCompensate(SecondCompensateReq req);
 }

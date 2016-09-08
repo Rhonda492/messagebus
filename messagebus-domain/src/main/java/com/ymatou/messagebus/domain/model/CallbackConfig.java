@@ -77,6 +77,12 @@ public class CallbackConfig {
     private String callbackAppId;
 
     /**
+     * 秒级补单时间间隔（单位：秒）
+     */
+    @Property("SecondCompensateSpan")
+    private Integer secondCompensateSpan;
+
+    /**
      * @return the callbackKey
      */
     public String getCallbackKey() {
@@ -232,5 +238,19 @@ public class CallbackConfig {
      */
     public final void setCallbackAppId(String callbackAppId) {
         this.callbackAppId = callbackAppId;
+    }
+
+    /**
+     * @return the secondCompensateSpan
+     */
+    public Integer getSecondCompensateSpan() {
+        return secondCompensateSpan;
+    }
+
+    /**
+     * @param secondCompensateSpan the secondCompensateSpan to set
+     */
+    public void setSecondCompensateSpan(Integer secondCompensateSpan) {
+        this.secondCompensateSpan = secondCompensateSpan;
     }
 }

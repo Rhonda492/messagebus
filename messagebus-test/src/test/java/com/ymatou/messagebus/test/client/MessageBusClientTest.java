@@ -43,6 +43,13 @@ public class MessageBusClientTest extends BaseTest {
     }
 
     @Test
+    public void testSendMessageSuccessWithConstructor() throws MessageBusException {
+        Message message = new Message("testjava", "hello", "xxx-300", TaskItemRequest.newInstance());
+
+        messageBusClient.sendMessasge(message);
+    }
+
+    @Test
     public void testSendMessageBodyNull() throws MessageBusException {
         thrown.expect(MessageBusException.class);
         thrown.expectMessage("body must not null");

@@ -53,6 +53,28 @@ public class MessageCompensateRepository extends MongoRepository {
     }
 
     /**
+     * 保存补单消息
+     * 
+     * @param messageCompensate
+     */
+    public void save(MessageCompensate messageCompensate) {
+        String collectionName = String.format("Mq_%s_%s", messageCompensate.getAppId(), messageCompensate.getCode());
+        MessageCompensate compensate =
+                newQuery(MessageCompensate.class, dbName, collectionName, ReadPreference.primaryPreferred())
+                        .field("uuid").equal(messageCompensate.getMessageUuid()).get();
+        if (compensate == null) {
+            insertEntiy(dbName, collectionName, messageCompensate);
+        } else {
+            compensate.setNewStatus(messageCompensate.getNewStatus());
+            compensate.setSource(messageCompensate.getSource());
+            compensate.incRetryCount();
+
+            DatastoreImpl datastore = (DatastoreImpl) getDatastore(dbName);
+            datastore.save(collectionName, compensate);
+        }
+    }
+
+    /**
      * 插入补单库
      * 
      * @param messageCompensate

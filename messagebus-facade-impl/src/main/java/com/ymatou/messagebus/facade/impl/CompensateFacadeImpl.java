@@ -13,6 +13,7 @@ import javax.annotation.Resource;
 import org.springframework.stereotype.Component;
 
 import com.ymatou.messagebus.domain.model.DistributedLock;
+import com.ymatou.messagebus.domain.model.Message;
 import com.ymatou.messagebus.domain.repository.DistributedLockRepository;
 import com.ymatou.messagebus.domain.service.CompensateService;
 import com.ymatou.messagebus.facade.CompensateFacade;
@@ -25,6 +26,8 @@ import com.ymatou.messagebus.facade.model.DeleteLockResp;
 import com.ymatou.messagebus.facade.model.DistributedLockVO;
 import com.ymatou.messagebus.facade.model.ListLockReq;
 import com.ymatou.messagebus.facade.model.ListLockResp;
+import com.ymatou.messagebus.facade.model.SecondCompensateReq;
+import com.ymatou.messagebus.facade.model.SecondCompensateResp;
 
 /**
  * 分发站 API实现
@@ -108,6 +111,22 @@ public class CompensateFacadeImpl implements CompensateFacade {
         compensateService.compensate(req.getAppId(), req.getCode());
 
         CompensateResp resp = new CompensateResp();
+        resp.setSuccess(true);
+        return resp;
+    }
+
+    @Override
+    public SecondCompensateResp secondCompensate(SecondCompensateReq req) {
+        Message message = new Message();
+        message.setAppId(req.getAppId());
+        message.setCode(req.getCode());
+        message.setUuid(req.getUuid());
+        message.setMessageId(req.getMessageId());
+        message.setBody(req.getBody());
+
+        compensateService.secondCompensate(message, req.getConsumerId(), req.getTimeSpanSecond().intValue());
+
+        SecondCompensateResp resp = new SecondCompensateResp();
         resp.setSuccess(true);
         return resp;
     }

@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import com.ymatou.messagebus.domain.model.CallbackConfig;
 import com.ymatou.messagebus.domain.model.Message;
 import com.ymatou.messagebus.domain.model.MessageCompensate;
+import com.ymatou.messagebus.facade.enums.CallbackModeEnum;
 import com.ymatou.messagebus.infrastructure.thread.AdjustableSemaphore;
 import com.ymatou.messagebus.infrastructure.thread.SemaphorManager;
 
@@ -63,6 +64,16 @@ public class BizSystemCallback implements FutureCallback<HttpResponse> {
     private long beginTime;
 
     /**
+     * 回调模式
+     */
+    private CallbackModeEnum callbackMode;
+
+    /**
+     * 回调结果
+     */
+    private boolean callbackResult;
+
+    /**
      * 构造异步回调实例
      * 
      * @param httpClient
@@ -83,6 +94,14 @@ public class BizSystemCallback implements FutureCallback<HttpResponse> {
 
         setContentType(callbackConfig.getContentType());
         setTimeout(callbackConfig.getTimeout());
+
+        this.callbackResult = false;
+        if (messageCompensate == null) {
+            this.callbackMode = CallbackModeEnum.Dispatch;
+        } else {
+            this.callbackMode = CallbackModeEnum.Compensate;
+        }
+
     }
 
 
@@ -159,7 +178,29 @@ public class BizSystemCallback implements FutureCallback<HttpResponse> {
             logger.error(String.format("biz callback accquire semaphore fail, appcode:%s, messageUuid:%s",
                     message.getAppCode(), message.getUuid()), e);
         }
+    }
 
+    /**
+     * 秒级补单
+     * 
+     * @param timeSpanMS
+     */
+    public void secondCompensate(int timeSpanSecond) {
+        this.callbackMode = CallbackModeEnum.SecondCompensate;
+        for (int i = 0; i < 10; i++) {
+            send();
+
+            try {
+                Thread.sleep(timeSpanSecond * 1000);
+            } catch (InterruptedException e) {
+                logger.error("secondCompensate fail.", e);
+            }
+
+            if (callbackResult) {
+                break;
+            }
+        }
+        httpPost.releaseConnection();
     }
 
     /**
@@ -167,7 +208,9 @@ public class BizSystemCallback implements FutureCallback<HttpResponse> {
      */
     private void clear() {
         semaphore.release();
-        httpPost.releaseConnection();
+        if (this.callbackMode != CallbackModeEnum.SecondCompensate) {
+            httpPost.releaseConnection();
+        }
     }
 
     @Override
@@ -182,10 +225,12 @@ public class BizSystemCallback implements FutureCallback<HttpResponse> {
                     message.getAppCode(), message.getUuid(), statusCode, duration, reponseStr);
 
             if (isCallbackSuccess(statusCode, reponseStr)) {
-                callbackServiceImpl.writeSuccessResult(message, messageCompensate, callbackConfig, duration);
+                callbackResult = true;
+                callbackServiceImpl.writeSuccessResult(callbackMode, message, messageCompensate, callbackConfig,
+                        duration);
             } else {
-                callbackServiceImpl.writeFailResult(message, messageCompensate, callbackConfig, reponseStr, duration,
-                        null);
+                callbackServiceImpl.writeFailResult(callbackMode, message, messageCompensate, callbackConfig,
+                        reponseStr, duration, null);
             }
 
         } catch (Exception e) {
@@ -202,7 +247,8 @@ public class BizSystemCallback implements FutureCallback<HttpResponse> {
                 message.getUuid(), httpPost.getRequestLine()), ex);
 
         long duration = System.currentTimeMillis() - beginTime;
-        callbackServiceImpl.writeFailResult(message, messageCompensate, callbackConfig, null, duration, ex);
+        callbackServiceImpl.writeFailResult(callbackMode, message, messageCompensate, callbackConfig, null, duration,
+                ex);
 
         clear();
 
@@ -214,8 +260,8 @@ public class BizSystemCallback implements FutureCallback<HttpResponse> {
                 message.getUuid(), httpPost.getRequestLine());
 
         long duration = System.currentTimeMillis() - beginTime;
-        callbackServiceImpl.writeFailResult(message, messageCompensate, callbackConfig, "http cancelled", duration,
-                null);
+        callbackServiceImpl.writeFailResult(callbackMode, message, messageCompensate, callbackConfig, "http cancelled",
+                duration, null);
 
         clear();
     }
