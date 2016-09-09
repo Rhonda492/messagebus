@@ -28,6 +28,8 @@ import com.ymatou.messagebus.facade.model.DeleteLockReq;
 import com.ymatou.messagebus.facade.model.DeleteLockResp;
 import com.ymatou.messagebus.facade.model.ListLockReq;
 import com.ymatou.messagebus.facade.model.ListLockResp;
+import com.ymatou.messagebus.facade.model.SecondCompensateReq;
+import com.ymatou.messagebus.facade.model.SecondCompensateResp;
 
 /**
  * 补单站 REST 实现
@@ -108,6 +110,15 @@ public class CompensateResourceImpl implements CompensateResource {
     @Override
     public RestResp checkToCompensate(CheckToCompensateReq req) {
         CheckToCompensateResp resp = compensateFacade.checkToCompensate(req);
+
+        return RestResp.newInstance(resp);
+    }
+
+    @POST
+    @Path("/{message:(?i:message)}/{secondCompensate:(?i:secondCompensate)}")
+    @Override
+    public RestResp secondCompensate(SecondCompensateReq req) {
+        SecondCompensateResp resp = compensateFacade.secondCompensate(req);
 
         return RestResp.newInstance(resp);
     }

@@ -67,7 +67,7 @@ final public class AdjustableSemaphore implements Serializable {
     /**
      * @return the maxPermits
      */
-    public int getMaxPermits() {
+    public synchronized int getMaxPermits() {
         return maxPermits;
     }
 }

@@ -8,6 +8,7 @@ package com.ymatou.messagebus.facade.rest;
 import com.ymatou.messagebus.facade.model.CheckToCompensateReq;
 import com.ymatou.messagebus.facade.model.CompensateReq;
 import com.ymatou.messagebus.facade.model.ListLockResp;
+import com.ymatou.messagebus.facade.model.SecondCompensateReq;
 
 /**
  * 补单站 REST API
@@ -54,4 +55,12 @@ public interface CompensateResource {
      * @return
      */
     public RestResp checkToCompensate(CheckToCompensateReq req);
+
+    /**
+     * 秒级补单
+     * 
+     * @param req
+     * @return
+     */
+    public RestResp secondCompensate(SecondCompensateReq req);
 }

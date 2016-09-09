@@ -155,7 +155,7 @@ public class MessageBusService implements InitializingBean {
             }
 
         } catch (Exception e) {
-            throw new BizException(ErrorCode.MESSAGE_PUBLISH_FAIL, "appcode:" + message.getMessageId(), e);
+            throw new BizException(ErrorCode.MESSAGE_PUBLISH_FAIL, "appcode:" + message.getAppCode(), e);
         }
     }
 

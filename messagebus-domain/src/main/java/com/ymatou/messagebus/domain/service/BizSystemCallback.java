@@ -234,7 +234,7 @@ public class BizSystemCallback implements FutureCallback<HttpResponse> {
             }
 
         } catch (Exception e) {
-            logger.error(String.format("appcode:{}, messageUuid:{}, {} completed.", message.getAppCode(),
+            logger.error(String.format("appcode:%s, messageUuid:%s, %s completed.", message.getAppCode(),
                     message.getUuid(), httpPost.getRequestLine()), e);
         } finally {
             clear();
@@ -243,7 +243,7 @@ public class BizSystemCallback implements FutureCallback<HttpResponse> {
 
     @Override
     public void failed(Exception ex) {
-        logger.error(String.format("appcode:{}, messageUuid:{}, {} cancelled.", message.getAppCode(),
+        logger.error(String.format("appcode:%s, messageUuid:%s, %s cancelled.", message.getAppCode(),
                 message.getUuid(), httpPost.getRequestLine()), ex);
 
         long duration = System.currentTimeMillis() - beginTime;

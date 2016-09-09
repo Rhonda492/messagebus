@@ -16,7 +16,7 @@
 	<dependencies>
 		<dependency>
 			<groupId>com.ymatou.messagebus</groupId>
-			<artifactId>messagebus-facade-model</artifactId>
+			<artifactId>messagebus-facade</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>com.ymatou.messagebus</groupId>
