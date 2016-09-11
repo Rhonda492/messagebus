@@ -11,7 +11,6 @@ import javax.annotation.Resource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
 import com.ymatou.messagebus.facade.ErrorCode;
 import com.ymatou.messagebus.facade.PublishMessageFacade;
@@ -24,7 +23,6 @@ import com.ymatou.messagebus.facade.model.PublishMessageResp;
  * @author wangxudong 2016年9月1日 下午12:04:20
  *
  */
-@Component
 public class MessageLocalConsumer extends Thread {
 
     private static Logger logger = LoggerFactory.getLogger(MessageLocalConsumer.class);

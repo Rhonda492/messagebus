@@ -29,7 +29,7 @@ public class MessageBusClient implements InitializingBean, DisposableBean {
 
     private Logger logger = LoggerFactory.getLogger(MessageBusClient.class);
 
-    public final static String VERSION = "1.0.1";
+    public final static String VERSION = "1.0.2";
 
     /**
      * 消息存储路径
@@ -44,7 +44,6 @@ public class MessageBusClient implements InitializingBean, DisposableBean {
     /**
      * 消息本地线程
      */
-    @Resource
     private MessageLocalConsumer messageLocalConsumer;
 
     @Resource(name = "publishMessageClient")
@@ -125,6 +124,7 @@ public class MessageBusClient implements InitializingBean, DisposableBean {
     public void afterPropertiesSet() throws Exception {
         messageDB = new MessageDB(getMessageDbPath(), "message");
 
+        messageLocalConsumer = new MessageLocalConsumer();
         messageLocalConsumer.setMessageDB(messageDB);
         messageLocalConsumer.setDaemon(true);
         messageLocalConsumer.start();
