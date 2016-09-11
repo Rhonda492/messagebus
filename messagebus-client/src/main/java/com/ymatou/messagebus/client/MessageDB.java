@@ -52,7 +52,9 @@ public class MessageDB {
         if (folder.exists() == false) {
             folder.mkdirs();
         }
-        db = DBMaker.fileDB(String.format("%s/%s.db", this.filePath, dbName)).make();
+        db = DBMaker.fileDB(String.format("%s/%s.db", this.filePath, dbName)).closeOnJvmShutdown()
+                .checksumHeaderBypass()
+                .make();
     }
 
     /**
