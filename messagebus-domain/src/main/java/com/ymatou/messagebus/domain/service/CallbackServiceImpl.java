@@ -44,7 +44,6 @@ import com.ymatou.messagebus.facade.enums.MessageCompensateStatusEnum;
 import com.ymatou.messagebus.facade.enums.MessageNewStatusEnum;
 import com.ymatou.messagebus.facade.enums.MessageProcessStatusEnum;
 import com.ymatou.messagebus.facade.enums.MessageStatusEnum;
-import com.ymatou.messagebus.facade.enums.MessageStatusSourceEnum;
 import com.ymatou.messagebus.facade.model.SecondCompensateReq;
 import com.ymatou.messagebus.facade.model.SecondCompensateResp;
 import com.ymatou.messagebus.infrastructure.logger.ErrorReportClient;
@@ -169,20 +168,16 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
             logger.info("----------------------- callback write success message begin ----------------");
             try {
                 MessageStatus messageStatus = MessageStatus.from(message, callbackConfig);
-                if (CallbackModeEnum.Dispatch == callbackMode) {
-                    messageStatus.setSource(MessageStatusSourceEnum.Dispatch.toString());
-                } else {
-                    messageStatus.setSource(MessageStatusSourceEnum.Compensate.toString());
-                }
+                messageStatus.setSource(callbackMode.toString());
                 messageStatus.setStatus(MessageStatusEnum.PushOk.toString());
                 messageStatus.setSuccessResult(callbackConfig.getCallbackKey(), duration, callbackConfig.getUrl());
-
                 messageStatusRepository.insert(messageStatus, message.getAppId());
 
                 if (CallbackModeEnum.SecondCompensate == callbackMode) {
                     MessageCompensate compensate =
                             MessageCompensate.from(message, callbackConfig, MessageCompensateSourceEnum.Compensate);
                     compensate.setNewStatus(MessageCompensateStatusEnum.RetryOk.code());
+                    compensate.incRetryCount();
                     messageCompensateRepository.save(compensate);
 
                 } else {
@@ -226,10 +221,15 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
 
                 // 记录调用结果
                 if (CallbackModeEnum.Dispatch == callbackMode) {
-                    messageStatus.setSource(MessageStatusSourceEnum.Dispatch.toString());
-                } else {
-                    messageStatus.setSource(MessageStatusSourceEnum.Compensate.toString());
+                    if (callbackConfig.getIsRetry() == null || callbackConfig.getIsRetry().intValue() > 0) {
+                        // 如果需要秒级补单则调用补单站
+                        if (callbackConfig.getSecondCompensateSpan() != null
+                                && callbackConfig.getSecondCompensateSpan().intValue() > 0) {
+                            secondCompensate(message, callbackConfig);
+                        }
+                    }
                 }
+                messageStatus.setSource(callbackMode.toString());
                 messageStatus.setStatus(MessageStatusEnum.PushFail.toString());
                 messageStatus.setFailResult(callbackConfig.getCallbackKey(), throwable, duration, response,
                         callbackConfig.getUrl());
@@ -238,20 +238,16 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
                 // 记录补单结果
                 if (CallbackModeEnum.Dispatch == callbackMode) {
                     if (callbackConfig.getIsRetry() == null || callbackConfig.getIsRetry().intValue() > 0) {
-                        // 如果需要秒级补单则调用补单站
-                        if (callbackConfig.getSecondCompensateSpan() != null
-                                && callbackConfig.getSecondCompensateSpan().intValue() > 0) {
-                            secondCompensate(message, callbackConfig);
-                        }
                         MessageCompensate compensate =
                                 MessageCompensate.from(message, callbackConfig, MessageCompensateSourceEnum.Dispatch);
-                        messageCompensateRepository.insert(compensate);
+                        messageCompensateRepository.save(compensate);
                     }
                 } else if (CallbackModeEnum.SecondCompensate == callbackMode) {
                     MessageCompensate compensate =
                             MessageCompensate.from(message, callbackConfig, MessageCompensateSourceEnum.Compensate);
 
                     compensate.setNewStatus(MessageCompensateStatusEnum.Retrying.code());
+                    compensate.incRetryCount();
                     messageCompensateRepository.save(compensate);
 
                 } else {
@@ -275,6 +271,9 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
                                 message.getUuid(), MessageNewStatusEnum.InRabbitMQ,
                                 MessageProcessStatusEnum.Fail);
                     }
+                } else if (CallbackModeEnum.SecondCompensate == callbackMode) {
+                    messageRepository.updateMessageProcessStatus(message.getAppId(), message.getCode(),
+                            message.getUuid(), MessageProcessStatusEnum.Compensate);
                 } else {
                     if (messageCompensate.getNewStatus() == MessageCompensateStatusEnum.RetryFail.code()) {
                         messageRepository.updateMessageProcessStatus(message.getAppId(), message.getCode(),

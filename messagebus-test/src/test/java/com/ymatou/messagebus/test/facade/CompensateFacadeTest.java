@@ -5,7 +5,9 @@
  */
 package com.ymatou.messagebus.test.facade;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -23,11 +25,11 @@ import com.ymatou.messagebus.domain.repository.MessageRepository;
 import com.ymatou.messagebus.domain.repository.MessageStatusRepository;
 import com.ymatou.messagebus.domain.service.CompensateService;
 import com.ymatou.messagebus.facade.CompensateFacade;
+import com.ymatou.messagebus.facade.enums.CallbackModeEnum;
 import com.ymatou.messagebus.facade.enums.MessageCompensateSourceEnum;
 import com.ymatou.messagebus.facade.enums.MessageCompensateStatusEnum;
 import com.ymatou.messagebus.facade.enums.MessageNewStatusEnum;
 import com.ymatou.messagebus.facade.enums.MessageProcessStatusEnum;
-import com.ymatou.messagebus.facade.enums.MessageStatusSourceEnum;
 import com.ymatou.messagebus.facade.model.CheckToCompensateReq;
 import com.ymatou.messagebus.facade.model.CheckToCompensateResp;
 import com.ymatou.messagebus.facade.model.CompensateReq;
@@ -163,7 +165,7 @@ public class CompensateFacadeTest extends BaseTest {
 
         MessageStatus messageStatus = messageStatusRepository.getByUuid(appId, message.getUuid(), "testjava_hello_c0");
         assertNotNull(messageStatus);
-        assertEquals(MessageStatusSourceEnum.Compensate.toString(), messageStatus.getSource());
+        assertEquals(CallbackModeEnum.Compensate.toString(), messageStatus.getSource());
         assertEquals(true, messageStatus.getResult().startsWith("fail"));
     }
 
@@ -218,7 +220,7 @@ public class CompensateFacadeTest extends BaseTest {
 
         MessageStatus messageStatus = messageStatusRepository.getByUuid(appId, message.getUuid(), "testjava_hello_c0");
         assertNotNull(messageStatus);
-        assertEquals(MessageStatusSourceEnum.Compensate.toString(), messageStatus.getSource());
+        assertEquals(CallbackModeEnum.Compensate.toString(), messageStatus.getSource());
         assertEquals(true, messageStatus.getResult().startsWith("ok"));
     }
 
@@ -274,7 +276,7 @@ public class CompensateFacadeTest extends BaseTest {
 
         MessageStatus messageStatus = messageStatusRepository.getByUuid(appId, message.getUuid(), "testjava_hello_c0");
         assertNotNull(messageStatus);
-        assertEquals(MessageStatusSourceEnum.Compensate.toString(), messageStatus.getSource());
+        assertEquals(CallbackModeEnum.Compensate.toString(), messageStatus.getSource());
         assertEquals(true, messageStatus.getResult().startsWith("ok"));
     }
 }

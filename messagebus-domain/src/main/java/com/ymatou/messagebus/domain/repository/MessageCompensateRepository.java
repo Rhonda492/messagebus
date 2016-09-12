@@ -66,7 +66,7 @@ public class MessageCompensateRepository extends MongoRepository {
             insertEntiy(dbName, collectionName, messageCompensate);
         } else {
             compensate.setNewStatus(messageCompensate.getNewStatus());
-            compensate.setSource(messageCompensate.getSource());
+            // compensate.setSource(messageCompensate.getSource());
             compensate.incRetryCount();
 
             DatastoreImpl datastore = (DatastoreImpl) getDatastore(dbName);
