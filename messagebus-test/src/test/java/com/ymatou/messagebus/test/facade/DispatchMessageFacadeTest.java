@@ -220,14 +220,32 @@ public class DispatchMessageFacadeTest extends BaseTest {
         assertEquals(true, messageStatus.getResult().startsWith("fail"));
         assertEquals("PushFail", messageStatus.getStatus());
 
+        MessageStatus messageStatus1 =
+                messageStatusRepository.getByUuid(req.getAppId(), req.getMessageUuid(), "testjava_hello2_c1");
+        assertNotNull(messageStatus1);
+        assertEquals("Dispatch", messageStatus1.getSource());
+        assertEquals(req.getMessageUuid(), messageStatus1.getMessageUuid());
+        assertEquals(req.getMessageId(), messageStatus1.getMessageId());
+        assertEquals(true, messageStatus1.getResult().startsWith("fail"));
+        assertEquals("PushFail", messageStatus1.getStatus());
+
         MessageCompensate messageCompensate = messageCompensateRepository.getByUuid(message.getAppId(),
-                message.getCode(), message.getUuid());
+                message.getCode(), message.getUuid(), "testjava_hello2_c0");
         assertNotNull(messageCompensate);
         assertEquals(2, messageCompensate.getStatus().intValue());
         assertEquals(message.getMessageId(), messageCompensate.getMessageId());
         assertEquals(message.getBody(), messageCompensate.getBody());
         assertEquals(0, messageCompensate.getNewStatus().intValue());
         assertEquals(MessageCompensateSourceEnum.Dispatch.code(), messageCompensate.getSource());
+
+        MessageCompensate messageCompensate1 = messageCompensateRepository.getByUuid(message.getAppId(),
+                message.getCode(), message.getUuid(), "testjava_hello2_c1");
+        assertNotNull(messageCompensate1);
+        assertEquals(2, messageCompensate1.getStatus().intValue());
+        assertEquals(message.getMessageId(), messageCompensate1.getMessageId());
+        assertEquals(message.getBody(), messageCompensate1.getBody());
+        assertEquals(0, messageCompensate1.getNewStatus().intValue());
+        assertEquals(MessageCompensateSourceEnum.Dispatch.code(), messageCompensate1.getSource());
 
         Message messageAssert =
                 messageRepository.getByUuid(message.getAppId(), message.getCode(), message.getUuid());

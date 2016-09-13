@@ -6,7 +6,7 @@
 package com.ymatou.messagebus.domain.repository;
 
 
-import java.util.Date;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Set;
 
@@ -64,7 +64,9 @@ public class MessageCompensateRepository extends MongoRepository {
         String collectionName = String.format("Mq_%s_%s", messageCompensate.getAppId(), messageCompensate.getCode());
         MessageCompensate compensate =
                 newQuery(MessageCompensate.class, dbName, collectionName, ReadPreference.primaryPreferred())
-                        .field("uuid").equal(messageCompensate.getMessageUuid()).get();
+                        .field("uuid").equal(messageCompensate.getMessageUuid())
+                        .field("cid").equal(messageCompensate.getConsumerId())
+                        .get();
         if (compensate == null) {
             insertEntiy(dbName, collectionName, messageCompensate);
         } else {
@@ -116,6 +118,23 @@ public class MessageCompensateRepository extends MongoRepository {
     }
 
     /**
+     * 查找消息补偿信息
+     * 
+     * @param appId
+     * @param code
+     * @param messageUuid
+     * @return
+     */
+    public MessageCompensate getByUuid(String appId, String code, String messageUuid, String consumerId) {
+        String collectionName = String.format("Mq_%s_%s", appId, code);
+
+        return newQuery(MessageCompensate.class, dbName, collectionName, ReadPreference.primary())
+                .field("uuid").equal(messageUuid)
+                .field("cid").equal(consumerId)
+                .get();
+    }
+
+    /**
      * 获取到需要补单的消息
      * 
      * @param appId
@@ -125,12 +144,15 @@ public class MessageCompensateRepository extends MongoRepository {
     public List<MessageCompensate> getNeedCompensate(String appId, String code) {
         String collectionName = String.format("Mq_%s_%s", appId, code);
 
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.SECOND, 2);
+
         Query<MessageCompensate> query =
                 newQuery(MessageCompensate.class, dbName, collectionName, ReadPreference.primaryPreferred());
         query.or(
                 query.criteria("nstatus").equal(MessageCompensateStatusEnum.NotRetry.code()),
                 query.criteria("nstatus").equal(MessageCompensateStatusEnum.Retrying.code()));
-        query.and(query.criteria("rtime").lessThanOrEq(new Date()));
+        query.and(query.criteria("rtime").lessThanOrEq(calendar.getTime()));
 
 
         return query.asList();
