@@ -71,6 +71,13 @@ public class CallbackConfig {
     private Integer retryTimeout;
 
     /**
+     * 重试补偿策略（Null或者空为每分钟补偿一次）
+     * 例如：1m-5m-10m-30m-1h-4h-8h-15h-1d-3d
+     */
+    @Property("RetryPolicy")
+    private String retryPolicy;
+
+    /**
      * 订阅者AppId
      */
     @Property("CallbackAppId")
@@ -252,5 +259,19 @@ public class CallbackConfig {
      */
     public void setSecondCompensateSpan(Integer secondCompensateSpan) {
         this.secondCompensateSpan = secondCompensateSpan;
+    }
+
+    /**
+     * @return the retryPolicy
+     */
+    public String getRetryPolicy() {
+        return retryPolicy;
+    }
+
+    /**
+     * @param retryPolicy the retryPolicy to set
+     */
+    public void setRetryPolicy(String retryPolicy) {
+        this.retryPolicy = retryPolicy;
     }
 }

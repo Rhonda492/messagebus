@@ -8,7 +8,9 @@ package com.ymatou.messagebus.domain.model;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Property;
 
@@ -20,6 +22,10 @@ import com.ymatou.messagebus.facade.enums.MessageCompensateStatusEnum;
  * 消息补偿记录
  * 
  * @author wangxudong 2016年8月2日 下午6:15:39
+ *
+ */
+/**
+ * @author wangxudong 2016年9月13日 上午10:31:13
  *
  */
 @Entity(noClassnameStored = true)
@@ -83,6 +89,13 @@ public class MessageCompensate extends PrintFriendliness {
     @Property("ctime")
     private Date createTime;
 
+
+    /**
+     * 重试时间(下一次补单时间)
+     */
+    @Property("rtime")
+    private Date retryTime;
+
     /**
      * 重试过期时间
      */
@@ -96,10 +109,16 @@ public class MessageCompensate extends PrintFriendliness {
     private String appKey;
 
     /**
-     * 重试次数
+     * 重试次数（包含秒补）
      */
     @Property("retrycount")
     private Integer retryCount;
+
+    /**
+     * 补偿次数（不含秒补）
+     */
+    @Property("compensatecount")
+    private Integer compensateCount;
 
     /**
      * 补单状态 JAVA版
@@ -254,6 +273,31 @@ public class MessageCompensate extends PrintFriendliness {
     }
 
     /**
+     * 判断是否需要重试
+     * 
+     * @param retryProlicy
+     * @return
+     */
+    public boolean needRetry(String retryProlicy) {
+        if (new Date().after(retryTimeout)) { // 超过了重试时间
+            return false;
+        }
+
+        int index = 0;
+        if (compensateCount != null) {
+            index = compensateCount.intValue();
+        }
+
+        if (!StringUtils.isEmpty(retryProlicy) // 填写了重试策略
+                && !retryProlicy.contains("e") // 重试策略不是无限终止
+                && retryProlicy.split("-").length <= index) { // 重试策略已经用完
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * 从消息到补偿的模型装换
      * 
      * @param appConfig
@@ -274,6 +318,8 @@ public class MessageCompensate extends PrintFriendliness {
         compensate.setCreateTime(new Date());
         compensate.setConsumerId(callbackConfig.getCallbackKey());
         compensate.setRetryCount(0);
+        compensate.setCompensateCount(0);
+        compensate.setRetryTime(new Date());
         compensate.setSource(sourceEnum.code());
 
         // 计算重试截止时间
@@ -281,7 +327,78 @@ public class MessageCompensate extends PrintFriendliness {
         calendar.add(Calendar.MINUTE, callbackConfig.getRetryTimeout());
         compensate.setRetryTimeout(calendar.getTime());
 
+        // 计算下次重试时间
+        compensate.setRetryTime(calcRetryTime(null, 0, callbackConfig.getRetryPolicy()));
+
         return compensate;
+    }
+
+    /**
+     * 设置重试时间
+     * 
+     * @param retryProlicy
+     */
+    public void setRetryTime(String retryProlicy) {
+        setRetryTime(calcRetryTime(null, compensateCount, retryProlicy));
+    }
+
+    /**
+     * 计算出下次重试时间
+     * 
+     * @param lstRetryTime
+     * @param index
+     * @param retryProlicy
+     * @return
+     */
+    public static Date calcRetryTime(Date lstRetryTime, int index, String retryProlicy) {
+        Calendar calendar = Calendar.getInstance();
+        if (lstRetryTime != null) {
+            calendar.setTime(lstRetryTime);
+        }
+
+        int nextMinute = 1;
+        if (!StringUtils.isEmpty(retryProlicy)) {
+            nextMinute = calcNextRetryMinute(index, retryProlicy);
+        }
+        calendar.add(Calendar.MINUTE, nextMinute);
+
+        return calendar.getTime();
+    }
+
+    /**
+     * 重试策略（eNh）正则表达式
+     */
+    private static final Pattern retryPolicyPattern = Pattern.compile("^e(\\d+)h$");
+
+    /**
+     * 根据重试策略计算出下一次重试时间距离当前的分钟数
+     * 
+     * @param index
+     * @param retryPolicy
+     * @return
+     */
+    public static int calcNextRetryMinute(int index, String retryPolicy) {
+        String[] retryArray = retryPolicy.split("-");
+        if (index >= retryArray.length) {
+            index = retryArray.length - 1;
+        }
+
+        String retryItem = retryArray[index];
+        if (retryItem.endsWith("m")) {
+            return Integer.parseInt(retryItem.substring(0, retryItem.length() - 1));
+        } else if (retryItem.equals("eh")) {
+            return 60;
+        } else if (retryPolicyPattern.matcher(retryItem).matches()) {
+            return Integer.parseInt(retryItem.substring(1, retryItem.length() - 1)) * 60;
+        } else if (retryItem.endsWith("h")) {
+            return Integer.parseInt(retryItem.substring(0, retryItem.length() - 1)) * 60;
+        } else if (retryItem.equals("ed")) {
+            return 60 * 24;
+        } else if (retryItem.endsWith("d")) {
+            return Integer.parseInt(retryItem.substring(0, retryItem.length() - 1)) * 60 * 24;
+        } else {
+            return 1;
+        }
     }
 
     /**
@@ -334,6 +451,17 @@ public class MessageCompensate extends PrintFriendliness {
     }
 
     /**
+     * 增加补单次数
+     */
+    public void incCompensateCount() {
+        if (this.compensateCount == null) {
+            this.compensateCount = 1;
+        } else {
+            this.compensateCount = this.compensateCount.intValue() + 1;
+        }
+    }
+
+    /**
      * @return the messageUuid
      */
     public final String getMessageUuid() {
@@ -359,5 +487,33 @@ public class MessageCompensate extends PrintFriendliness {
      */
     public final void setConsumerId(String consumerId) {
         this.consumerId = consumerId;
+    }
+
+    /**
+     * @return the retryTime
+     */
+    public Date getRetryTime() {
+        return retryTime;
+    }
+
+    /**
+     * @param retryTime the retryTime to set
+     */
+    public void setRetryTime(Date retryTime) {
+        this.retryTime = retryTime;
+    }
+
+    /**
+     * @return the compensateCount
+     */
+    public Integer getCompensateCount() {
+        return compensateCount;
+    }
+
+    /**
+     * @param compensateCount the compensateCount to set
+     */
+    public void setCompensateCount(Integer compensateCount) {
+        this.compensateCount = compensateCount;
     }
 }

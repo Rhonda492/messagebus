@@ -6,6 +6,7 @@
 package com.ymatou.messagebus.domain.repository;
 
 
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -49,6 +50,8 @@ public class MessageCompensateRepository extends MongoRepository {
             DBCollection collection = getCollection(dbName, collectionName);
             collection.createIndex("uuid");
             collection.createIndex("ctime");
+            collection.createIndex("rtime");
+            collection.createIndex("nstatus");
         }
     }
 
@@ -127,6 +130,8 @@ public class MessageCompensateRepository extends MongoRepository {
         query.or(
                 query.criteria("nstatus").equal(MessageCompensateStatusEnum.NotRetry.code()),
                 query.criteria("nstatus").equal(MessageCompensateStatusEnum.Retrying.code()));
+        query.and(query.criteria("rtime").lessThanOrEq(new Date()));
+
 
         return query.asList();
     }

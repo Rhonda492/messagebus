@@ -176,13 +176,17 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
                 if (CallbackModeEnum.SecondCompensate == callbackMode) {
                     MessageCompensate compensate =
                             MessageCompensate.from(message, callbackConfig, MessageCompensateSourceEnum.Compensate);
-                    compensate.setNewStatus(MessageCompensateStatusEnum.RetryOk.code());
                     compensate.incRetryCount();
+                    compensate.setCompensateCount(0);
+                    compensate.setRetryTime(new Date());
+                    compensate.setNewStatus(MessageCompensateStatusEnum.RetryOk.code());
                     messageCompensateRepository.save(compensate);
 
                 } else {
                     if (messageCompensate != null) {
                         messageCompensate.incRetryCount();
+                        messageCompensate.incCompensateCount();
+                        messageCompensate.setRetryTime(new Date());
                         messageCompensate.setNewStatus(MessageCompensateStatusEnum.RetryOk.code());
                         messageCompensateRepository.update(messageCompensate);
                     }
@@ -252,10 +256,13 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
 
                 } else {
                     messageCompensate.incRetryCount();
-                    if (new Date().after(messageCompensate.getRetryTimeout())) {
-                        messageCompensate.setNewStatus(MessageCompensateStatusEnum.RetryFail.code());
-                    } else {
+                    messageCompensate.incCompensateCount();
+
+                    if (messageCompensate.needRetry(callbackConfig.getRetryPolicy())) {
+                        messageCompensate.setRetryTime(callbackConfig.getRetryPolicy());
                         messageCompensate.setNewStatus(MessageCompensateStatusEnum.Retrying.code());
+                    } else {
+                        messageCompensate.setNewStatus(MessageCompensateStatusEnum.RetryFail.code());
                     }
                     messageCompensateRepository.update(messageCompensate);
                 }

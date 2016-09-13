@@ -141,6 +141,10 @@ public class CompensateFacadeTest extends BaseTest {
         assertEquals(MessageCompensateStatusEnum.NotRetry.code(), compensate.getNewStatus());
         assertEquals(MessageCompensateSourceEnum.Compensate.code(), compensate.getSource());
 
+        // 确保执行补单可以查出这条记录
+        compensate.setRetryTime(new Date());
+        messageCompensateRepository.update(compensate);
+
         // 执行补单
         compensateService.initSemaphore();
 
@@ -195,6 +199,15 @@ public class CompensateFacadeTest extends BaseTest {
         assertNotNull(compensate);
         assertEquals(MessageCompensateStatusEnum.NotRetry.code(), compensate.getNewStatus());
         assertEquals(MessageCompensateSourceEnum.Compensate.code(), compensate.getSource());
+        assertEquals(0, compensate.getCompensateCount().intValue());
+
+        Calendar calandar = Calendar.getInstance();
+        calandar.add(Calendar.MINUTE, 1);
+        assertEquals(true, calandar.getTime().getTime() - compensate.getRetryTime().getTime() < 500);
+
+        // 确保执行补单可以查出这条记录
+        compensate.setRetryTime(new Date());
+        messageCompensateRepository.update(compensate);
 
         // 执行补单
         compensateService.initSemaphore();
@@ -250,6 +263,10 @@ public class CompensateFacadeTest extends BaseTest {
         assertNotNull(compensate);
         assertEquals(MessageCompensateStatusEnum.NotRetry.code(), compensate.getNewStatus());
         assertEquals(MessageCompensateSourceEnum.Compensate.code(), compensate.getSource());
+
+        // 确保执行补单可以查出这条记录
+        compensate.setRetryTime(new Date());
+        messageCompensateRepository.update(compensate);
 
         // 删除消息，模拟MongoDB宕机，导致消息没有进入的场景
         messageRepository.delete(msgAssert);
