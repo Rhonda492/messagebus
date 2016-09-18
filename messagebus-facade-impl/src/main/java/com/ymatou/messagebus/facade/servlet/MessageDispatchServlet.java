@@ -130,6 +130,7 @@ public class MessageDispatchServlet extends HttpServlet {
             timer.purge();
             timer = null;
 
+            logger.info("dispatch task stop success.");
             return "stop success!";
         } else {
             return "task allready stop.";
@@ -145,6 +146,9 @@ public class MessageDispatchServlet extends HttpServlet {
         if (timer == null) {
             timer = new Timer(true);
             timer.schedule(new MessageDispatchTask(), 0, 1000 * 60);
+
+
+            logger.info("dispatch task start success.");
             return "start success!";
         } else {
             return "task allready start.";

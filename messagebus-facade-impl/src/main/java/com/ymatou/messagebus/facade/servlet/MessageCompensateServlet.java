@@ -118,6 +118,8 @@ public class MessageCompensateServlet extends HttpServlet {
             timer.cancel();
             timer.purge();
             timer = null;
+
+            logger.info("compensate task stop success.");
             return "stop success!";
         } else {
             return "task allready stop.";
@@ -133,6 +135,7 @@ public class MessageCompensateServlet extends HttpServlet {
         if (timer == null) {
             timer = new Timer(true);
             timer.schedule(new MessageCompensateTask(), 0, 1000 * 30);
+            logger.info("compensate task start success.");
             return "start success!";
         } else {
             return "task allready start.";
