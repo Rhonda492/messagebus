@@ -25,6 +25,12 @@ import org.slf4j.LoggerFactory;
 public class NetUtil {
     private static Logger logger = LoggerFactory.getLogger(NetUtil.class);
 
+    private static String ip;
+
+    private static String hostName;
+
+    private static Object lock = new Object();
+
     public static InetAddress getInetAddress() {
         Collection<InetAddress> colInetAddress = getAllHostAddress();
         for (InetAddress address : colInetAddress) {
@@ -61,20 +67,30 @@ public class NetUtil {
     }
 
     public static String getHostIp() {
-        InetAddress inetAddress = getInetAddress();
-        if (null == inetAddress) {
-            return null;
+        if (ip == null) {
+            InetAddress inetAddress = getInetAddress();
+            synchronized (lock) {
+                if (null == inetAddress) {
+                    ip = "unknow";
+                } else {
+                    ip = inetAddress.getHostAddress();
+                }
+            }
         }
-        String ip = inetAddress.getHostAddress();
         return ip;
     }
 
     public static String getHostName() {
-        InetAddress inetAddress = getInetAddress();
-        if (null == inetAddress) {
-            return null;
+        if (hostName == null) {
+            InetAddress inetAddress = getInetAddress();
+            synchronized (lock) {
+                if (null == inetAddress) {
+                    hostName = "unknow";
+                } else {
+                    hostName = inetAddress.getHostName();
+                }
+            }
         }
-        String hostName = inetAddress.getHostName();
         return hostName;
     }
 }

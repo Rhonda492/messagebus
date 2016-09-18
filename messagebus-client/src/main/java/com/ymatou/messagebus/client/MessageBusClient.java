@@ -22,6 +22,8 @@ import com.ymatou.messagebus.facade.model.PublishMessageResp;
  * 消息总线客户端
  * 
  * @author wangxudong 2016年8月30日 上午11:51:35
+ * 
+ *         1.0.3-优化获取本机IP的性能
  *
  */
 @Component
@@ -29,7 +31,7 @@ public class MessageBusClient implements InitializingBean, DisposableBean {
 
     private Logger logger = LoggerFactory.getLogger(MessageBusClient.class);
 
-    public final static String VERSION = "1.0.2";
+    public final static String VERSION = "1.0.3";
 
     /**
      * 消息存储路径
@@ -57,6 +59,7 @@ public class MessageBusClient implements InitializingBean, DisposableBean {
      * @throws MessageBusException
      */
     public void sendMessasge(Message message) throws MessageBusException {
+        logger.debug("messagebus client send begin:{}", message);
         PublishMessageReq req = message.validateToReq();
         logger.debug("messagebus client send message:{}", req);
 
@@ -129,7 +132,8 @@ public class MessageBusClient implements InitializingBean, DisposableBean {
         messageLocalConsumer.setDaemon(true);
         messageLocalConsumer.start();
 
-        logger.debug("message bus client initialization success, version:{}.", VERSION);
+        logger.debug("message bus client initialization success, version:{}, ip:{}, hostName:{}.", VERSION,
+                NetUtil.getHostIp(), NetUtil.getHostName());
     }
 
     @Override

@@ -14,6 +14,8 @@ import javax.annotation.Resource;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.ymatou.messagebus.client.Message;
 import com.ymatou.messagebus.client.MessageBusClient;
@@ -24,6 +26,8 @@ import com.ymatou.messagebus.test.BaseTest;
 import com.ymatou.messagebus.test.TaskItemRequest;
 
 public class MessageBusClientTest extends BaseTest {
+
+    private Logger logger = LoggerFactory.getLogger(MessageBusClientTest.class);
 
     @Resource
     private MessageBusClient messageBusClient;
@@ -39,7 +43,11 @@ public class MessageBusClientTest extends BaseTest {
         req.setMessageId("xxx-200");
         req.setBody(TaskItemRequest.newInstance());
 
+        logger.info(
+                "---------------------------------------------client send message start-----------------------------------------------------");
         messageBusClient.sendMessasge(req);
+        logger.info(
+                "---------------------------------------------client send message end-----------------------------------------------------");
     }
 
     @Test
