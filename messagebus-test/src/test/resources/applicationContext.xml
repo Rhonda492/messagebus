@@ -81,10 +81,15 @@
 	<dubbo:protocol name="dubbo" port="${dubbo.port}"
 		serialization="kryo" />
 
-	<!-- 生成远程服务代理，可以和本地bean一样使用demoFacade -->
-	<dubbo:reference id="publishMessageClient" interface="com.ymatou.messagebus.facade.PublishMessageFacade" retries="1" timeout="10000" />
-
 	<dubbo:reference id="compensateClient" interface="com.ymatou.messagebus.facade.CompensateFacade" retries="1" timeout="10000" />
+
+	<!-- 消息总线API生成远程服务代理 -->
+	<dubbo:reference id="publishMessageClient" interface="com.ymatou.messagebus.facade.PublishMessageFacade" retries="1" timeout="10000" />
+	 
+	<!-- 消息总线客户端 -->
+	<bean id="messageBusClient" class="com.ymatou.messagebus.client.MessageBusClient">
+	    <property name="messageDbPath" value="/data/messagebus/demo" />
+	</bean>
 	
 	
 </beans>

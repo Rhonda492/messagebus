@@ -25,6 +25,7 @@ import com.ymatou.messagebus.facade.model.PublishMessageResp;
  * 
  *         1.0.3-优化获取本机IP的性能
  *         1.0.4-修复MapDB关闭BUG
+ *         1.0.5-修改sendMessage方法名，修复补单BUG。
  *
  */
 @Component
@@ -32,7 +33,7 @@ public class MessageBusClient implements InitializingBean, DisposableBean {
 
     private Logger logger = LoggerFactory.getLogger(MessageBusClient.class);
 
-    public final static String VERSION = "1.0.4";
+    public final static String VERSION = "1.0.5";
 
     /**
      * 消息存储路径
@@ -59,7 +60,7 @@ public class MessageBusClient implements InitializingBean, DisposableBean {
      * @return
      * @throws MessageBusException
      */
-    public void sendMessasge(Message message) throws MessageBusException {
+    public void sendMessage(Message message) throws MessageBusException {
         logger.debug("messagebus client send begin:{}", message);
         PublishMessageReq req = message.validateToReq();
         logger.debug("messagebus client send message:{}", req);
@@ -91,7 +92,7 @@ public class MessageBusClient implements InitializingBean, DisposableBean {
      * @param req
      * @throws MessageBusException
      */
-    public void publishLocal(PublishMessageReq messageReq) throws MessageBusException {
+    private void publishLocal(PublishMessageReq messageReq) throws MessageBusException {
         try {
             String key = messageReq.getAppId() + messageReq.getCode() + messageReq.getMsgUniqueId();
             messageDB.save("message", key, messageReq);
@@ -116,11 +117,12 @@ public class MessageBusClient implements InitializingBean, DisposableBean {
     }
 
     /**
-     * 获取到数据存储
+     * 获取到数据存储(测试专用)
      * 
      * @return
      */
-    public MessageDB getMessageDB() {
+    @SuppressWarnings("unused")
+    private MessageDB getMessageDB() {
         return messageDB;
     }
 
@@ -128,12 +130,12 @@ public class MessageBusClient implements InitializingBean, DisposableBean {
     public void afterPropertiesSet() throws Exception {
         messageDB = new MessageDB(getMessageDbPath(), "message");
 
-        messageLocalConsumer = new MessageLocalConsumer();
+        messageLocalConsumer = new MessageLocalConsumer(publishMessageFacade);
         messageLocalConsumer.setMessageDB(messageDB);
         messageLocalConsumer.setDaemon(true);
         messageLocalConsumer.start();
 
-        logger.debug("message bus client initialization success, version:{}, ip:{}, hostName:{}.", VERSION,
+        logger.info("message bus client initialization success, version:{}, ip:{}, hostName:{}.", VERSION,
                 NetUtil.getHostIp(), NetUtil.getHostName());
     }
 

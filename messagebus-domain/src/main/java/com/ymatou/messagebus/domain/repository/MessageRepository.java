@@ -120,6 +120,22 @@ public class MessageRepository extends MongoRepository implements InitializingBe
     }
 
     /**
+     * 获取到单条消息
+     * 
+     * @param appId
+     * @param code
+     * @param messageId
+     * @return
+     */
+    public Message getByMessageId(String appId, String code, String colSuffix, String messageId) {
+        String dbName = "JMQ_Message_" + appId + "_" + colSuffix;
+        String collectionName = "Message_" + code;
+
+        return newQuery(Message.class, dbName, collectionName, ReadPreference.primaryPreferred()).field("mid")
+                .equal(messageId).get();
+    }
+
+    /**
      * 更新消息状态
      * 
      * @param appId

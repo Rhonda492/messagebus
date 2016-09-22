@@ -6,8 +6,7 @@
 package com.ymatou.messagebus.client;
 
 import java.util.Iterator;
-
-import javax.annotation.Resource;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,8 +31,19 @@ public class MessageLocalConsumer extends Thread {
      */
     private MessageDB messageDB;
 
-    @Resource(name = "publishMessageClient")
+    /**
+     * 总线消息发布API
+     */
     private PublishMessageFacade publishMessageFacade;
+
+    /**
+     * 构造函数
+     * 
+     * @param publishMessageFacade
+     */
+    public MessageLocalConsumer(PublishMessageFacade publishMessageFacade) {
+        this.publishMessageFacade = publishMessageFacade;
+    }
 
 
     @Override
@@ -45,7 +55,7 @@ public class MessageLocalConsumer extends Thread {
                 } catch (Throwable t) {
                     logger.error("fail to consume local message.", t);
                 }
-                Thread.sleep(1000 * 10);
+                TimeUnit.MILLISECONDS.sleep(1000 * 5);
             }
         } catch (InterruptedException e) {
             logger.error("message local consume thread is interrupted", e);
