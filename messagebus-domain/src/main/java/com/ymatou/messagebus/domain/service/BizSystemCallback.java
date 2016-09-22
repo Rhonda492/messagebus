@@ -221,7 +221,7 @@ public class BizSystemCallback implements FutureCallback<HttpResponse> {
             int statusCode = result.getStatusLine().getStatusCode();
             long duration = System.currentTimeMillis() - beginTime;
 
-            logger.info("appcode:{}, messageUuid:{}, async response code:{}, duration:{}ms, message{}.",
+            logger.info("appcode:{}, messageUuid:{}, async response code:{}, duration:{}ms, message:{}.",
                     message.getAppCode(), message.getUuid(), statusCode, duration, reponseStr);
 
             if (isCallbackSuccess(statusCode, reponseStr)) {
