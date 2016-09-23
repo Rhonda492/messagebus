@@ -25,7 +25,8 @@ import com.ymatou.messagebus.facade.model.PublishMessageResp;
  * 
  *         1.0.3-优化获取本机IP的性能
  *         1.0.4-修复MapDB关闭BUG
- *         1.0.5-修改sendMessage方法名，修复补单BUG。
+ *         1.0.5-修改sendMessage方法名，修复补单BUG
+ *         1.0.6-修复MessageLocalConsumer中对于Facade放回的处理
  *
  */
 @Component
@@ -33,7 +34,7 @@ public class MessageBusClient implements InitializingBean, DisposableBean {
 
     private Logger logger = LoggerFactory.getLogger(MessageBusClient.class);
 
-    public final static String VERSION = "1.0.5";
+    public final static String VERSION = "1.0.6";
 
     /**
      * 消息存储路径
@@ -69,14 +70,12 @@ public class MessageBusClient implements InitializingBean, DisposableBean {
             PublishMessageResp resp = publishMessageFacade.publish(req);
             logger.debug("messagebus client recv response:{}", resp);
 
-            if (resp.isSuccess()) {
-                return;
-            }
-
-            if (ErrorCode.ILLEGAL_ARGUMENT.equals(resp.getErrorCode())) {
-                throw new MessageBusException(resp.getErrorMessage());
-            } else {
-                publishLocal(req);
+            if (!resp.isSuccess()) {
+                if (ErrorCode.ILLEGAL_ARGUMENT.equals(resp.getErrorCode())) {
+                    throw new MessageBusException(resp.getErrorMessage());
+                } else {
+                    publishLocal(req);
+                }
             }
         } catch (MessageBusException busException) {
             throw busException;
@@ -97,8 +96,8 @@ public class MessageBusClient implements InitializingBean, DisposableBean {
             String key = messageReq.getAppId() + messageReq.getCode() + messageReq.getMsgUniqueId();
             messageDB.save("message", key, messageReq);
         } catch (Exception ex) {
-            logger.warn("publish messge local fail, messageId:" + messageReq.getMsgUniqueId(), ex);
-            throw new MessageBusException("publish messge local fail, messageId:" + messageReq.getMsgUniqueId(), ex);
+            logger.warn("publish message local fail, messageId:" + messageReq.getMsgUniqueId(), ex);
+            throw new MessageBusException("publish message local fail, messageId:" + messageReq.getMsgUniqueId(), ex);
         }
     }
 

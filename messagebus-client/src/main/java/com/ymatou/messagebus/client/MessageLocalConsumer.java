@@ -83,14 +83,14 @@ public class MessageLocalConsumer extends Thread {
 
                 if (resp.isSuccess()) {
                     messageDB.delete("message", key);
-                }
-
-                if (ErrorCode.ILLEGAL_ARGUMENT.equals(resp.getErrorCode())) {
-                    logger.error("message local consume fail, will be remove from local db, cause:{}",
-                            resp.getErrorMessage());
-                    messageDB.delete("message", key);
                 } else {
-                    logger.error("message local consume fail:{}", resp.getErrorMessage());
+                    if (ErrorCode.ILLEGAL_ARGUMENT.equals(resp.getErrorCode())) {
+                        logger.error("message local consume fail, will be remove from local db, cause:{}",
+                                resp.getErrorMessage());
+                        messageDB.delete("message", key);
+                    } else {
+                        logger.error("message local consume fail:{}", resp.getErrorMessage());
+                    }
                 }
             } catch (Exception e) {
                 logger.error("consume message fail, key:" + key, e);

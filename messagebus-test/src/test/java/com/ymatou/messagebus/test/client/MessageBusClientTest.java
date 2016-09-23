@@ -153,31 +153,6 @@ public class MessageBusClientTest extends BaseTest {
     }
 
     @Test
-    public void testPublishLocal() throws MessageBusException {
-        PublishMessageReq req = new PublishMessageReq();
-        req.setAppId("testjava");
-        req.setCode("hello-x");
-        req.setMsgUniqueId(UUID.randomUUID().toString());
-        req.setBody("hello");
-
-        MessageDB messageDB = invokeGetMessageDB();
-
-        int beforeNum = messageDB.count("message");
-        invokePublishLocal(req);
-
-        int afterNum = messageDB.count("message");
-        assertEquals(beforeNum + 1, afterNum);
-
-        String key = req.getAppId() + req.getCode() + req.getMsgUniqueId();
-        PublishMessageReq req2 = messageDB.get("message", key);
-        assertNotNull(req2);
-        assertEquals(req.getAppId(), req2.getAppId());
-        assertEquals(req.getCode(), req2.getCode());
-        assertEquals(req.getIp(), req2.getIp());
-        assertEquals(req.getBody(), req2.getBody());
-    }
-
-    @Test
     public void testRetryThread() throws InterruptedException {
         PublishMessageReq req = new PublishMessageReq();
         req.setAppId("testjava");
@@ -205,7 +180,7 @@ public class MessageBusClientTest extends BaseTest {
         assertEquals(req.getBody(), req2.getBody());
 
         // 给后台补发线程足够的处理时间
-        Thread.sleep(1000 * 7);
+        Thread.sleep(1000 * 6);
 
         com.ymatou.messagebus.domain.model.Message message =
                 messageRepository.getByMessageId(req.getAppId(), req.getCode(), simpleDateFormat.format(new Date()),
@@ -217,6 +192,10 @@ public class MessageBusClientTest extends BaseTest {
         assertEquals(req.getAppId() + "_" + req.getCode(), message.getAppCode());
 
         System.out.println("messageId:" + message.getMessageId());
+
+    }
+
+    public void testPublishLocal() {
 
     }
 
