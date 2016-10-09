@@ -243,7 +243,7 @@ public class BizSystemCallback implements FutureCallback<HttpResponse> {
 
     @Override
     public void failed(Exception ex) {
-        logger.error(String.format("appcode:%s, messageUuid:%s, %s cancelled.", message.getAppCode(),
+        logger.error(String.format("appcode:%s, messageUuid:%s, %s failed.", message.getAppCode(),
                 message.getUuid(), httpPost.getRequestLine()), ex);
 
         long duration = System.currentTimeMillis() - beginTime;

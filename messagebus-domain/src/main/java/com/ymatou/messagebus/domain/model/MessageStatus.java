@@ -179,8 +179,9 @@ public class MessageStatus extends PrintFriendliness {
         }
 
         if (throwable != null) {
-            this.result = String.format("fail, %s, %dms, %s, %s", consumerId, duration, throwable.getMessage(),
-                    callbackUrl);
+            this.result =
+                    String.format("fail, %s, %dms, %s:%s, %s", consumerId, duration, throwable.getClass().getName(),
+                            throwable.getMessage(), callbackUrl);
         } else {
             this.result = String.format("fail, %s, %dms, %s, %s", consumerId, duration, response, callbackUrl);
         }
