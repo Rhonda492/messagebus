@@ -26,9 +26,13 @@ public class SystemResourceImpl implements SystemResource {
 
     @GET
     @Path("/version")
+    @Produces(MediaType.APPLICATION_JSON)
     @Override
     public String version() {
-        return "2016-10-09.1";
+        return "{"
+                + "\"1.0.0\":\"2016-09-01.1 first deploy.\","
+                + "\"1.0.1\":\"2016-10-10.1 create kafka publish site.\""
+                + "}";
     }
 
 
