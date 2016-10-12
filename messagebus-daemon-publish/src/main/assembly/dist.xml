@@ -17,7 +17,7 @@
 			<outputDirectory>conf</outputDirectory>
 		</fileSet>
 		<fileSet>
-			<directory>${project.basedir}\bin</directory>
+			<directory>${project.basedir}\script</directory>
 			<includes>
 				<include>*.sh</include>
 			</includes>

@@ -2,7 +2,8 @@
 <configuration>
 	<property name="pattern"
 		value="%date [%thread] %-5level %logger{40} KEY[%X{logPrefix}] - %msg%n" />
-	<property name="baseDir" value="/usr/local/log/mqpublish.kafka.iapi.ymatou.com" />
+	<property name="appId" value="mqpublish.kafka.iapi.ymatou.com" />
+	<property name="baseDir" value="/usr/local/log/${appId}" />
 	<property name="level" value="info" />
 	<property name="charset" value="UTF-8" />
 	<property name="immediateFlush" value="true" />
@@ -22,7 +23,7 @@
 		<param name="targetUrl" value="http://alarm.ymatou.com/Alarm/SaveSingle" />
 
 		<!-- your application id -->
-		<param name="appId" value="mqpublish.kafka.iapi.ymatou.com" />
+		<param name="appId" value="${appId}" />
 	</appender>
 
 	<appender name="ERROR-APPENDER"
@@ -68,12 +69,11 @@
 		<appender-ref ref="DEFAULT-APPENDER" />
 	</appender>
 
-	<logger name="mqpublish.kafka.iapi.ymatou.com" additivity="false">
+	<logger name="com.ymatou.messagebus" additivity="false">
 		<level value="${level}" />
 		<appender-ref ref="ASYNC-DEFAULT-APPENDER" />
 		<appender-ref ref="ASYNC-ERROR-APPENDER" />
 		<appender-ref ref="HTTP-POST-ERROR-APPENDER" />
-		<appender-ref ref="STDOUT" />
 	</logger>
 
 	<root level="${level}">

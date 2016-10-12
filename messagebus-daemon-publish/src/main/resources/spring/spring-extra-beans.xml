@@ -77,7 +77,7 @@
 
 	<bean id="performanceMonitorAdvice"
 		class="com.ymatou.performancemonitorclient.PerformanceMonitorAdvice">
-		<property name="appId" value="mqpublish.kafka.iapi.ymatou.com"></property>
+		<property name="appId" value="${appId}"></property>
 		<property name="serverUrl" value="${perfmonapi.url}"></property>
 	</bean>
 
