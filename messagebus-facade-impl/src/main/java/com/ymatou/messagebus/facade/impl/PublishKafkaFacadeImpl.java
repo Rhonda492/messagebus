@@ -12,7 +12,7 @@ import javax.annotation.Resource;
 import org.springframework.stereotype.Component;
 
 import com.ymatou.messagebus.domain.model.Message;
-import com.ymatou.messagebus.domain.service.MessageBusService;
+import com.ymatou.messagebus.domain.service.KafkaBusService;
 import com.ymatou.messagebus.facade.PublishKafkaFacade;
 import com.ymatou.messagebus.facade.enums.MessageNewStatusEnum;
 import com.ymatou.messagebus.facade.enums.MessageProcessStatusEnum;
@@ -31,7 +31,7 @@ import com.ymatou.messagebus.infrastructure.net.NetUtil;
 public class PublishKafkaFacadeImpl implements PublishKafkaFacade {
 
     @Resource
-    private MessageBusService messageBusService;
+    private KafkaBusService kafkaBusService;
 
     /*
      * (non-Javadoc)
@@ -55,7 +55,7 @@ public class PublishKafkaFacadeImpl implements PublishKafkaFacade {
         message.setNewStatus(MessageNewStatusEnum.InRabbitMQ.code());
         message.setProcessStatus(MessageProcessStatusEnum.Init.code());
 
-        messageBusService.publish(message);
+        kafkaBusService.publish(message);
 
         PublishMessageResp resp = new PublishMessageResp();
         resp.setSuccess(true);

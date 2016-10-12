@@ -20,16 +20,17 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Component;
 
+import com.ymatou.messagebus.domain.cache.AppConfigCache;
 import com.ymatou.messagebus.domain.model.AppConfig;
 import com.ymatou.messagebus.domain.model.CallbackConfig;
 import com.ymatou.messagebus.domain.model.Message;
 import com.ymatou.messagebus.domain.model.MessageCompensate;
 import com.ymatou.messagebus.domain.model.MessageConfig;
-import com.ymatou.messagebus.domain.repository.AppConfigRepository;
 import com.ymatou.messagebus.domain.repository.MessageCompensateRepository;
 import com.ymatou.messagebus.domain.repository.MessageRepository;
 import com.ymatou.messagebus.facade.BizException;
 import com.ymatou.messagebus.facade.ErrorCode;
+import com.ymatou.messagebus.facade.enums.MQTypeEnum;
 import com.ymatou.messagebus.facade.enums.MessageCompensateSourceEnum;
 import com.ymatou.messagebus.facade.enums.MessageNewStatusEnum;
 import com.ymatou.messagebus.facade.enums.MessageProcessStatusEnum;
@@ -50,7 +51,7 @@ public class MessageBusService implements InitializingBean {
     private MessageRepository messageRepository;
 
     @Resource
-    private AppConfigRepository appConfigRepository;
+    private AppConfigCache appConfigCache;
 
     @Resource
     private MessageCompensateRepository compensateRepository;
@@ -69,9 +70,14 @@ public class MessageBusService implements InitializingBean {
      * @param message
      */
     public void publish(Message message) {
-        AppConfig appConfig = appConfigRepository.getAppConfig(message.getAppId());
+        AppConfig appConfig = appConfigCache.get(message.getAppId());
         if (appConfig == null) {
             throw new BizException(ErrorCode.ILLEGAL_ARGUMENT, "invalid appId:" + message.getAppId());
+        }
+
+        if (MQTypeEnum.Kafka.code().equals(appConfig.getMqType())) {
+            throw new BizException(ErrorCode.ILLEGAL_ARGUMENT,
+                    "invalid appId:" + message.getAppId() + ", please config mqtype to rabbitmq.");
         }
 
         MessageConfig messageConfig = appConfig.getMessageConfig(message.getCode());

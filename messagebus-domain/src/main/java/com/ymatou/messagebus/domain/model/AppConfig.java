@@ -58,6 +58,12 @@ public class AppConfig extends PrintFriendliness {
     @Property("DispatchGroup")
     private String dispatchGroup;
 
+    /*
+     * 消息中间件类型
+     */
+    @Property("MQType")
+    private Integer mqType;
+
 
     /**
      * @return the version
@@ -171,5 +177,19 @@ public class AppConfig extends PrintFriendliness {
     public MessageConfig getMessageConfigByAppCode(String appCode) {
         String code = appCode.substring(getAppId().length() + 1);
         return getMessageConfig(code);
+    }
+
+    /**
+     * @return the mqType
+     */
+    public Integer getMqType() {
+        return mqType;
+    }
+
+    /**
+     * @param mqType the mqType to set
+     */
+    public void setMqType(Integer mqType) {
+        this.mqType = mqType;
     }
 }

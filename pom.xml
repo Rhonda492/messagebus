@@ -67,6 +67,7 @@
 		<fastjson.version>1.2.11</fastjson.version>
 		<beanutils.version>1.9.2</beanutils.version>
 		<mapdb.version>3.0.1</mapdb.version>
+		<google.guava.version>19.0</google.guava.version>
 
 		<!-- self version -->
 		<messagebus.version>1.0.0</messagebus.version>
@@ -252,6 +253,11 @@
 				<version>${zkclient.version}</version>
 			</dependency>
 
+			<dependency>
+			  <groupId>com.google.guava</groupId>
+			  <artifactId>guava</artifactId>
+			  <version>${google.guava.version}</version>
+			</dependency>
 
 			<dependency>
 				<groupId>org.apache.commons</groupId>

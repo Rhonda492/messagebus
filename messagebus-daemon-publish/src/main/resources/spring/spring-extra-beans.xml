@@ -22,7 +22,7 @@
 
 	<!-- 使用disconf必须添加以下配置 -->
 	<bean id="disconfMgrBean" class="com.baidu.disconf.client.DisconfMgrBean"
-		destroy-method="destroy">
+		destroy-method="destroy" depends-on="tomcatConfig">
 		<property name="scanPackage" value="com.ymatou.messagebus" />
 	</bean>
 	<bean id="disconfMgrBean2" class="com.baidu.disconf.client.DisconfMgrBeanSecond"
@@ -33,7 +33,9 @@
           class="com.baidu.disconf.client.addons.properties.ReloadablePropertiesFactoryBean">
         <property name="locations">
             <list>
-                <value>application.properties</value>
+                <value>app.properties</value>
+                <value>tomcat.properties</value>
+                <value>kafkaproducer.properties</value>
             </list>
         </property>
     </bean>
@@ -101,7 +103,7 @@
 	<dubbo:protocol name="dubbo" port="${dubbo.port}" serialization="kryo" />
 			
 
-	<dubbo:protocol name="rest" server="servlet" port="${server.port}"
+	<dubbo:protocol name="rest" server="servlet" port="${tomcat.port}"
 		extension="com.ymatou.messagebus.infrastructure.serialize.JacksonConfig" />
 
 

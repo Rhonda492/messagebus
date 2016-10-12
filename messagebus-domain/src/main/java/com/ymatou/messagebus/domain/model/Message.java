@@ -269,6 +269,15 @@ public class Message extends PrintFriendliness {
     }
 
     /**
+     * 获取Kafka对应的Topic名称
+     * 
+     * @return
+     */
+    public String getKafkaTopic() {
+        return String.format("messagebus.%s_%s", appId, code);
+    }
+
+    /**
      * @return the newStatus
      */
     public Integer getNewStatus() {

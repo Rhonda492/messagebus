@@ -2,28 +2,51 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-
-	<!-- <parent> <groupId>org.springframework.boot</groupId> <artifactId>spring-boot-starter-parent</artifactId> 
-		<version>1.4.1.RELEASE</version> </parent> <artifactId>messagebus-daemon-publish</artifactId> 
-		<name>com.ymatou.messagebus</name> <description>消息总线分发站（Kafka）</description> 
-		<dependencies> <dependency> <groupId>org.springframework.boot</groupId> <artifactId>spring-boot-starter-web</artifactId> 
-		</dependency> </dependencies> -->
-
 	<parent>
 		<groupId>com.ymatou.messagebus</groupId>
 		<artifactId>messagebus</artifactId>
 		<version>1.0.0</version>
 	</parent>
+
 	<artifactId>messagebus-daemon-publish</artifactId>
-	<name>com.ymatou.messagebus</name>
+	<name>messagebus-daemon-publish</name>
 	<description>消息总线分发站（Kafka）</description>
+
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<start-class>com.ymatou.messagebus.daemon.publish.PublishApplication</start-class>
 	</properties>
+
 	<dependencies>
 		<dependency>
 			<groupId>com.ymatou.messagebus</groupId>
 			<artifactId>messagebus-facade-impl</artifactId>
 		</dependency>
 	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<executions>  <!--执行器 mvn assembly:assembly -->
+					<execution>
+						<id>make-dist</id><!--名字任意 -->
+						<phase>package</phase><!-- 绑定到package生命周期阶段上 -->
+						<goals>
+							<goal>single</goal><!-- 只运行一次 -->
+						</goals>
+						<configuration>
+							<appendAssemblyId>false</appendAssemblyId>
+							<finalName>dist</finalName>
+							<includeProjectArtifact>false</includeProjectArtifact>
+						
+							<descriptors>
+								<descriptor>src/main/assembly/dist.xml</descriptor>
+							</descriptors>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
 </project>

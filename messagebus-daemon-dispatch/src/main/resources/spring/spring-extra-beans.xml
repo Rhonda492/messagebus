@@ -1,16 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <beans xmlns="http://www.springframework.org/schema/beans"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
 	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:context="http://www.springframework.org/schema/context"
-	xmlns:mongo="http://www.springframework.org/schema/data/mongo"
 	xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans
         http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
         http://www.springframework.org/schema/aop 
         http://www.springframework.org/schema/aop/spring-aop-4.2.xsd
-        http://www.springframework.org/schema/data/mongo
-        http://www.springframework.org/schema/data/mongo/spring-mongo-1.9.xsd  
         http://www.springframework.org/schema/tx
         http://www.springframework.org/schema/tx/spring-tx-4.2.xsd
         http://www.springframework.org/schema/context 
@@ -24,8 +20,6 @@
 
 	<aop:aspectj-autoproxy />
 
-	<context:component-scan base-package="com.ymatou.messagebus" />
-
 	<!-- 使用disconf必须添加以下配置 -->
 	<bean id="disconfMgrBean" class="com.baidu.disconf.client.DisconfMgrBean"
 		destroy-method="destroy">
@@ -34,22 +28,26 @@
 	<bean id="disconfMgrBean2" class="com.baidu.disconf.client.DisconfMgrBeanSecond"
 		init-method="init" destroy-method="destroy">
 	</bean>
-
-	<bean id="disconfProperties"
-		class="com.baidu.disconf.client.addons.properties.ReloadablePropertiesFactoryBean">
-		<property name="locations">
-			<list>
-				<value>kafkaproducer.properties</value>
-			</list>
-		</property>
-	</bean>
+	
+	<bean id="propertiesDisconf"
+          class="com.baidu.disconf.client.addons.properties.ReloadablePropertiesFactoryBean">
+        <property name="locations">
+            <list>
+                <value>application.properties</value>
+            </list>
+        </property>
+    </bean>
 
 	<bean id="propertyPlaceholderConfigurer"
 		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="propertiesArray">
+            <list>
+                <ref bean="propertiesDisconf"/>
+            </list>
+        </property>
 		<property name="locations">
 			<list>
 				<value>classpath:mongodb.properties</value>
-				<value>classpath:app.properties</value>
 			</list>
 		</property>
 	</bean>
@@ -59,9 +57,9 @@
 		<!-- 核心线程数，默认为1 -->
 		<property name="corePoolSize" value="10" />
 		<!-- 最大线程数，默认为Integer.MAX_VALUE -->
-		<property name="maxPoolSize" value="50" />
+		<property name="maxPoolSize" value="200" />
 		<!-- 队列最大长度，一般需要设置值>=notifyScheduledMainExecutor.maxNum；默认为Integer.MAX_VALUE -->
-		<property name="queueCapacity" value="1000" />
+		<property name="queueCapacity" value="100000" />
 		<!-- 线程池维护线程所允许的空闲时间，默认为60s -->
 		<property name="keepAliveSeconds" value="300" />
 
@@ -75,32 +73,47 @@
 		</property>
 	</bean>
 
-	<import resource="classpath:spring/persistence.xml" />
-
-	<!-- 提供方应用信息，用于计算依赖关系 -->
-	<dubbo:application name="demo.ymatou.com" />
-
-	<!-- <dubbo:registry address="zookeeper://zk.ymatou.com:2181" /> -->
-	<dubbo:registry address="zookeeper://${dubbo.zoo}"
-		timeout="30000" />
-
-	<!-- 用dubbo协议在20880端口暴露服务 -->
-	<dubbo:protocol name="dubbo" port="${dubbo.port}"
-		serialization="kryo" />
-
-	<dubbo:reference id="compensateClient"
-		interface="com.ymatou.messagebus.facade.CompensateFacade" retries="1"
-		timeout="10000" />
-
-	<!-- 消息总线API生成远程服务代理 -->
-	<dubbo:reference id="publishMessageClient"
-		interface="com.ymatou.messagebus.facade.PublishMessageFacade" retries="1"
-		timeout="10000" />
-
-	<!-- 消息总线客户端 -->
-	<bean id="messageBusClient" class="com.ymatou.messagebus.client.MessageBusClient">
-		<property name="messageDbPath" value="/data/messagebus/demo" />
+	<bean id="performanceMonitorAdvice"
+		class="com.ymatou.performancemonitorclient.PerformanceMonitorAdvice">
+		<property name="appId" value="mqpublish.kafka.iapi.ymatou.com"></property>
+		<property name="serverUrl" value="${perfmonapi.url}"></property>
 	</bean>
 
+	<import resource="classpath:spring/persistence.xml" />
 
+	<aop:config>
+		<aop:advisor advice-ref="performanceMonitorAdvice"
+			pointcut="execution(* com.ymatou.messagebus.facade.*Facade.*(..))
+						|| execution(* com.ymatou.messagebus.facade.rest.*Resource.*(..))
+						|| execution(* com.ymatou.messagebus.domain.service.MessageBusService.*(..))
+						|| execution(* com.ymatou.messagebus.infrastructure.rabbitmq.EndPoint.*(..))
+						|| execution(* com.ymatou.messagebus..*Repository.*(..)))
+						" />
+	</aop:config>
+
+
+	<!-- 提供方应用信息，用于计算依赖关系 -->
+	<dubbo:application name="${appId}" />
+
+	<dubbo:registry address="zookeeper://${dubbo.zoo}" timeout="30000" />
+
+	<!-- 用dubbo协议在20880端口暴露服务 -->
+	<dubbo:protocol name="dubbo" port="${dubbo.port}" serialization="kryo" />
+			
+
+	<dubbo:protocol name="rest" server="servlet" port="${server.port}"
+		extension="com.ymatou.messagebus.infrastructure.serialize.JacksonConfig" />
+
+
+	<dubbo:service interface="com.ymatou.messagebus.facade.rest.SystemResource"
+		ref="systemResource" protocol="rest" />
+
+	<dubbo:service interface="com.ymatou.messagebus.facade.PublishKafkaFacade" 
+		ref="publishKafkaFacade" protocol="dubbo" />
+
+	<dubbo:service
+		interface="com.ymatou.messagebus.facade.rest.PublishKafkaResource"
+		ref="publishKafkaResource" protocol="rest" />
+
+	<dubbo:reference id="compensateClient" interface="com.ymatou.messagebus.facade.CompensateFacade" retries="1" timeout="10000" /> 
 </beans>
