@@ -22,18 +22,20 @@
 
 	<!-- 使用disconf必须添加以下配置 -->
 	<bean id="disconfMgrBean" class="com.baidu.disconf.client.DisconfMgrBean"
-		destroy-method="destroy">
+		destroy-method="destroy" depends-on="tomcatConfig">
 		<property name="scanPackage" value="com.ymatou.messagebus" />
 	</bean>
 	<bean id="disconfMgrBean2" class="com.baidu.disconf.client.DisconfMgrBeanSecond"
-		init-method="init" destroy-method="destroy">
+		init-method="init" destroy-method="destroy" >
 	</bean>
 	
 	<bean id="propertiesDisconf"
           class="com.baidu.disconf.client.addons.properties.ReloadablePropertiesFactoryBean">
         <property name="locations">
             <list>
-                <value>application.properties</value>
+                <value>app.properties</value>
+                <value>tomcat.properties</value>
+                <value>kafkaproducer.properties</value>
             </list>
         </property>
     </bean>
@@ -94,23 +96,17 @@
 
 	<!-- 提供方应用信息，用于计算依赖关系 -->
 	<dubbo:application name="${appId}" />
-
 	<dubbo:registry address="zookeeper://${dubbo.zoo}" timeout="30000" />
 
-	<!-- 用dubbo协议在20880端口暴露服务 -->
 	<dubbo:protocol name="dubbo" port="${dubbo.port}" serialization="kryo" />
-			
-
-	<dubbo:protocol name="rest" server="servlet" port="${server.port}"
+	<dubbo:protocol name="rest" server="servlet" port="${tomcat.port}"
 		extension="com.ymatou.messagebus.infrastructure.serialize.JacksonConfig" />
 
 
 	<dubbo:service interface="com.ymatou.messagebus.facade.rest.SystemResource"
 		ref="systemResource" protocol="rest" />
-
 	<dubbo:service interface="com.ymatou.messagebus.facade.PublishKafkaFacade" 
 		ref="publishKafkaFacade" protocol="dubbo" />
-
 	<dubbo:service
 		interface="com.ymatou.messagebus.facade.rest.PublishKafkaResource"
 		ref="publishKafkaResource" protocol="rest" />

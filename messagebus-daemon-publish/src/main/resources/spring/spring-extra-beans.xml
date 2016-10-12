@@ -96,26 +96,14 @@
 
 	<!-- 提供方应用信息，用于计算依赖关系 -->
 	<dubbo:application name="${appId}" />
-
 	<dubbo:registry address="zookeeper://${dubbo.zoo}" timeout="30000" />
 
-	<!-- 用dubbo协议在20880端口暴露服务 -->
 	<dubbo:protocol name="dubbo" port="${dubbo.port}" serialization="kryo" />
-			
-
 	<dubbo:protocol name="rest" server="servlet" port="${tomcat.port}"
 		extension="com.ymatou.messagebus.infrastructure.serialize.JacksonConfig" />
 
-
 	<dubbo:service interface="com.ymatou.messagebus.facade.rest.SystemResource"
 		ref="systemResource" protocol="rest" />
-
-	<dubbo:service interface="com.ymatou.messagebus.facade.PublishKafkaFacade" 
-		ref="publishKafkaFacade" protocol="dubbo" />
-
-	<dubbo:service
-		interface="com.ymatou.messagebus.facade.rest.PublishKafkaResource"
-		ref="publishKafkaResource" protocol="rest" />
 
 	<dubbo:reference id="compensateClient" interface="com.ymatou.messagebus.facade.CompensateFacade" retries="1" timeout="10000" /> 
 </beans>

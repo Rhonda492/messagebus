@@ -14,7 +14,6 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<start-class>com.ymatou.messagebus.daemon.publish.PublishApplication</start-class>
 	</properties>
 
 	<dependencies>
