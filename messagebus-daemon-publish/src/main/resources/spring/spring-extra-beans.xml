@@ -34,8 +34,8 @@
         <property name="locations">
             <list>
                 <value>app.properties</value>
-                <value>tomcat.properties</value>
                 <value>kafkaproducer.properties</value>
+                <value>kafkaconumer.properties</value>
             </list>
         </property>
     </bean>
@@ -50,6 +50,7 @@
 		<property name="locations">
 			<list>
 				<value>classpath:mongodb.properties</value>
+				<value>classpath:tomcat.properties</value>
 			</list>
 		</property>
 	</bean>
@@ -89,6 +90,7 @@
 						|| execution(* com.ymatou.messagebus.facade.rest.*Resource.*(..))
 						|| execution(* com.ymatou.messagebus.domain.service.MessageBusService.*(..))
 						|| execution(* com.ymatou.messagebus.infrastructure.rabbitmq.EndPoint.*(..))
+						|| execution(* com.ymatou.messagebus.infrastructure.kafka..*Client.*(..))
 						|| execution(* com.ymatou.messagebus..*Repository.*(..)))
 						" />
 	</aop:config>
@@ -104,6 +106,11 @@
 
 	<dubbo:service interface="com.ymatou.messagebus.facade.rest.SystemResource"
 		ref="systemResource" protocol="rest" />
+	<dubbo:service interface="com.ymatou.messagebus.facade.PublishKafkaFacade" 
+		ref="publishKafkaFacade" protocol="dubbo" />
+	<dubbo:service
+		interface="com.ymatou.messagebus.facade.rest.PublishKafkaResource"
+		ref="publishKafkaResource" protocol="rest" />
 
 	<dubbo:reference id="compensateClient" interface="com.ymatou.messagebus.facade.CompensateFacade" retries="1" timeout="10000" /> 
 </beans>

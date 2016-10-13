@@ -4,7 +4,7 @@ source "/etc/profile"
 GCLOGPATH="logs/gc.log"
 APP_NAME="mqpublish.kafka.iapi.ymatou.com"
 MAIN_CLASS="com.ymatou.messagebus.daemon.publish.PublishApplication"
-CLASS_PATH="lib/*:conf"
+CLASS_PATH="conf:lib/*"
 JAVA_OPTS=" -server \
             -Xms1024m -Xmx1024m \
             -XX:MaxMetaspaceSize=512m \
