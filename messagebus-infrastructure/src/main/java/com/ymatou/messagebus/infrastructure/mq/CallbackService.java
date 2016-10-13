@@ -3,7 +3,7 @@
  *
  * All rights reserved.
  */
-package com.ymatou.messagebus.infrastructure.rabbitmq;
+package com.ymatou.messagebus.infrastructure.mq;
 
 /**
  * 分发回调服务
@@ -16,11 +16,11 @@ public interface CallbackService {
     /**
      * 回调服务
      * 
-     * @param exchange
-     * @param queue
+     * @param appId
+     * @param appCode
      * @param messageBody
      * @param messageId
      * @param messageUuid
      */
-    public void invoke(String exchange, String queue, String messageBody, String messageId, String messageUuid);
+    public void invoke(String appId, String appCode, String messageBody, String messageId, String messageUuid);
 }

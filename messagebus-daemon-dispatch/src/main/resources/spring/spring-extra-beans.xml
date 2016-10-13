@@ -26,30 +26,31 @@
 		<property name="scanPackage" value="com.ymatou.messagebus" />
 	</bean>
 	<bean id="disconfMgrBean2" class="com.baidu.disconf.client.DisconfMgrBeanSecond"
-		init-method="init" destroy-method="destroy" >
+		init-method="init" destroy-method="destroy">
 	</bean>
-	
+
 	<bean id="propertiesDisconf"
-          class="com.baidu.disconf.client.addons.properties.ReloadablePropertiesFactoryBean">
-        <property name="locations">
-            <list>
-                <value>app.properties</value>
-                <value>tomcat.properties</value>
-                <value>kafkaproducer.properties</value>
-            </list>
-        </property>
-    </bean>
+		class="com.baidu.disconf.client.addons.properties.ReloadablePropertiesFactoryBean">
+		<property name="locations">
+			<list>
+				<value>app.properties</value>
+				<value>kafkaproducer.properties</value>
+				<value>kafkaconsumer.properties</value>
+			</list>
+		</property>
+	</bean>
 
 	<bean id="propertyPlaceholderConfigurer"
 		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
-        <property name="propertiesArray">
-            <list>
-                <ref bean="propertiesDisconf"/>
-            </list>
-        </property>
+		<property name="propertiesArray">
+			<list>
+				<ref bean="propertiesDisconf" />
+			</list>
+		</property>
 		<property name="locations">
 			<list>
 				<value>classpath:mongodb.properties</value>
+				<value>classpath:tomcat.properties</value>
 			</list>
 		</property>
 	</bean>
@@ -81,6 +82,10 @@
 		<property name="serverUrl" value="${perfmonapi.url}"></property>
 	</bean>
 
+	<bean id="kafkaDispatchServlet"
+		class="com.ymatou.messagebus.facade.servlet.KafkaDispatchServlet">
+	</bean>
+
 	<import resource="classpath:spring/persistence.xml" />
 
 	<aop:config>
@@ -89,6 +94,7 @@
 						|| execution(* com.ymatou.messagebus.facade.rest.*Resource.*(..))
 						|| execution(* com.ymatou.messagebus.domain.service.MessageBusService.*(..))
 						|| execution(* com.ymatou.messagebus.infrastructure.rabbitmq.EndPoint.*(..))
+						|| execution(* com.ymatou.messagebus.infrastructure.kafka..*Client.*(..))
 						|| execution(* com.ymatou.messagebus..*Repository.*(..)))
 						" />
 	</aop:config>
@@ -96,20 +102,22 @@
 
 	<!-- 提供方应用信息，用于计算依赖关系 -->
 	<dubbo:application name="${appId}" />
-	<dubbo:registry address="zookeeper://${dubbo.zoo}" timeout="30000" />
+	<dubbo:registry address="zookeeper://${dubbo.zoo}"
+		timeout="30000" />
 
-	<dubbo:protocol name="dubbo" port="${dubbo.port}" serialization="kryo" />
+	<dubbo:protocol name="dubbo" port="${dubbo.port}"
+		serialization="kryo" />
 	<dubbo:protocol name="rest" server="servlet" port="${tomcat.port}"
 		extension="com.ymatou.messagebus.infrastructure.serialize.JacksonConfig" />
 
 
 	<dubbo:service interface="com.ymatou.messagebus.facade.rest.SystemResource"
 		ref="systemResource" protocol="rest" />
-	<dubbo:service interface="com.ymatou.messagebus.facade.PublishKafkaFacade" 
-		ref="publishKafkaFacade" protocol="dubbo" />
-	<dubbo:service
-		interface="com.ymatou.messagebus.facade.rest.PublishKafkaResource"
-		ref="publishKafkaResource" protocol="rest" />
+	<dubbo:service interface="com.ymatou.messagebus.facade.rest.DispatchKafkaResource"
+		ref="dispatchKafkaResource" protocol="rest" />
 
-	<dubbo:reference id="compensateClient" interface="com.ymatou.messagebus.facade.CompensateFacade" retries="1" timeout="10000" /> 
+
+	<dubbo:reference id="compensateClient"
+		interface="com.ymatou.messagebus.facade.CompensateFacade" retries="1"
+		timeout="10000" />
 </beans>

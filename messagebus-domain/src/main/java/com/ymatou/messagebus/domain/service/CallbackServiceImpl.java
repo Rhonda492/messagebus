@@ -47,7 +47,7 @@ import com.ymatou.messagebus.facade.enums.MessageStatusEnum;
 import com.ymatou.messagebus.facade.model.SecondCompensateReq;
 import com.ymatou.messagebus.facade.model.SecondCompensateResp;
 import com.ymatou.messagebus.infrastructure.logger.ErrorReportClient;
-import com.ymatou.messagebus.infrastructure.rabbitmq.CallbackService;
+import com.ymatou.messagebus.infrastructure.mq.CallbackService;
 
 /**
  * 回调服务
@@ -94,22 +94,22 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
      * java.lang.String, java.lang.String)
      */
     @Override
-    public void invoke(String exchange, String queue, String messageBody, String messageId,
+    public void invoke(String appId, String appCode, String messageBody, String messageId,
             String messageUuid) {
-        AppConfig appConfig = appConfigRepository.getAppConfig(exchange);
+        AppConfig appConfig = appConfigRepository.getAppConfig(appId);
         if (appConfig == null) {
-            throw new BizException(ErrorCode.ILLEGAL_ARGUMENT, "invalid appId:" + exchange);
+            throw new BizException(ErrorCode.ILLEGAL_ARGUMENT, "invalid appId:" + appId);
         }
 
-        MessageConfig messageConfig = appConfig.getMessageConfigByAppCode(queue);
+        MessageConfig messageConfig = appConfig.getMessageConfigByAppCode(appCode);
         if (messageConfig == null) {
-            throw new BizException(ErrorCode.ILLEGAL_ARGUMENT, "invalid appCode:" + queue);
+            throw new BizException(ErrorCode.ILLEGAL_ARGUMENT, "invalid appCode:" + appCode);
         }
 
         List<CallbackConfig> callbackCfgList = messageConfig.getCallbackCfgList();
         if (callbackCfgList == null
                 || !callbackCfgList.stream().anyMatch(x -> x.getEnable() == null || x.getEnable() == true)) {
-            throw new BizException(ErrorCode.NOT_EXIST_INVALID_CALLBACK, "appCode:" + queue);
+            throw new BizException(ErrorCode.NOT_EXIST_INVALID_CALLBACK, "appCode:" + appCode);
         }
 
         if (StringUtils.isEmpty(messageId)) {

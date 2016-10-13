@@ -151,6 +151,16 @@ public class AppConfig extends PrintFriendliness {
     }
 
     /**
+     * 获取Kafka对应的Topic名称
+     * 
+     * @return
+     */
+    public String getKafkaTopic(String code) {
+        return String.format("messagebus.%s_%s", appId, code);
+    }
+
+
+    /**
      * 根据Code查找消息配置
      * 
      * @param code

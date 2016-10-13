@@ -24,6 +24,7 @@ import com.rabbitmq.client.Consumer;
 import com.rabbitmq.client.Envelope;
 import com.rabbitmq.client.ShutdownSignalException;
 import com.ymatou.messagebus.infrastructure.config.RabbitMQConfig;
+import com.ymatou.messagebus.infrastructure.mq.CallbackService;
 
 /**
  * 消息消费者

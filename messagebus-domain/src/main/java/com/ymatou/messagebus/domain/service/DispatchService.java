@@ -25,7 +25,7 @@ import com.ymatou.messagebus.domain.model.CallbackConfig;
 import com.ymatou.messagebus.domain.model.MessageConfig;
 import com.ymatou.messagebus.domain.repository.AppConfigRepository;
 import com.ymatou.messagebus.infrastructure.config.RabbitMQConfig;
-import com.ymatou.messagebus.infrastructure.rabbitmq.CallbackService;
+import com.ymatou.messagebus.infrastructure.mq.CallbackService;
 import com.ymatou.messagebus.infrastructure.rabbitmq.ConnectionPool;
 import com.ymatou.messagebus.infrastructure.rabbitmq.MessageConsumer;
 import com.ymatou.messagebus.infrastructure.thread.AdjustableSemaphore;

@@ -10,13 +10,16 @@ import java.net.URISyntaxException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 
 import javax.annotation.Resource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.task.TaskExecutor;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 
 import com.ymatou.messagebus.domain.config.DispatchConfig;
@@ -24,13 +27,9 @@ import com.ymatou.messagebus.domain.model.AppConfig;
 import com.ymatou.messagebus.domain.model.CallbackConfig;
 import com.ymatou.messagebus.domain.model.MessageConfig;
 import com.ymatou.messagebus.domain.repository.AppConfigRepository;
-import com.ymatou.messagebus.facade.BizException;
-import com.ymatou.messagebus.facade.ErrorCode;
 import com.ymatou.messagebus.facade.enums.MQTypeEnum;
-import com.ymatou.messagebus.infrastructure.config.RabbitMQConfig;
-import com.ymatou.messagebus.infrastructure.rabbitmq.CallbackService;
-import com.ymatou.messagebus.infrastructure.rabbitmq.ConnectionPool;
-import com.ymatou.messagebus.infrastructure.rabbitmq.MessageConsumer;
+import com.ymatou.messagebus.infrastructure.kafka.KafkaConsumerClient;
+import com.ymatou.messagebus.infrastructure.mq.CallbackService;
 import com.ymatou.messagebus.infrastructure.thread.AdjustableSemaphore;
 import com.ymatou.messagebus.infrastructure.thread.SemaphorManager;
 
@@ -49,16 +48,18 @@ public class KafkaDispatchService {
     private DispatchConfig dispatchConfig;
 
     @Resource
-    private RabbitMQConfig rabbitMQConfig;
-
-    @Resource
     private AppConfigRepository appConfigRepository;
 
     @Resource
-    private TaskExecutor taskExecutor;
+    private CallbackService callbackService;
 
     @Resource
-    private CallbackService callbackService;
+    private KafkaConsumerClient kafkaConsumerClient;
+
+    // 定时器
+    private Timer timer;
+
+
 
     /**
      * 启动分发服务
@@ -69,49 +70,24 @@ public class KafkaDispatchService {
      * @throws NoSuchAlgorithmException
      * @throws KeyManagementException
      */
-    public void start()
-            throws KeyManagementException, NoSuchAlgorithmException, IOException, TimeoutException, URISyntaxException {
+    public void start() {
+        logger.info("kafka dispatch {} service start consumer!", dispatchConfig.getGroupId());
+
         List<AppConfig> allAppConfig = appConfigRepository.getAllAppConfig();
         for (AppConfig appConfig : allAppConfig) {
             if (MQTypeEnum.Kafka.code().equals(appConfig.getMqType())) {
                 initConsumer(appConfig);
             }
         }
-        logger.info("kafka dispatch {} service clear consumer!", dispatchConfig.getGroupId());
-    }
 
-    /**
-     * 停止分发服务
-     * 
-     * @throws IOException
-     */
-    public void stop() throws IOException {
-        logger.info("kafka dispatch {} service clear consumer!", dispatchConfig.getGroupId());
-        MessageConsumer.clearAll();
-
-        logger.info("kafka dispatch {} service clear connection pool!", dispatchConfig.getGroupId());
-        ConnectionPool.clearAll();
-    }
-
-    /**
-     * 检查重启
-     * 
-     * @throws KeyManagementException
-     * @throws NoSuchAlgorithmException
-     * @throws IOException
-     * @throws TimeoutException
-     * @throws URISyntaxException
-     */
-    public void checkReload()
-            throws KeyManagementException, NoSuchAlgorithmException, IOException, TimeoutException, URISyntaxException {
-        List<AppConfig> allAppConfig = appConfigRepository.getAllAppConfig();
-        for (AppConfig appConfig : allAppConfig) {
-            String dispatchGroup = appConfig.getDispatchGroup();
-            if (dispatchGroup != null && dispatchGroup.contains(dispatchConfig.getGroupId())) {
-                initConsumer(appConfig);
-            } else {
-                stopConsumer(appConfig);
-            }
+        if (timer == null) {
+            timer = new Timer(true);
+            timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    checkReload();
+                }
+            }, 0, 1000 * 1);
         }
     }
 
@@ -125,16 +101,56 @@ public class KafkaDispatchService {
      * @throws TimeoutException
      * @throws URISyntaxException
      */
-    private void initConsumer(AppConfig appConfig)
-            throws KeyManagementException, NoSuchAlgorithmException, IOException, TimeoutException, URISyntaxException {
+    private void initConsumer(AppConfig appConfig) {
         for (MessageConfig messageConfig : appConfig.getMessageCfgList()) {
-            String appCode = appConfig.getAppCode(messageConfig.getCode());
-            String appId = appConfig.getAppId();
+            String topic = appConfig.getKafkaTopic(messageConfig.getCode());
 
             initSemaphore(messageConfig);
-
+            kafkaConsumerClient.subscribe(topic);
         }
     }
+
+
+    /**
+     * 停止分发服务
+     * 
+     * @throws IOException
+     */
+    public void stop() {
+        logger.info("kafka dispatch {} service stop consumer!", dispatchConfig.getGroupId());
+
+        if (timer != null) {
+            timer.cancel();
+            timer.purge();
+            timer = null;
+        }
+        kafkaConsumerClient.unscribeAll();
+    }
+
+    /**
+     * 检查重启
+     * 
+     * @throws KeyManagementException
+     * @throws NoSuchAlgorithmException
+     * @throws IOException
+     * @throws TimeoutException
+     * @throws URISyntaxException
+     */
+    public void checkReload() {
+        try {
+            MDC.put("logPrefix", "KafkaDispatchTask|" + UUID.randomUUID().toString().replaceAll("-", ""));
+            List<AppConfig> allAppConfig = appConfigRepository.getAllAppConfig();
+            for (AppConfig appConfig : allAppConfig) {
+                if (MQTypeEnum.Kafka.code().equals(appConfig.getMqType())) {
+                    initConsumer(appConfig);
+                }
+            }
+            logger.info("kafka dispatch service check reload.");
+        } catch (Exception e) {
+            logger.error("kafka dispatch service check reload failed.", e);
+        }
+    }
+
 
     /**
      * 初始化信号量
@@ -153,30 +169,6 @@ public class KafkaDispatchService {
                 SemaphorManager.put(consumerId, semaphore);
             } else {
                 semaphore.setMaxPermits(parallelismNum);
-            }
-        }
-    }
-
-    /**
-     * 停止消费者
-     * 
-     * @param appConfig
-     * @throws KeyManagementException
-     * @throws NoSuchAlgorithmException
-     * @throws IOException
-     * @throws TimeoutException
-     * @throws URISyntaxException
-     */
-    private void stopConsumer(AppConfig appConfig)
-            throws KeyManagementException, NoSuchAlgorithmException, IOException, TimeoutException, URISyntaxException {
-        for (MessageConfig callbackConfig : appConfig.getMessageCfgList()) {
-            String appId = appConfig.getAppId();
-            String appCode = appConfig.getAppCode(callbackConfig.getCode());
-
-            if (MessageConsumer.contains(appId, appCode)) {
-                MessageConsumer consumer = MessageConsumer.getConsumer(appId, appCode);
-                consumer.stop();
-                logger.info("stop consumer {} success.", consumer.getConsumerId());
             }
         }
     }
