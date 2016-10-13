@@ -35,7 +35,7 @@
             <list>
                 <value>app.properties</value>
                 <value>kafkaproducer.properties</value>
-                <value>kafkaconumer.properties</value>
+                <value>kafkaconsumer.properties</value>
             </list>
         </property>
     </bean>
