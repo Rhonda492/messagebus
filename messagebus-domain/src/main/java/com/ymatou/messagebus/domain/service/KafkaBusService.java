@@ -21,7 +21,7 @@ import com.ymatou.messagebus.domain.repository.MessageRepository;
 import com.ymatou.messagebus.facade.BizException;
 import com.ymatou.messagebus.facade.ErrorCode;
 import com.ymatou.messagebus.facade.enums.MQTypeEnum;
-import com.ymatou.messagebus.infrastructure.kafka.KafkaClient;
+import com.ymatou.messagebus.infrastructure.kafka.KafkaProducerClient;
 
 /**
  * Kafka消息接收发布服务
@@ -36,7 +36,7 @@ public class KafkaBusService {
 
 
     @Resource
-    private KafkaClient kafkaClient;
+    private KafkaProducerClient kafkaClient;
 
     @Resource
     private TaskExecutor taskExecutor;

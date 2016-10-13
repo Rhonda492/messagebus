@@ -9,13 +9,13 @@ import javax.annotation.Resource;
 
 import org.junit.Test;
 
-import com.ymatou.messagebus.infrastructure.kafka.KafkaClient;
+import com.ymatou.messagebus.infrastructure.kafka.KafkaProducerClient;
 import com.ymatou.messagebus.test.BaseTest;
 
 public class KafkaClientTest extends BaseTest {
 
     @Resource
-    private KafkaClient kafkaClient;
+    private KafkaProducerClient kafkaClient;
 
     @Test
     public void testSendAsync() throws InterruptedException {

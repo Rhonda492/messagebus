@@ -25,9 +25,9 @@ import com.ymatou.messagebus.infrastructure.config.KafkaProducerConfig;
 
 
 @Component
-public class KafkaClient {
+public class KafkaProducerClient {
 
-    public static final Logger logger = LoggerFactory.getLogger(KafkaClient.class);
+    public static final Logger logger = LoggerFactory.getLogger(KafkaProducerClient.class);
 
     private Producer<String, String> producer;
 

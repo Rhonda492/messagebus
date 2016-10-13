@@ -21,11 +21,11 @@ import com.baidu.disconf.client.common.annotations.DisconfUpdateService;
 import com.baidu.disconf.client.common.update.IDisconfUpdate;
 import com.ymatou.messagebus.infrastructure.net.NetUtil;
 
-@DisconfUpdateService(confFileKeys = {"kafkaproducer.properties"})
+@DisconfUpdateService(confFileKeys = {"kafkaconsumer.properties"})
 @Component
-public class KafkaProducerConfig extends Properties implements IDisconfUpdate, InitializingBean {
+public class KafkaConsumerConfig extends Properties implements IDisconfUpdate, InitializingBean {
 
-    private static final Logger logger = LoggerFactory.getLogger(KafkaProducerConfig.class);
+    private static final Logger logger = LoggerFactory.getLogger(KafkaConsumerConfig.class);
 
     /**
      * 
@@ -43,19 +43,20 @@ public class KafkaProducerConfig extends Properties implements IDisconfUpdate, I
         try {
             init();
         } catch (Exception e) {
-            logger.error("reload kafkaproducer.properties failed.", e);
+            logger.error("reload kafkaconsumer.properties failed.", e);
         } finally {
             myLock.writeLock().unlock();
         }
     }
 
     private void init() throws Exception {
-        File mqProperties = DisConf.getLocalConfig("kafkaproducer.properties");
+        File mqProperties = DisConf.getLocalConfig("kafkaconsumer.properties");
 
         load(new FileInputStream(mqProperties));
-        put("client.id", "messagebus.publish." + NetUtil.getHostIp());
+        put("client.id", "messagebus.dispatch." + NetUtil.getHostIp());
+        put("enable.auto.commit", "true");
 
-        logger.info("init kafkaproducer.properties:" + this);
+        logger.info("init kafkaconsumer.properties:" + this);
     }
 
     @Override

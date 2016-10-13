@@ -9,7 +9,7 @@
 	<includeBaseDirectory>false</includeBaseDirectory>  
 	<fileSets>
 		<fileSet>
-			<directory>${project.basedir}\src\main\resources</directory>
+			<directory>${project.basedir}/src/main/resources</directory>
 			<!-- 过滤 -->
 			<excludes>
 				<exclude>**/*.properties</exclude>
@@ -17,7 +17,7 @@
 			<outputDirectory>conf</outputDirectory>
 		</fileSet>
 		<fileSet>
-			<directory>${project.basedir}\script</directory>
+			<directory>${project.basedir}/script</directory>
 			<includes>
 				<include>*.sh</include>
 			</includes>
