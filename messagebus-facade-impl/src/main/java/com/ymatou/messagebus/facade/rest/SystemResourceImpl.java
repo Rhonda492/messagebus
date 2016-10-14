@@ -31,8 +31,9 @@ public class SystemResourceImpl implements SystemResource {
     public String version() {
         return "{"
                 + "\"1.0.0\":\"2016-09-01.1 first deploy.\","
-                + "\"1.0.1\":\"2016-10-13.1 create kafka publish service.\","
-                + "\"1.0.2\":\"2016-10-13.1 create kafka dispatch service.\""
+                + "\"1.0.1\":\"2016-10-13.1 add kafka publish service.\","
+                + "\"1.0.2\":\"2016-10-13.1 add kafka dispatch service.\","
+                + "\"1.0.3\":\"2016-10-14.1 add kafka client sdk.\""
                 + "}";
     }
 

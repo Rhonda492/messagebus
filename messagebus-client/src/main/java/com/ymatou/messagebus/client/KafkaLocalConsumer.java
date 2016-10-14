@@ -12,19 +12,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.ymatou.messagebus.facade.ErrorCode;
-import com.ymatou.messagebus.facade.PublishMessageFacade;
+import com.ymatou.messagebus.facade.PublishKafkaFacade;
 import com.ymatou.messagebus.facade.model.PublishMessageReq;
 import com.ymatou.messagebus.facade.model.PublishMessageResp;
 
 /**
- * 消息本地消费者
+ * Kafka消息本地消费者
  * 
  * @author wangxudong 2016年9月1日 下午12:04:20
  *
  */
-public class MessageLocalConsumer extends Thread {
+public class KafkaLocalConsumer extends Thread {
 
-    private static Logger logger = LoggerFactory.getLogger(MessageLocalConsumer.class);
+    private static Logger logger = LoggerFactory.getLogger(KafkaLocalConsumer.class);
 
     /**
      * 消息数据库
@@ -34,15 +34,15 @@ public class MessageLocalConsumer extends Thread {
     /**
      * 总线消息发布API
      */
-    private PublishMessageFacade publishMessageFacade;
+    private PublishKafkaFacade publishKafkaFacade;
 
     /**
      * 构造函数
      * 
-     * @param publishMessageFacade
+     * @param publishKafkaFacade
      */
-    public MessageLocalConsumer(PublishMessageFacade publishMessageFacade) {
-        this.publishMessageFacade = publishMessageFacade;
+    public KafkaLocalConsumer(PublishKafkaFacade publishKafkaFacade) {
+        this.publishKafkaFacade = publishKafkaFacade;
     }
 
 
@@ -53,12 +53,12 @@ public class MessageLocalConsumer extends Thread {
                 try {
                     consume();
                 } catch (Throwable t) {
-                    logger.error("fail to consume local message.", t);
+                    logger.error("kafka fail to consume local message.", t);
                 }
                 TimeUnit.MILLISECONDS.sleep(1000 * 5);
             }
         } catch (InterruptedException e) {
-            logger.error("message local consume thread is interrupted", e);
+            logger.error("kafka message local consume thread is interrupted", e);
         }
     }
 
@@ -66,34 +66,34 @@ public class MessageLocalConsumer extends Thread {
      * 消费消息
      */
     private void consume() {
-        Iterator<String> keysIterator = messageDB.getKeysIterator(Constant.RABBITMQ_MAPNAME);
+        Iterator<String> keysIterator = messageDB.getKeysIterator(Constant.KAFKA_MAPNAME);
         while (keysIterator.hasNext()) {
             String key = keysIterator.next();
             try {
-                PublishMessageReq req = messageDB.get(Constant.RABBITMQ_MAPNAME, key);
+                PublishMessageReq req = messageDB.get(Constant.KAFKA_MAPNAME, key);
                 if (req == null) {
                     continue;
                 }
 
-                logger.debug("messagebus client consumer send message:{}", req);
+                logger.debug("kafka messagebus client consumer send message:{}", req);
 
-                PublishMessageResp resp = publishMessageFacade.publish(req);
+                PublishMessageResp resp = publishKafkaFacade.publish(req);
 
-                logger.debug("messagebus client consumer recv response:{}", resp);
+                logger.debug("kafka messagebus client consumer recv response:{}", resp);
 
                 if (resp.isSuccess()) {
-                    messageDB.delete(Constant.RABBITMQ_MAPNAME, key);
+                    messageDB.delete(Constant.KAFKA_MAPNAME, key);
                 } else {
                     if (ErrorCode.ILLEGAL_ARGUMENT.equals(resp.getErrorCode())) {
-                        logger.error("message local consume fail, will be remove from local db, cause:{}",
+                        logger.error("kafka message local consume fail, will be remove from local db, cause:{}",
                                 resp.getErrorMessage());
-                        messageDB.delete(Constant.RABBITMQ_MAPNAME, key);
+                        messageDB.delete(Constant.KAFKA_MAPNAME, key);
                     } else {
-                        logger.error("message local consume fail:{}", resp.getErrorMessage());
+                        logger.error("kafka message local consume fail:{}", resp.getErrorMessage());
                     }
                 }
             } catch (Exception e) {
-                logger.error("consume message fail, key:" + key, e);
+                logger.error("kafka consume message fail, key:" + key, e);
             }
         }
 

@@ -97,10 +97,19 @@
 		interface="com.ymatou.messagebus.facade.PublishMessageFacade" retries="1"
 		timeout="10000" />
 
+	<dubbo:reference id="publishKafkaClient"
+		interface="com.ymatou.messagebus.facade.PublishKafkaFacade" retries="1"
+		timeout="10000" />
+
 	<!-- 消息总线客户端 -->
 	<bean id="messageBusClient" class="com.ymatou.messagebus.client.MessageBusClient">
 		<property name="messageDbPath" value="/data/messagebus/demo" />
 	</bean>
 
-
+	<!-- 消息总线客户端Kafka-->
+	<bean id="kafkaBusClient" class="com.ymatou.messagebus.client.KafkaBusClient">
+		<property name="messageDbPath" value="/data/messagebus/demo" />
+		<property name="asyncSendMaxThreadNum" value="2" />
+		<property name="asyncSendMaxQueueNum" value="10" />
+	</bean>
 </beans>

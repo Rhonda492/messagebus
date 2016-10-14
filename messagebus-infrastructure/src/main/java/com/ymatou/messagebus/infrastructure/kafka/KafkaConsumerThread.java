@@ -6,6 +6,7 @@
 package com.ymatou.messagebus.infrastructure.kafka;
 
 import java.util.Arrays;
+import java.util.UUID;
 
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -13,6 +14,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import com.ymatou.messagebus.infrastructure.config.KafkaConsumerConfig;
 import com.ymatou.messagebus.infrastructure.mq.CallbackService;
@@ -59,8 +61,9 @@ public class KafkaConsumerThread extends Thread {
         try {
             while (true) {
                 ConsumerRecords<String, String> records = consumer.poll(5000);
-
                 for (ConsumerRecord<String, String> record : records) {
+                    MDC.put("logPrefix", String.format("%s|%s", this.getName(), UUID.randomUUID().toString()));
+
                     logger.info("recv kafka message:{}", record);
                     KafkaMessageKey key = null;
                     try {

@@ -11,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.stereotype.Component;
 
 import com.ymatou.messagebus.facade.ErrorCode;
 import com.ymatou.messagebus.facade.PublishMessageFacade;
@@ -29,12 +28,10 @@ import com.ymatou.messagebus.facade.model.PublishMessageResp;
  *         1.0.6-修复MessageLocalConsumer中对于Facade放回的处理
  *
  */
-@Component
 public class MessageBusClient implements InitializingBean, DisposableBean {
 
     private Logger logger = LoggerFactory.getLogger(MessageBusClient.class);
 
-    public final static String VERSION = "1.0.6";
 
     /**
      * 消息存储路径
@@ -94,7 +91,7 @@ public class MessageBusClient implements InitializingBean, DisposableBean {
     private void publishLocal(PublishMessageReq messageReq) throws MessageBusException {
         try {
             String key = messageReq.getAppId() + messageReq.getCode() + messageReq.getMsgUniqueId();
-            messageDB.save("message", key, messageReq);
+            messageDB.save(Constant.RABBITMQ_MAPNAME, key, messageReq);
         } catch (Exception ex) {
             logger.warn("publish message local fail, messageId:" + messageReq.getMsgUniqueId(), ex);
             throw new MessageBusException("publish message local fail, messageId:" + messageReq.getMsgUniqueId(), ex);
@@ -127,14 +124,14 @@ public class MessageBusClient implements InitializingBean, DisposableBean {
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        messageDB = new MessageDB(getMessageDbPath(), "message");
+        messageDB = new MessageDB(getMessageDbPath(), Constant.RABBITMQ_MAPNAME);
 
         messageLocalConsumer = new MessageLocalConsumer(publishMessageFacade);
         messageLocalConsumer.setMessageDB(messageDB);
         messageLocalConsumer.setDaemon(true);
         messageLocalConsumer.start();
 
-        logger.info("message bus client initialization success, version:{}, ip:{}, hostName:{}.", VERSION,
+        logger.info("message bus client initialization success, version:{}, ip:{}, hostName:{}.", Constant.VERSION,
                 NetUtil.getHostIp(), NetUtil.getHostName());
     }
 

@@ -6,7 +6,6 @@
 package com.ymatou.messagebus.infrastructure.kafka;
 
 import java.io.Serializable;
-import org.aspectj.org.eclipse.jdt.core.dom.ThisExpression;
 
 import com.alibaba.fastjson.JSON;
 
