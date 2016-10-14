@@ -65,7 +65,7 @@ public class KafkaBusService {
 
         writeMongoAsync(message, MDC.get("logPrefix"));
 
-        kafkaClient.sendAsync(message.getKafkaTopic(), message.getBody());
+        kafkaClient.sendAsync(message.getKafkaTopic(), message.getKafkaMessageKey(), message.getBody());
     }
 
     /**

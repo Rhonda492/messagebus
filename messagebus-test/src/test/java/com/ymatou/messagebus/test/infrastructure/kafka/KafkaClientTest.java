@@ -5,10 +5,13 @@
  */
 package com.ymatou.messagebus.test.infrastructure.kafka;
 
+import java.util.UUID;
+
 import javax.annotation.Resource;
 
 import org.junit.Test;
 
+import com.ymatou.messagebus.infrastructure.kafka.KafkaMessageKey;
 import com.ymatou.messagebus.infrastructure.kafka.KafkaProducerClient;
 import com.ymatou.messagebus.test.BaseTest;
 
@@ -20,9 +23,10 @@ public class KafkaClientTest extends BaseTest {
     @Test
     public void testSendAsync() throws InterruptedException {
         for (int i = 0; i < 10; i++) {
-            kafkaClient.sendAsync("demo.test", "tony" + i);
-        }
+            KafkaMessageKey kafkaMessageKey =
+                    new KafkaMessageKey("demo", "hello", UUID.randomUUID().toString(), String.valueOf(i));
 
-        Thread.sleep(100);
+            kafkaClient.sendAsync("messagebus.demo", kafkaMessageKey, "tony" + i);
+        }
     }
 }

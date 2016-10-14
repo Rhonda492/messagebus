@@ -21,9 +21,11 @@ public class KafkaConsumerThread extends Thread {
 
     private static Logger logger = LoggerFactory.getLogger(KafkaConsumerThread.class);
 
-    private Consumer<KafkaMessageKey, String> consumer;
+    private Consumer<String, String> consumer;
 
     private CallbackService callbackService;
+
+    private String topic;
 
     /**
      * 请求暂停
@@ -35,10 +37,15 @@ public class KafkaConsumerThread extends Thread {
     }
 
     public KafkaConsumerThread(String topic, KafkaConsumerConfig config, CallbackService callbackService) {
+        this.setTopic(topic);
         this.callbackService = callbackService;
 
         consumer = new KafkaConsumer<>(config);
         consumer.subscribe(Arrays.asList(topic));
+    }
+
+    public String getThreadInfo() {
+        return String.format("consumer thread: %s, state: %s.", toString(), getState().toString());
     }
 
     /*
@@ -51,17 +58,22 @@ public class KafkaConsumerThread extends Thread {
         logger.info("dispatch server start consume topic:{}.", this.getName());
         try {
             while (true) {
-                ConsumerRecords<KafkaMessageKey, String> records = consumer.poll(5000);
+                ConsumerRecords<String, String> records = consumer.poll(5000);
 
-                for (ConsumerRecord<KafkaMessageKey, String> record : records) {
+                for (ConsumerRecord<String, String> record : records) {
                     logger.info("recv kafka message:{}", record);
-                    KafkaMessageKey key = record.key();
+                    KafkaMessageKey key = null;
                     try {
+                        key = KafkaMessageKey.valueOf(record.key());
                         callbackService.invoke(key.getAppId(), key.getAppCode(), record.value(), key.getMessageId(),
                                 key.getUuid());
 
                     } catch (Exception e) {
-                        logger.error("fail to consume kafka message" + key.getUuid(), e);
+                        if (key == null) {
+                            logger.error("fail to consume kafka message, key is null", e);
+                        } else {
+                            logger.error("fail to consume kafka message" + key.getUuid(), e);
+                        }
                     }
                 }
 
@@ -76,5 +88,19 @@ public class KafkaConsumerThread extends Thread {
             consumer.close();
         }
         logger.info("dispatch server stop consume topic:{}.", this.getName());
+    }
+
+    /**
+     * @return the topic
+     */
+    public String getTopic() {
+        return topic;
+    }
+
+    /**
+     * @param topic the topic to set
+     */
+    public void setTopic(String topic) {
+        this.topic = topic;
     }
 }

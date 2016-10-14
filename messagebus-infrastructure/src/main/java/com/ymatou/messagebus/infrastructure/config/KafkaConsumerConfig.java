@@ -19,7 +19,6 @@ import org.springframework.stereotype.Component;
 import com.baidu.disconf.client.DisConf;
 import com.baidu.disconf.client.common.annotations.DisconfUpdateService;
 import com.baidu.disconf.client.common.update.IDisconfUpdate;
-import com.ymatou.messagebus.infrastructure.net.NetUtil;
 
 @DisconfUpdateService(confFileKeys = {"kafkaconsumer.properties"})
 @Component
@@ -53,7 +52,6 @@ public class KafkaConsumerConfig extends Properties implements IDisconfUpdate, I
         File mqProperties = DisConf.getLocalConfig("kafkaconsumer.properties");
 
         load(new FileInputStream(mqProperties));
-        put("client.id", "messagebus.dispatch." + NetUtil.getHostIp());
         put("enable.auto.commit", "true");
 
         logger.info("init kafkaconsumer.properties:" + this);

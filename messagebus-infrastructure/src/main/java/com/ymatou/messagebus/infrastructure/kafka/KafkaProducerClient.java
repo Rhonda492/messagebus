@@ -48,18 +48,19 @@ public class KafkaProducerClient {
         producer.close();
     }
 
-    public void sendAsync(String topic, String message) {
-        ProducerRecord<String, String> record = new ProducerRecord<String, String>(topic, message);
+    public void sendAsync(String topic, KafkaMessageKey key, String message) {
+        ProducerRecord<String, String> record =
+                new ProducerRecord<String, String>(topic, key.toString(), message);
         try {
             producerExecutor.submit(() -> {
                 producer.send(record, (metadata, exception) -> {
                     if (exception != null) {
-                        logger.error("Failed to send Kafka message:{}", record);
+                        logger.error("fail to send Kafka message:{}, exception:{}", record, exception);
                     }
                 });
             });
         } catch (Exception e) {
-            logger.error("Kafka send message thread pool used up", e);
+            logger.error("kafka send message thread pool used up", e);
         }
     }
 }

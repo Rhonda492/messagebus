@@ -21,4 +21,9 @@ public interface DispatchKafkaResource {
      * @return
      */
     public String stop();
+
+    /*
+     * 获取消费者状态
+     */
+    public String consumers();
 }

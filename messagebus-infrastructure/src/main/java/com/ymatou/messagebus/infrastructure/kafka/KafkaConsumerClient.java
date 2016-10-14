@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 
 import com.ymatou.messagebus.infrastructure.config.KafkaConsumerConfig;
 import com.ymatou.messagebus.infrastructure.mq.CallbackService;
+import com.ymatou.messagebus.infrastructure.net.NetUtil;
 
 /**
  * @author wangxudong 2016年10月13日 下午8:01:42
@@ -42,15 +43,28 @@ public class KafkaConsumerClient {
      */
     private ReadWriteLock myLock = new ReentrantReadWriteLock();
 
+    /**
+     * 获取到消费者信息
+     * 
+     * @return
+     */
+    public Map<String, String> getConsumerInfo() {
+        Map<String, String> mapInfo = new HashMap<>();
+        for (Map.Entry<String, KafkaConsumerThread> thread : consumerMap.entrySet()) {
+            mapInfo.put(thread.getKey(), thread.getValue().getThreadInfo());
+        }
+
+        return mapInfo;
+    }
 
     /**
      * 每个主题由一个消费者线程订阅
      * 
      * @param topic
      */
-    public void subscribe(String topic) {
+    public void subscribe(String topic, String groupId) {
         if (!consumerMap.containsKey(topic)) {
-            startConsumer(topic);
+            startConsumer(topic, groupId);
         } else {
             KafkaConsumerThread kafkaConsumerThread = consumerMap.get(topic);
             if (kafkaConsumerThread == null ||
@@ -58,7 +72,7 @@ public class KafkaConsumerClient {
                 logger.error("find consumer:{} thread terminate, start new", topic);
 
                 consumerMap.remove(topic);
-                startConsumer(topic);
+                startConsumer(topic, groupId);
             }
         }
     }
@@ -88,10 +102,14 @@ public class KafkaConsumerClient {
      * 
      * @param topic
      */
-    private void startConsumer(String topic) {
+    private void startConsumer(String topic, String groupId) {
         myLock.writeLock().lock();
         try {
             if (!consumerMap.containsKey(topic)) {
+                kafkaConfig.put("group.id", String.format("messagebus.dispatch.%s", groupId));
+                kafkaConfig.put("client.id",
+                        String.format("messagebus.dispatch.%s.%s.%s", topic, groupId, NetUtil.getHostIp()));
+
                 KafkaConsumerThread kafkaConsumerThread =
                         new KafkaConsumerThread(topic, kafkaConfig, callbackService);
                 kafkaConsumerThread.setName(topic);

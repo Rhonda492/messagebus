@@ -17,6 +17,8 @@ import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.ymatou.messagebus.infrastructure.kafka.KafkaMessageKey;
+
 public class KafkaConsumerDemo {
 
     private static Logger logger = LoggerFactory.getLogger(KafkaConsumerDemo.class);
@@ -31,16 +33,16 @@ public class KafkaConsumerDemo {
         props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
         props.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
 
-        Consumer<String, String> consumer = new KafkaConsumer<>(props);
+        Consumer<KafkaMessageKey, String> consumer = new KafkaConsumer<>(props);
         consumer.subscribe(Arrays.asList("test"));
         try {
             while (true) {
-                ConsumerRecords<String, String> records = consumer.poll(500);
+                ConsumerRecords<KafkaMessageKey, String> records = consumer.poll(500);
                 for (TopicPartition partition : records.partitions()) {
 
-                    List<ConsumerRecord<String, String>> partitionRecords = records.records(partition);
+                    List<ConsumerRecord<KafkaMessageKey, String>> partitionRecords = records.records(partition);
                     try {
-                        for (ConsumerRecord<String, String> record : partitionRecords) {
+                        for (ConsumerRecord<KafkaMessageKey, String> record : partitionRecords) {
                             logger.info("Recv kafka message:{}", record);
                             // kafkaRecordListener.onRecordReceived(record);
                         }

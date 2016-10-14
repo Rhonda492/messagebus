@@ -5,13 +5,23 @@
  */
 package com.ymatou.messagebus.infrastructure.kafka;
 
+import java.io.Serializable;
+import org.aspectj.org.eclipse.jdt.core.dom.ThisExpression;
+
+import com.alibaba.fastjson.JSON;
+
 /**
  * Kafka消息键
  * 
  * @author wangxudong 2016年10月13日 下午6:30:31
  *
  */
-public class KafkaMessageKey {
+public class KafkaMessageKey implements Serializable {
+
+    /**
+     * 
+     */
+    private static final long serialVersionUID = -1973418533199503811L;
 
     public KafkaMessageKey() {
 
@@ -90,5 +100,19 @@ public class KafkaMessageKey {
      */
     public String getAppCode() {
         return String.format("%s_%s", appId, code);
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        return JSON.toJSONString(this);
+    }
+
+    public static KafkaMessageKey valueOf(String json) {
+        return (KafkaMessageKey) JSON.parseObject(json, KafkaMessageKey.class);
     }
 }

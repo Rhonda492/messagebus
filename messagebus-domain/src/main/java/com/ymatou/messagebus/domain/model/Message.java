@@ -13,6 +13,7 @@ import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Property;
 
 import com.ymatou.messagebus.facade.PrintFriendliness;
+import com.ymatou.messagebus.infrastructure.kafka.KafkaMessageKey;
 
 /**
  * 总线消息实体
@@ -275,6 +276,15 @@ public class Message extends PrintFriendliness {
      */
     public String getKafkaTopic() {
         return String.format("messagebus.%s_%s", appId, code);
+    }
+
+    /**
+     * 获取到Kafka的Key
+     * 
+     * @return
+     */
+    public KafkaMessageKey getKafkaMessageKey() {
+        return new KafkaMessageKey(appId, code, uuid, messageId);
     }
 
     /**

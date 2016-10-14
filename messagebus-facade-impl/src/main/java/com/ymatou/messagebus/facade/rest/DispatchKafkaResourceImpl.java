@@ -15,7 +15,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import com.alibaba.fastjson.JSON;
 import com.ymatou.messagebus.domain.service.KafkaDispatchService;
+import com.ymatou.messagebus.infrastructure.kafka.KafkaConsumerClient;
 
 
 /**
@@ -33,6 +35,9 @@ public class DispatchKafkaResourceImpl implements DispatchKafkaResource {
 
     @Resource
     private KafkaDispatchService kafkaDispatchService;
+
+    @Resource
+    private KafkaConsumerClient kafkaConsumerClient;
 
     @Override
     @GET
@@ -59,4 +64,13 @@ public class DispatchKafkaResourceImpl implements DispatchKafkaResource {
             return "stop fail, " + e.getMessage();
         }
     }
+
+    @Override
+    @GET
+    @Path("/consumers")
+    public String consumers() {
+        return JSON.toJSONString(kafkaConsumerClient.getConsumerInfo());
+    }
+
+
 }

@@ -87,7 +87,7 @@ public class KafkaDispatchService {
                 public void run() {
                     checkReload();
                 }
-            }, 0, 1000 * 1);
+            }, 0, 1000 * 60);
         }
     }
 
@@ -106,7 +106,7 @@ public class KafkaDispatchService {
             String topic = appConfig.getKafkaTopic(messageConfig.getCode());
 
             initSemaphore(messageConfig);
-            kafkaConsumerClient.subscribe(topic);
+            kafkaConsumerClient.subscribe(topic, dispatchConfig.getGroupId());
         }
     }
 
