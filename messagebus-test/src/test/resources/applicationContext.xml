@@ -110,6 +110,6 @@
 	<bean id="kafkaBusClient" class="com.ymatou.messagebus.client.KafkaBusClient">
 		<property name="messageDbPath" value="/data/messagebus/demo" />
 		<property name="asyncSendMaxThreadNum" value="2" />
-		<property name="asyncSendMaxQueueNum" value="10" />
+		<property name="asyncSendMaxQueueNum" value="10000" />
 	</bean>
 </beans>

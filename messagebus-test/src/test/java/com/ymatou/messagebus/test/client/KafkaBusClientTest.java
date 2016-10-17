@@ -7,9 +7,9 @@ package com.ymatou.messagebus.test.client;
 
 import javax.annotation.Resource;
 
+import org.junit.Rule;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.junit.rules.ExpectedException;
 
 import com.ymatou.messagebus.client.KafkaBusClient;
 import com.ymatou.messagebus.client.Message;
@@ -19,11 +19,11 @@ import com.ymatou.messagebus.test.TaskItemRequest;
 
 public class KafkaBusClientTest extends BaseTest {
 
-    private Logger logger = LoggerFactory.getLogger(KafkaBusClientTest.class);
-
     @Resource
     private KafkaBusClient kafkaBusClient;
 
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
     @Test
     public void testSendMessageSuccess() throws MessageBusException {
@@ -32,12 +32,18 @@ public class KafkaBusClientTest extends BaseTest {
         req.setCode("hello");
         req.setMessageId("xxx-200");
         req.setBody(TaskItemRequest.newInstance());
-
-        logger.info(
-                "---------------------------------------------client send message start-----------------------------------------------------");
         kafkaBusClient.sendMessage(req);
-        logger.info(
-                "---------------------------------------------client send message end-----------------------------------------------------");
+    }
+
+    @Test
+    public void testSendMessageBodyNull() throws MessageBusException {
+        thrown.expect(MessageBusException.class);
+        thrown.expectMessage("body must not null");
+        Message req = new Message();
+        req.setAppId("testjava");
+        req.setCode("hello");
+        req.setMessageId("messageId");
+        kafkaBusClient.sendMessage(req);
     }
 
     @Test
@@ -48,11 +54,7 @@ public class KafkaBusClientTest extends BaseTest {
         req.setMessageId("xxx-300");
         req.setBody(TaskItemRequest.newInstance());
 
-        logger.info(
-                "---------------------------------------------client send message start-----------------------------------------------------");
         kafkaBusClient.sendMessageAsync(req);
-        logger.info(
-                "---------------------------------------------client send message end-----------------------------------------------------");
 
         Thread.sleep(500);
     }
