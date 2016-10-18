@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.stereotype.Component;
 
 import com.ymatou.messagebus.facade.ErrorCode;
 import com.ymatou.messagebus.facade.PublishMessageFacade;
@@ -26,8 +27,10 @@ import com.ymatou.messagebus.facade.model.PublishMessageResp;
  *         1.0.4-修复MapDB关闭BUG
  *         1.0.5-修改sendMessage方法名，修复补单BUG
  *         1.0.6-修复MessageLocalConsumer中对于Facade放回的处理
+ *         1.0.8 增加Component注解
  *
  */
+@Component
 public class MessageBusClient implements InitializingBean, DisposableBean {
 
     private Logger logger = LoggerFactory.getLogger(MessageBusClient.class);
