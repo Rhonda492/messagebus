@@ -34,7 +34,7 @@ public class KafkaProducerClient {
     @Resource
     private KafkaProducerConfig kafkaConfig;
 
-    private ExecutorService producerExecutor = new ThreadPoolExecutor(1, 1,
+    private ExecutorService producerExecutor = new ThreadPoolExecutor(1, 2,
             0L, TimeUnit.MILLISECONDS,
             new LinkedBlockingQueue<Runnable>(10000));
 

@@ -76,17 +76,15 @@
 		</property>
 	</bean>
 
+	<bean id="kafkaDispatchServlet"
+		class="com.ymatou.messagebus.facade.servlet.KafkaDispatchServlet">
+	</bean>
+<!-- 
 	<bean id="performanceMonitorAdvice"
 		class="com.ymatou.performancemonitorclient.PerformanceMonitorAdvice">
 		<property name="appId" value="mqpublish.kafka.iapi.ymatou.com"></property>
 		<property name="serverUrl" value="${perfmonapi.url}"></property>
 	</bean>
-
-	<bean id="kafkaDispatchServlet"
-		class="com.ymatou.messagebus.facade.servlet.KafkaDispatchServlet">
-	</bean>
-
-	<import resource="classpath:spring/persistence.xml" />
 
 	<aop:config>
 		<aop:advisor advice-ref="performanceMonitorAdvice"
@@ -98,6 +96,9 @@
 						|| execution(* com.ymatou.messagebus..*Repository.*(..)))
 						" />
 	</aop:config>
+ -->
+ 
+	<import resource="classpath:spring/persistence.xml" />
 
 
 	<!-- 提供方应用信息，用于计算依赖关系 -->

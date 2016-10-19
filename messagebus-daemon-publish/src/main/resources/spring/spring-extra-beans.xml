@@ -76,14 +76,13 @@
 		</property>
 	</bean>
 
+ 
 	<bean id="performanceMonitorAdvice"
 		class="com.ymatou.performancemonitorclient.PerformanceMonitorAdvice">
 		<property name="appId" value="${appId}"></property>
 		<property name="serverUrl" value="${perfmonapi.url}"></property>
+		<property name="reportToCat" value="false"></property>
 	</bean>
-
-	<import resource="classpath:spring/persistence.xml" />
-
 	<aop:config>
 		<aop:advisor advice-ref="performanceMonitorAdvice"
 			pointcut="execution(* com.ymatou.messagebus.facade.*Facade.*(..))
@@ -93,7 +92,9 @@
 						|| execution(* com.ymatou.messagebus.infrastructure.kafka..*Client.*(..))
 						|| execution(* com.ymatou.messagebus..*Repository.*(..)))
 						" />
-	</aop:config>
+	</aop:config> 
+
+	<import resource="classpath:spring/persistence.xml" />
 
 
 	<!-- 提供方应用信息，用于计算依赖关系 -->

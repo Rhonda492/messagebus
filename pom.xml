@@ -4,7 +4,7 @@
 
 	<groupId>com.ymatou.messagebus</groupId>
 	<artifactId>messagebus</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.9</version>
 	<packaging>pom</packaging>
 
 	<name>messagebus</name>
@@ -57,8 +57,8 @@
 		<joda-time.verson>2.9.3</joda-time.verson>
 
 		<el-api.version>2.2</el-api.version>
-		<errorreporter.version>1.0.1</errorreporter.version>
-		<performance.monitor.client.version>1.0.5</performance.monitor.client.version>
+		<errorreporter.version>1.0.3</errorreporter.version>
+		<performance.monitor.client.version>1.0.6</performance.monitor.client.version>
 
 		<thoughtworks.xstream.version>1.4.7</thoughtworks.xstream.version>
 		<dom4j.version>1.6.1</dom4j.version>
@@ -70,12 +70,12 @@
 		<google.guava.version>19.0</google.guava.version>
 
 		<!-- self version -->
-		<messagebus.version>1.0.0</messagebus.version>
+		<messagebus.version>1.0.9</messagebus.version>
 
 		<!--对外暴露的API，需发布到maven私服，供客户端引用。版本会不断升级。 -->
 		<!--开发联调，API还未稳定，需要频繁发布时，版本号变更为1.0.0.SNAPSHOT。 -->
 		<!--API最终确定后，版本号修改为“1.0.0YyyyMmDd”并release。客户端最终必须都是使用release版。 -->
-		<messagebus-facade.version>1.0.8</messagebus-facade.version>
+		<messagebus-facade.version>1.0.9</messagebus-facade.version>
 
 	</properties>
 	<dependencyManagement>

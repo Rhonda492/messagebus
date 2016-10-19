@@ -16,7 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.stereotype.Component;
 
 import com.ymatou.messagebus.facade.ErrorCode;
 import com.ymatou.messagebus.facade.PublishKafkaFacade;
@@ -32,7 +31,6 @@ import com.ymatou.messagebus.facade.model.PublishMessageResp;
  *         1.0.8 增加Component注解
  *
  */
-@Component
 public class KafkaBusClient implements InitializingBean, DisposableBean {
 
     private Logger logger = LoggerFactory.getLogger(KafkaBusClient.class);

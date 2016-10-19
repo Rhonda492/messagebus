@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>com.ymatou.messagebus</groupId>
 		<artifactId>messagebus</artifactId>
-		<version>1.0.0</version>
+		<version>1.0.9</version>
 	</parent>
 
 	<artifactId>messagebus-infrastructure</artifactId>

@@ -7,6 +7,7 @@ package com.ymatou.messagebus.facade.model;
 
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.validator.constraints.NotEmpty;
 
 import com.ymatou.messagebus.facade.BaseRequest;
@@ -93,7 +94,6 @@ public class PublishMessageReq extends BaseRequest {
      */
     public void setMsgUniqueId(String msgUniqueId) {
         this.msgUniqueId = msgUniqueId;
-        setRequestId(msgUniqueId);
     }
 
     /**
@@ -122,5 +122,20 @@ public class PublishMessageReq extends BaseRequest {
      */
     public void setBody(String body) {
         this.body = body;
+    }
+
+    public void validateData() {
+        if (StringUtils.isEmpty(appId)) {
+            throw new IllegalArgumentException("appId not empty");
+        }
+        if (StringUtils.isEmpty(code)) {
+            throw new IllegalArgumentException("code not empty");
+        }
+        if (StringUtils.isEmpty(msgUniqueId)) {
+            throw new IllegalArgumentException("messageId not empty");
+        }
+        if (StringUtils.isEmpty(body)) {
+            throw new IllegalArgumentException("body not empty");
+        }
     }
 }

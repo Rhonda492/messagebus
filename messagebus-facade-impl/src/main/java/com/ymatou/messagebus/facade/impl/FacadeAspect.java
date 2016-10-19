@@ -33,7 +33,7 @@ public class FacadeAspect {
 
     private static final Logger DEFAULT_LOGGER = LoggerFactory.getLogger(FacadeAspect.class);
 
-    @Pointcut("execution(* com.ymatou.messagebus.facade.*Facade.*(*)) && args(req)")
+    @Pointcut("execution(* com.ymatou.messagebus.facade.*eFacade.*(*)) && args(req)")
     public void executAccountFacade(BaseRequest req) {};
 
     @Around("executAccountFacade(req)")
@@ -87,6 +87,7 @@ public class FacadeAspect {
         long consumedTime = System.currentTimeMillis() - startTime;
 
         logger.info("Finished {}, Consumed:{}ms", getRequestFlag(req), consumedTime);
+
         return resp;
     }
 

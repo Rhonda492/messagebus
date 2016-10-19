@@ -24,6 +24,8 @@
 
 		<!-- your application id -->
 		<param name="appId" value="${appId}" />
+
+		<param name="enableCat" value="false"/>
 	</appender>
 
 	<appender name="ERROR-APPENDER"

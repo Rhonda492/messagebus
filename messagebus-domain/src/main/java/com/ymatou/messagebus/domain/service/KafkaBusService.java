@@ -50,7 +50,8 @@ public class KafkaBusService {
     public void publish(Message message) {
         AppConfig appConfig = appConfigCache.get(message.getAppId());
         if (appConfig == null) {
-            throw new BizException(ErrorCode.ILLEGAL_ARGUMENT, "invalid appId:" + message.getAppId());
+            throw new BizException(ErrorCode.ILLEGAL_ARGUMENT, "invalid appId:" +
+                    message.getAppId());
         }
 
         if (!MQTypeEnum.Kafka.code().equals(appConfig.getMqType())) {
@@ -65,7 +66,8 @@ public class KafkaBusService {
 
         writeMongoAsync(message, MDC.get("logPrefix"));
 
-        kafkaClient.sendAsync(message.getKafkaTopic(), message.getKafkaMessageKey(), message.getBody());
+        kafkaClient.sendAsync(message.getKafkaTopic(), message.getKafkaMessageKey(),
+                message.getBody());
     }
 
     /**
