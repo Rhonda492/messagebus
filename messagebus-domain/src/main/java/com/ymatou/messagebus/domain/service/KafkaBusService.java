@@ -81,15 +81,9 @@ public class KafkaBusService {
 
             MDC.put("logPrefix", requestId);
 
-            logger.info(
-                    "----------------------------- async write message begin -------------------------------");
-
             // 记录消息日志
             messageRepository.insert(message);
 
-
-            logger.info(
-                    "----------------------------- async write message end -------------------------------");
         });
     }
 }
