@@ -50,7 +50,6 @@
 		<property name="locations">
 			<list>
 				<value>classpath:mongodb.properties</value>
-				<value>classpath:tomcat.properties</value>
 			</list>
 		</property>
 	</bean>
@@ -102,7 +101,7 @@
 	<dubbo:registry address="zookeeper://${dubbo.zoo}" timeout="30000" />
 
 	<dubbo:protocol name="dubbo" port="${dubbo.port}" serialization="kryo" />
-	<dubbo:protocol name="rest" server="servlet" port="${tomcat.port}"
+	<dubbo:protocol name="rest" server="servlet" port="${rest.port}"
 		extension="com.ymatou.messagebus.infrastructure.serialize.JacksonConfig" />
 
 	<dubbo:service interface="com.ymatou.messagebus.facade.rest.SystemResource"

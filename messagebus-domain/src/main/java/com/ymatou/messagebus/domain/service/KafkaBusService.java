@@ -7,8 +7,6 @@ package com.ymatou.messagebus.domain.service;
 
 import javax.annotation.Resource;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Component;
@@ -31,8 +29,6 @@ import com.ymatou.messagebus.infrastructure.kafka.KafkaProducerClient;
  */
 @Component
 public class KafkaBusService {
-
-    private static Logger logger = LoggerFactory.getLogger(KafkaBusService.class);
 
 
     @Resource

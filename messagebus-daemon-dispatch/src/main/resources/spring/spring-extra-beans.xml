@@ -50,7 +50,6 @@
 		<property name="locations">
 			<list>
 				<value>classpath:mongodb.properties</value>
-				<value>classpath:tomcat.properties</value>
 			</list>
 		</property>
 	</bean>
@@ -79,7 +78,7 @@
 	<bean id="kafkaDispatchServlet"
 		class="com.ymatou.messagebus.facade.servlet.KafkaDispatchServlet">
 	</bean>
-<!-- 
+
 	<bean id="performanceMonitorAdvice"
 		class="com.ymatou.performancemonitorclient.PerformanceMonitorAdvice">
 		<property name="appId" value="mqpublish.kafka.iapi.ymatou.com"></property>
@@ -96,7 +95,7 @@
 						|| execution(* com.ymatou.messagebus..*Repository.*(..)))
 						" />
 	</aop:config>
- -->
+
  
 	<import resource="classpath:spring/persistence.xml" />
 
@@ -108,7 +107,7 @@
 
 	<dubbo:protocol name="dubbo" port="${dubbo.port}"
 		serialization="kryo" />
-	<dubbo:protocol name="rest" server="servlet" port="${tomcat.port}"
+	<dubbo:protocol name="rest" server="servlet" port="${rest.port}"
 		extension="com.ymatou.messagebus.infrastructure.serialize.JacksonConfig" />
 
 
