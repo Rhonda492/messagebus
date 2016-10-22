@@ -22,12 +22,6 @@ import com.ymatou.messagebus.facade.model.PublishMessageResp;
  * 
  * @author wangxudong 2016年8月30日 上午11:51:35
  * 
- *         1.0.3-优化获取本机IP的性能
- *         1.0.4-修复MapDB关闭BUG
- *         1.0.5-修改sendMessage方法名，修复补单BUG
- *         1.0.6-修复MessageLocalConsumer中对于Facade放回的处理
- *         1.0.8 增加Component注解
- *
  */
 public class MessageBusClient implements InitializingBean, DisposableBean {
 
@@ -43,6 +37,11 @@ public class MessageBusClient implements InitializingBean, DisposableBean {
      * 消息存储
      */
     private MessageDB messageDB;
+
+    /**
+     * 序列化成JSON时不序列化值类型和引用类型的默认值
+     */
+    private boolean notWriteDefaultValue = false;
 
     /**
      * 消息本地线程
@@ -61,7 +60,7 @@ public class MessageBusClient implements InitializingBean, DisposableBean {
      */
     public void sendMessage(Message message) throws MessageBusException {
         logger.debug("messagebus client send begin:{}", message);
-        PublishMessageReq req = message.validateToReq();
+        PublishMessageReq req = message.validateToReq(notWriteDefaultValue);
         logger.debug("messagebus client send message:{}", req);
 
         try {
@@ -141,5 +140,19 @@ public class MessageBusClient implements InitializingBean, DisposableBean {
         if (messageDB != null) {
             messageDB.close();
         }
+    }
+
+    /**
+     * @return the notWriteDefaultValue
+     */
+    public boolean isNotWriteDefaultValue() {
+        return notWriteDefaultValue;
+    }
+
+    /**
+     * @param notWriteDefaultValue the notWriteDefaultValue to set
+     */
+    public void setNotWriteDefaultValue(boolean notWriteDefaultValue) {
+        this.notWriteDefaultValue = notWriteDefaultValue;
     }
 }

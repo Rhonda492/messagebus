@@ -8,6 +8,7 @@ package com.ymatou.messagebus.client;
 import org.apache.commons.lang3.StringUtils;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.ymatou.messagebus.facade.PrintFriendliness;
 import com.ymatou.messagebus.facade.model.PublishMessageReq;
 
@@ -116,7 +117,7 @@ public class Message extends PrintFriendliness {
      * @return
      * @throws MessageBusException
      */
-    public PublishMessageReq validateToReq() throws MessageBusException {
+    public PublishMessageReq validateToReq(boolean notWriteDefaultValue) throws MessageBusException {
         if (StringUtils.isEmpty(appId)) {
             throw new MessageBusException("invalid appId.");
         }
@@ -138,7 +139,14 @@ public class Message extends PrintFriendliness {
         publishMessageReq.setCode(code);
         publishMessageReq.setMsgUniqueId(messageId);
         publishMessageReq.setIp(NetUtil.getHostIp());
-        publishMessageReq.setBody(JSON.toJSONStringWithDateFormat(body, DATE_FORMAT));
+
+        if (notWriteDefaultValue) {
+            publishMessageReq
+                    .setBody(
+                            JSON.toJSONStringWithDateFormat(body, DATE_FORMAT, SerializerFeature.NotWriteDefaultValue));
+        } else {
+            publishMessageReq.setBody(JSON.toJSONStringWithDateFormat(body, DATE_FORMAT));
+        }
 
         return publishMessageReq;
     }

@@ -16,7 +16,7 @@ public class KafkaProducerDemo {
 
     public static void main(String[] args) throws IOException {
         Properties props = new Properties();
-        props.put("bootstrap.servers", "mqmaster.ymatou.com:9092,mqmaster.ymatou.com:9093,mqmaster.ymatou.com:9094");
+        props.put("bootstrap.servers", "mqmaster.ymatou.com:9092");
         props.put("acks", "1");
         props.put("retries", 0);
         props.put("batch.size", 16384);
@@ -26,12 +26,14 @@ public class KafkaProducerDemo {
         props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
 
         Producer<String, String> producer = new KafkaProducer<>(props);
-        for (int i = 0; i < 10; i++) {
-            producer.send(new ProducerRecord<String, String>("test", Integer.toString(i),
+        for (int i = 0; i < 1; i++) {
+            producer.send(new ProducerRecord<String, String>("test_5", Integer.toString(i),
                     Integer.toString(i)));
         }
 
         producer.close();
+
+        System.out.println("kafka send ok.");
     }
 
 

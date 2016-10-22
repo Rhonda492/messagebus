@@ -31,6 +31,8 @@ public class TaskItemRequest implements Serializable {
 
     private Date taskTime;
 
+    private int taskType;
+
     private Map<String, String> parameters;
 
     /**
@@ -111,6 +113,20 @@ public class TaskItemRequest implements Serializable {
     @Override
     public String toString() {
         return JSON.toJSONStringWithDateFormat(this, DATE_FORMAT);
+    }
+
+    /**
+     * @return the taskType
+     */
+    public int getTaskType() {
+        return taskType;
+    }
+
+    /**
+     * @param taskType the taskType to set
+     */
+    public void setTaskType(int taskType) {
+        this.taskType = taskType;
     }
 
 

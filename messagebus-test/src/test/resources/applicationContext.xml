@@ -104,6 +104,7 @@
 	<!-- 消息总线客户端 -->
 	<bean id="messageBusClient" class="com.ymatou.messagebus.client.MessageBusClient">
 		<property name="messageDbPath" value="/data/messagebus/demo" />
+		<property name="notWriteDefaultValue" value="true"></property>
 	</bean>
 
 	<!-- 消息总线客户端Kafka-->

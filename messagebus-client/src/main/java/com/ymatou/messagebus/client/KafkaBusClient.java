@@ -26,9 +26,6 @@ import com.ymatou.messagebus.facade.model.PublishMessageResp;
  * Kafka总线客户端
  * 
  * @author wangxudong 2016年10月14日 下午3:39:54
- * 
- *         1.0.7 增加Kafka总线客户端
- *         1.0.8 增加Component注解
  *
  */
 public class KafkaBusClient implements InitializingBean, DisposableBean {
@@ -57,6 +54,11 @@ public class KafkaBusClient implements InitializingBean, DisposableBean {
     private int asyncSendMaxQueueNum = 10000;
 
     /**
+     * 序列化成JSON时不序列化值类型和引用类型的默认值
+     */
+    private boolean notWriteDefaultValue = false;
+
+    /**
      * Kafka总线线程池
      */
     private ExecutorService kafkaBusExecutor;
@@ -78,7 +80,7 @@ public class KafkaBusClient implements InitializingBean, DisposableBean {
      */
     public void sendMessage(Message message) throws MessageBusException {
         logger.debug("kafka messagebus client send begin:{}", message);
-        PublishMessageReq req = message.validateToReq();
+        PublishMessageReq req = message.validateToReq(notWriteDefaultValue);
         logger.debug("kafka messagebus client send message:{}", req);
 
         sendMessageInner(req);
@@ -93,7 +95,7 @@ public class KafkaBusClient implements InitializingBean, DisposableBean {
      */
     public void sendMessageAsync(Message message) throws MessageBusException {
         logger.debug("kafka messagebus client send begin:{}", message);
-        PublishMessageReq req = message.validateToReq();
+        PublishMessageReq req = message.validateToReq(notWriteDefaultValue);
         logger.debug("kafka messagebus client send message:{}", req);
 
         try {
@@ -238,5 +240,19 @@ public class KafkaBusClient implements InitializingBean, DisposableBean {
         } else {
             this.asyncSendMaxQueueNum = asyncSendMaxQueueNum;
         }
+    }
+
+    /**
+     * @return the notWriteDefaultValue
+     */
+    public boolean isNotWriteDefaultValue() {
+        return notWriteDefaultValue;
+    }
+
+    /**
+     * @param notWriteDefaultValue the notWriteDefaultValue to set
+     */
+    public void setNotWriteDefaultValue(boolean notWriteDefaultValue) {
+        this.notWriteDefaultValue = notWriteDefaultValue;
     }
 }
