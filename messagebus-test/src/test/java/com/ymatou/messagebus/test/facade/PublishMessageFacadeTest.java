@@ -33,7 +33,7 @@ public class PublishMessageFacadeTest extends BaseTest {
     private MessageRepository messageRepository;
 
     @Test
-    public void testPublish() {
+    public void testPublish() throws InterruptedException {
         PublishMessageReq req = new PublishMessageReq();
         req.setAppId("testjava");
         req.setCode("hello");
@@ -44,6 +44,8 @@ public class PublishMessageFacadeTest extends BaseTest {
 
         System.out.println(resp.getErrorMessage());
         assertEquals(true, resp.isSuccess());
+
+        Thread.sleep(200);
 
         Message message = messageRepository.getByUuid(req.getAppId(), req.getCode(), resp.getUuid());
         assertNotNull(message);

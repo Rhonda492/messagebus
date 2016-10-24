@@ -60,7 +60,9 @@ public class KafkaBusService {
             throw new BizException(ErrorCode.ILLEGAL_ARGUMENT, "invalid code:" + message.getCode());
         }
 
-        writeMongoAsync(message, MDC.get("logPrefix"));
+        if (messageConfig.getEnableLog()) {
+            writeMongoAsync(message, MDC.get("logPrefix"));
+        }
 
         kafkaClient.sendAsync(message.getKafkaTopic(), message.getKafkaMessageKey(),
                 message.getBody());

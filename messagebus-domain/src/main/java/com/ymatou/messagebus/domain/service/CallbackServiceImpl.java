@@ -24,6 +24,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Component;
 
+import com.ymatou.messagebus.domain.cache.AppConfigCache;
 import com.ymatou.messagebus.domain.model.AppConfig;
 import com.ymatou.messagebus.domain.model.CallbackConfig;
 import com.ymatou.messagebus.domain.model.Message;
@@ -31,7 +32,6 @@ import com.ymatou.messagebus.domain.model.MessageCompensate;
 import com.ymatou.messagebus.domain.model.MessageConfig;
 import com.ymatou.messagebus.domain.model.MessageStatus;
 import com.ymatou.messagebus.domain.repository.AlarmRepository;
-import com.ymatou.messagebus.domain.repository.AppConfigRepository;
 import com.ymatou.messagebus.domain.repository.MessageCompensateRepository;
 import com.ymatou.messagebus.domain.repository.MessageRepository;
 import com.ymatou.messagebus.domain.repository.MessageStatusRepository;
@@ -63,7 +63,7 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
     private CloseableHttpAsyncClient httpClient;
 
     @Resource
-    private AppConfigRepository appConfigRepository;
+    private AppConfigCache appConfigCache;
 
     @Resource
     private AlarmRepository alarmRepository;
@@ -96,7 +96,7 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
     @Override
     public void invoke(String appId, String appCode, String messageBody, String messageId,
             String messageUuid) {
-        AppConfig appConfig = appConfigRepository.getAppConfig(appId);
+        AppConfig appConfig = appConfigCache.get(appId);
         if (appConfig == null) {
             throw new BizException(ErrorCode.ILLEGAL_ARGUMENT, "invalid appId:" + appId);
         }
@@ -141,7 +141,8 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
             if (callbackConfig.getEnable() == null || callbackConfig.getEnable() == true) {
 
                 try {
-                    new BizSystemCallback(httpClient, message, null, callbackConfig, this).send();
+                    new BizSystemCallback(httpClient, message, null, callbackConfig, this)
+                            .setEnableLog(messageConfig.getEnableLog()).send();
                 } catch (Exception e) {
                     logger.error(String.format("invoke biz system fail,appCode:%s, messageUuid:%s",
                             message.getAppCode(), message.getUuid()), e);
@@ -158,9 +159,14 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
      * @param duration
      */
     public void writeSuccessResult(CallbackModeEnum callbackMode, Message message, MessageCompensate messageCompensate,
-            CallbackConfig callbackConfig,
-            long duration) {
+            CallbackConfig callbackConfig, long duration, boolean enableLog) {
         String requestId = MDC.get("logPrefix");
+
+        if (enableLog == false) {
+            logger.info("callback service write success log, uuid:{}, messageId:{}.", message.getUuid(),
+                    message.getMessageId());
+            return;
+        }
 
         taskExecutor.execute(() -> {
             MDC.put("logPrefix", requestId);

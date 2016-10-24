@@ -26,6 +26,9 @@ public class MessageConfig {
     @Property("Enable")
     private Boolean enable;
 
+    @Property("EnableLog")
+    private Boolean enableLog;
+
     @Embedded("CallbackCfgList")
     private List<CallbackConfig> callbackCfgList;
 
@@ -104,5 +107,22 @@ public class MessageConfig {
         }
         return callbackCfgList.stream()
                 .filter(callbackCfg -> callbackCfg.getCallbackKey().equals(consumerId)).findAny().get();
+    }
+
+    /**
+     * @return the enableLog
+     */
+    public Boolean getEnableLog() {
+        if (enableLog == null) {
+            return true;
+        }
+        return enableLog;
+    }
+
+    /**
+     * @param enableLog the enableLog to set
+     */
+    public void setEnableLog(Boolean enableLog) {
+        this.enableLog = enableLog;
     }
 }

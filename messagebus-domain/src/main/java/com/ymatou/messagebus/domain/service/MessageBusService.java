@@ -9,6 +9,10 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import javax.annotation.Resource;
@@ -65,6 +69,13 @@ public class MessageBusService implements InitializingBean {
     private AutoResetHealthProxy autoResetHealthProxy;
 
     /**
+     * mongoDB日志专用线程池
+     */
+    private ExecutorService mongoDBLogExecutor = new ThreadPoolExecutor(3, 10,
+            0L, TimeUnit.MILLISECONDS,
+            new LinkedBlockingQueue<Runnable>(10000));
+
+    /**
      * 发布消息
      * 
      * @param message
@@ -87,11 +98,16 @@ public class MessageBusService implements InitializingBean {
 
         try {
             if (autoResetHealthProxy.isHealth()) {
+                String requestId = MDC.get("logPrefix");
+
                 // 记录消息日志
-                messageRepository.insert(message);
+                if (messageConfig.getEnableLog()) {
+                    writeMongoAsync(message, requestId);
+                }
 
                 // 异步发送消息
-                publishToMQAsync(message, messageConfig, MDC.get("logPrefix"));
+                publishToMQAsync(message, messageConfig, requestId);
+
             } else {
                 publishToMQ(message, messageConfig, false);
             }
@@ -105,6 +121,29 @@ public class MessageBusService implements InitializingBean {
             publishToMQ(message, messageConfig, false);
         }
     }
+
+    /**
+     * 异步写消息日志
+     * 
+     * @param appConfig
+     * @param message
+     */
+    private void writeMongoAsync(Message message, String requestId) {
+        try {
+            mongoDBLogExecutor.submit(() -> {
+                MDC.put("logPrefix", requestId);
+
+                try {
+                    messageRepository.insert(message);
+                } catch (Exception e) {
+                    logger.error("write mongodb log failed.", e);
+                }
+            });
+        } catch (Exception e) {
+            logger.error("write mongodb log thread pool used up", e);
+        }
+    }
+
 
     /**
      * 异步发送消息

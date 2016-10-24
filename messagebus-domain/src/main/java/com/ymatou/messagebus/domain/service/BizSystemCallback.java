@@ -63,6 +63,8 @@ public class BizSystemCallback implements FutureCallback<HttpResponse> {
 
     private long beginTime;
 
+    private boolean enableLog = true;
+
     /**
      * 回调模式
      */
@@ -119,6 +121,26 @@ public class BizSystemCallback implements FutureCallback<HttpResponse> {
         httpPost.setConfig(requestConfig);
 
         return this;
+    }
+
+    /**
+     * 设置是否写MongoDB日志
+     * 
+     * @param enableLog
+     * @return
+     */
+    public BizSystemCallback setEnableLog(Boolean enableLog) {
+        if (enableLog == null) {
+            this.enableLog = true;
+        } else {
+            this.enableLog = enableLog;
+        }
+
+        return this;
+    }
+
+    public boolean isEnableLog() {
+        return this.enableLog;
     }
 
     /**
@@ -227,7 +249,7 @@ public class BizSystemCallback implements FutureCallback<HttpResponse> {
             if (isCallbackSuccess(statusCode, reponseStr)) {
                 callbackResult = true;
                 callbackServiceImpl.writeSuccessResult(callbackMode, message, messageCompensate, callbackConfig,
-                        duration);
+                        duration, this.enableLog);
             } else {
                 callbackServiceImpl.writeFailResult(callbackMode, message, messageCompensate, callbackConfig,
                         reponseStr, duration, null);
