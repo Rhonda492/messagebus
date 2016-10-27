@@ -58,7 +58,7 @@
 
 		<el-api.version>2.2</el-api.version>
 		<errorreporter.version>1.0.3</errorreporter.version>
-		<performance.monitor.client.version>1.0.6</performance.monitor.client.version>
+		<performance.monitor.client.version>1.0.8</performance.monitor.client.version>
 
 		<thoughtworks.xstream.version>1.4.7</thoughtworks.xstream.version>
 		<dom4j.version>1.6.1</dom4j.version>

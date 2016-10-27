@@ -25,6 +25,7 @@ import com.ymatou.messagebus.facade.enums.MessagePublishStatusEnum;
 import com.ymatou.messagebus.facade.model.PublishMessageReq;
 import com.ymatou.messagebus.facade.model.PublishMessageResp;
 import com.ymatou.messagebus.infrastructure.net.NetUtil;
+import com.ymatou.performancemonitorclient.PerformanceStatisticContainer;
 
 /**
  * 发布消息到Kafka接口实现
@@ -40,6 +41,8 @@ public class PublishKafkaFacadeImpl implements PublishKafkaFacade {
     @Resource
     private KafkaBusService kafkaBusService;
 
+    private String monitorAppId = "mqpublish.monitor.iapi.ymatou.com";
+
     /*
      * (non-Javadoc)
      * 
@@ -49,6 +52,7 @@ public class PublishKafkaFacadeImpl implements PublishKafkaFacade {
      */
     @Override
     public PublishMessageResp publish(PublishMessageReq req) {
+        long startTime = System.currentTimeMillis();
         if (req == null) {
             logger.error("Recv: null");
             return builErrorResponse(ErrorCode.ILLEGAL_ARGUMENT, "request is null");
@@ -78,6 +82,13 @@ public class PublishKafkaFacadeImpl implements PublishKafkaFacade {
         } finally {
             logger.info("Resp:{}", resp);
         }
+
+        // 向性能监控器汇报性能情况
+        long consumedTime = System.currentTimeMillis() - startTime;
+        PerformanceStatisticContainer.addAsync(consumedTime, String.format("%s_%s", req.getAppId(), req.getCode()),
+                monitorAppId);
+        PerformanceStatisticContainer.addAsync(consumedTime, "Total", monitorAppId);
+
 
         return resp;
     }

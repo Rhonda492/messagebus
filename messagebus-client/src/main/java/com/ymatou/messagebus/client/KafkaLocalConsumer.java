@@ -52,6 +52,8 @@ public class KafkaLocalConsumer extends Thread {
             while (true) {
                 try {
                     consume();
+                } catch (IllegalAccessError error) {
+                    throw error;
                 } catch (Throwable t) {
                     logger.error("kafka fail to consume local message.", t);
                 }

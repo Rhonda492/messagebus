@@ -209,7 +209,7 @@ public class BizSystemCallback implements FutureCallback<HttpResponse> {
      */
     public void secondCompensate(int timeSpanSecond) {
         this.callbackMode = CallbackModeEnum.SecondCompensate;
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 5; i++) {
             send();
 
             try {

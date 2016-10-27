@@ -20,6 +20,7 @@ import com.ymatou.messagebus.facade.enums.MessagePublishStatusEnum;
 import com.ymatou.messagebus.facade.model.PublishMessageReq;
 import com.ymatou.messagebus.facade.model.PublishMessageResp;
 import com.ymatou.messagebus.infrastructure.net.NetUtil;
+import com.ymatou.performancemonitorclient.PerformanceStatisticContainer;
 
 /**
  * 发布消息接口实现
@@ -33,6 +34,8 @@ public class PublishMessageFacadeImpl implements PublishMessageFacade {
     @Resource
     private MessageBusService messageBusService;
 
+    private String monitorAppId = "mqpublish.monitor.iapi.ymatou.com";
+
     /*
      * (non-Javadoc)
      * 
@@ -42,6 +45,8 @@ public class PublishMessageFacadeImpl implements PublishMessageFacade {
      */
     @Override
     public PublishMessageResp publish(PublishMessageReq req) {
+        long startTime = System.currentTimeMillis();
+
         Message message = new Message();
         message.setAppId(req.getAppId());
         message.setBody(req.getBody());
@@ -60,6 +65,12 @@ public class PublishMessageFacadeImpl implements PublishMessageFacade {
         PublishMessageResp resp = new PublishMessageResp();
         resp.setSuccess(true);
         resp.setUuid(message.getUuid());
+
+
+        // 向性能监控器汇报性能情况
+        long consumedTime = System.currentTimeMillis() - startTime;
+        PerformanceStatisticContainer.addAsync(consumedTime, message.getAppCode(), monitorAppId);
+        PerformanceStatisticContainer.addAsync(consumedTime, "Total", monitorAppId);
 
         return resp;
     }

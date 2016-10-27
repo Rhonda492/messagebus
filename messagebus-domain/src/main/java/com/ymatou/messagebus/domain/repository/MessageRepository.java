@@ -70,6 +70,11 @@ public class MessageRepository extends MongoRepository implements InitializingBe
                     if (!collectionName.startsWith("mq_subscribe")) {
                         collection.createIndex("aid");
                         collection.createIndex("code");
+
+                        if (!dbName.equals("JMQ_Message_Compensate")) {
+                            collection.createIndex("nstatus");
+                            collection.createIndex("pstatus");
+                        }
                     }
                 }
             }
@@ -204,26 +209,33 @@ public class MessageRepository extends MongoRepository implements InitializingBe
         String dbName = "JMQ_Message_" + appId + "_";
         String collectionName = "Message_" + code;
 
-        Calendar calendarNow = Calendar.getInstance();
-        calendarNow.add(Calendar.MINUTE, -5);
+        Calendar calendarBegin = Calendar.getInstance();
+        calendarBegin.add(Calendar.HOUR, -48);
+
+        Calendar calendarEnd = Calendar.getInstance();
+        calendarEnd.add(Calendar.MINUTE, -5);
+
+
 
         Query<Message> query =
                 newQuery(Message.class, dbName + getTableSuffix(), collectionName, ReadPreference.primaryPreferred());
         query.and(
                 query.criteria("nstatus").equal(MessageNewStatusEnum.InRabbitMQ.code()),
                 query.criteria("pstatus").equal(MessageProcessStatusEnum.Init.code()),
-                query.criteria("ctime").lessThan(calendarNow.getTime()));
+                query.criteria("ctime").greaterThan(calendarBegin.getTime()),
+                query.criteria("ctime").lessThan(calendarEnd.getTime()));
         List<Message> curMonthList = query.asList();
 
         // 如果是跨月第一天，则补单需要查询上月的数据
-        if (calendarNow.get(Calendar.DATE) == 1) {
+        if (calendarEnd.get(Calendar.DATE) == 1) {
             Query<Message> queryLast =
                     newQuery(Message.class, dbName + getTableSuffixLastMonth(), collectionName,
                             ReadPreference.primaryPreferred());
             queryLast.and(
                     queryLast.criteria("nstatus").equal(MessageNewStatusEnum.InRabbitMQ.code()),
                     queryLast.criteria("pstatus").equal(MessageProcessStatusEnum.Init.code()),
-                    queryLast.criteria("ctime").lessThan(calendarNow.getTime()));
+                    queryLast.criteria("ctime").greaterThan(calendarBegin.getTime()),
+                    queryLast.criteria("ctime").lessThan(calendarEnd.getTime()));
             List<Message> lastMonthList = queryLast.asList();
 
             curMonthList.addAll(lastMonthList);

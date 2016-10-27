@@ -52,6 +52,8 @@ public class MessageLocalConsumer extends Thread {
             while (true) {
                 try {
                     consume();
+                } catch (IllegalAccessError error) {
+                    throw error;
                 } catch (Throwable t) {
                     logger.error("fail to consume local message.", t);
                 }
