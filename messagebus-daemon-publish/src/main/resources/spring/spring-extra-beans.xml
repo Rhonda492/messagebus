@@ -112,5 +112,5 @@
 		interface="com.ymatou.messagebus.facade.rest.PublishKafkaResource"
 		ref="publishKafkaResource" protocol="rest" />
 
-	<dubbo:reference id="compensateClient" interface="com.ymatou.messagebus.facade.CompensateFacade" retries="1" timeout="10000" /> 
+	<dubbo:reference id="compensateClient" interface="com.ymatou.messagebus.facade.CompensateFacade" check="false" retries="1" timeout="10000" /> 
 </beans>

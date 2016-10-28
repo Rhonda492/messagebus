@@ -48,6 +48,7 @@ import com.ymatou.messagebus.facade.model.SecondCompensateReq;
 import com.ymatou.messagebus.facade.model.SecondCompensateResp;
 import com.ymatou.messagebus.infrastructure.logger.ErrorReportClient;
 import com.ymatou.messagebus.infrastructure.mq.CallbackService;
+import com.ymatou.performancemonitorclient.PerformanceStatisticContainer;
 
 /**
  * 回调服务
@@ -85,6 +86,8 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
 
     @Resource(name = "compensateClient")
     private CompensateFacade compensateFacade;
+
+    private String monitorAppId = "mqmonitor.iapi.ymatou.com";
 
 
     /*
@@ -127,7 +130,15 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
         message.setMessageId(messageId);
         message.setUuid(messageUuid);
 
+        long startTime = System.currentTimeMillis();
+
         invokeCore(message, messageConfig);
+
+        // 向性能监控器汇报性能情况
+        long consumedTime = System.currentTimeMillis() - startTime;
+        PerformanceStatisticContainer.addAsync(consumedTime, String.format("%s.dispatch", message.getAppCode()),
+                monitorAppId);
+        PerformanceStatisticContainer.addAsync(consumedTime, "TotalDispatch", monitorAppId);
     }
 
     /**
