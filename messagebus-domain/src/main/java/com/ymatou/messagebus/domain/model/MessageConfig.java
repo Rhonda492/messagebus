@@ -7,6 +7,7 @@ package com.ymatou.messagebus.domain.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.mongodb.morphia.annotations.Embedded;
 import org.mongodb.morphia.annotations.Property;
@@ -105,8 +106,14 @@ public class MessageConfig {
         if (callbackCfgList == null) {
             return null;
         }
-        return callbackCfgList.stream()
-                .filter(callbackCfg -> callbackCfg.getCallbackKey().equals(consumerId)).findAny().get();
+        Optional<CallbackConfig> findAny = callbackCfgList.stream()
+                .filter(callbackCfg -> callbackCfg.getCallbackKey().equals(consumerId)).findAny();
+
+        if (findAny.isPresent()) {
+            return findAny.get();
+        } else {
+            return null;
+        }
     }
 
     /**

@@ -263,6 +263,10 @@ public class CompensateService implements InitializingBean {
     private void compensateCallback(MessageCompensate messageCompensate, MessageConfig messageConfig) {
         CallbackConfig callbackConfig = messageConfig.getCallbackConfig(messageCompensate.getConsumerId());
 
+        if (callbackConfig == null) {
+            throw new RuntimeException("can not find callbackconfig");
+        }
+
         // 直接从补单消息转换来，避免因为消息库丢失造成的补单失败
         // Message message = messageRepository.getByUuid(appId, code, uuid);
         Message message = Message.from(messageCompensate);
