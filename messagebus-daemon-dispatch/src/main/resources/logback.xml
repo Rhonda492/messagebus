@@ -55,7 +55,7 @@
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
 			<fileNamePattern>${baseDir}/default.%d{yyyy-MM-dd}
 			</fileNamePattern>
-			<maxHistory>30</maxHistory>
+			<maxHistory>10</maxHistory>
 		</rollingPolicy>
 		<encoder>
 			<charset>${charset}</charset>
@@ -74,13 +74,11 @@
 		<appender-ref ref="ASYNC-DEFAULT-APPENDER" />
 		<appender-ref ref="ASYNC-ERROR-APPENDER" />
 		<appender-ref ref="HTTP-POST-ERROR-APPENDER" />
-		<appender-ref ref="STDOUT" />
 	</logger>
 
 	<root level="${level}">
 		<appender-ref ref="ASYNC-DEFAULT-APPENDER" />
 		<appender-ref ref="ASYNC-ERROR-APPENDER" />
 		<appender-ref ref="HTTP-POST-ERROR-APPENDER" />
-		<appender-ref ref="STDOUT" />
 	</root>
 </configuration>

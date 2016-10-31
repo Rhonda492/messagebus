@@ -41,7 +41,15 @@ public class PublishKafkaFacadeImpl implements PublishKafkaFacade {
     @Resource
     private KafkaBusService kafkaBusService;
 
+    /**
+     * 按照业务统计
+     */
     private String monitorAppId = "mqmonitor.iapi.ymatou.com";
+
+    /**
+     * 按照机器统计性能数据
+     */
+    private String staticAppId = "mqstatic.iapi.ymatou.com";
 
     /*
      * (non-Javadoc)
@@ -88,6 +96,8 @@ public class PublishKafkaFacadeImpl implements PublishKafkaFacade {
         PerformanceStatisticContainer.addAsync(consumedTime, String.format("%s_%s", req.getAppId(), req.getCode()),
                 monitorAppId);
         PerformanceStatisticContainer.addAsync(consumedTime, "TotalPublish", monitorAppId);
+        PerformanceStatisticContainer.addAsync(consumedTime, String.format("TotalPublish.%s", NetUtil.getHostIp()),
+                staticAppId);
 
 
         return resp;

@@ -34,7 +34,15 @@ public class PublishMessageFacadeImpl implements PublishMessageFacade {
     @Resource
     private MessageBusService messageBusService;
 
+    /**
+     * 按照业务统计
+     */
     private String monitorAppId = "mqmonitor.iapi.ymatou.com";
+
+    /**
+     * 按照机器统计性能数据
+     */
+    private String staticAppId = "mqstatic.iapi.ymatou.com";
 
     /*
      * (non-Javadoc)
@@ -71,6 +79,8 @@ public class PublishMessageFacadeImpl implements PublishMessageFacade {
         long consumedTime = System.currentTimeMillis() - startTime;
         PerformanceStatisticContainer.addAsync(consumedTime, message.getAppCode(), monitorAppId);
         PerformanceStatisticContainer.addAsync(consumedTime, "TotalPublish", monitorAppId);
+        PerformanceStatisticContainer.addAsync(consumedTime, String.format("TotalPublish.%s", NetUtil.getHostIp()),
+                staticAppId);
 
         return resp;
     }
