@@ -77,9 +77,9 @@ public class PublishMessageFacadeImpl implements PublishMessageFacade {
 
         // 向性能监控器汇报性能情况
         long consumedTime = System.currentTimeMillis() - startTime;
-        PerformanceStatisticContainer.addAsync(consumedTime, message.getAppCode(), monitorAppId);
-        PerformanceStatisticContainer.addAsync(consumedTime, "TotalPublish", monitorAppId);
-        PerformanceStatisticContainer.addAsync(consumedTime, String.format("TotalPublish.%s", NetUtil.getHostIp()),
+        PerformanceStatisticContainer.add(consumedTime, message.getAppCode(), monitorAppId);
+        PerformanceStatisticContainer.add(consumedTime, "TotalPublish", monitorAppId);
+        PerformanceStatisticContainer.add(consumedTime, String.format("TotalPublish.%s", NetUtil.getHostIp()),
                 staticAppId);
 
         return resp;

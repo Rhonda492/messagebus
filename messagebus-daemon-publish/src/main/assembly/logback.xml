@@ -8,13 +8,6 @@
 	<property name="charset" value="UTF-8" />
 	<property name="immediateFlush" value="true" />
 	<property name="queueSize" value="1024" />
-	
-	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-		<encoder>
-			<charset>${charset}</charset>
-			<pattern>${pattern}</pattern>
-		</encoder>
-	</appender>
 
 	<appender name="HTTP-POST-ERROR-APPENDER"
 		class="com.ymatou.errorreporter.logbackappender.HttpPostErrorAppender">

@@ -35,7 +35,8 @@ public class SystemResourceImpl implements SystemResource {
                 + "\"1.0.2\":\"2016-10-13.1 add kafka dispatch service.\","
                 + "\"1.0.3\":\"2016-10-19.7 add kafka client sdk.\","
                 + "\"1.0.4\":\"2016-10-24.1 add enableLog property to controll mongoDB log.\","
-                + "\"1.0.5\":\"2016-10-31.1 report to monitor with appid_code.\""
+                + "\"1.0.5\":\"2016-10-31.1 report to monitor with appid_code.\","
+                + "\"1.0.6\":\"2016-11-01.1 change message and compensate mongodb.\""
                 + "}";
     }
 

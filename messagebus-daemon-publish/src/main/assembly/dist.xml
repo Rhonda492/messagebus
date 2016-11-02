@@ -6,14 +6,23 @@
 	<formats>
 		<format>dir</format>
 	</formats>
-	<includeBaseDirectory>false</includeBaseDirectory>  
+	<includeBaseDirectory>false</includeBaseDirectory>
 	<fileSets>
 		<fileSet>
 			<directory>${project.basedir}/src/main/resources</directory>
 			<!-- 过滤 -->
 			<excludes>
 				<exclude>**/*.properties</exclude>
+				<exclude>logback.xml</exclude>
+				<exclude>logback-test.xml</exclude>
 			</excludes>
+			<outputDirectory>conf</outputDirectory>
+		</fileSet>
+		<fileSet>
+			<directory>${project.basedir}/src/main/assembly</directory>
+			<includes>
+				<include>logback.xml</include>
+			</includes>
 			<outputDirectory>conf</outputDirectory>
 		</fileSet>
 		<fileSet>

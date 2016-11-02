@@ -93,10 +93,10 @@ public class PublishKafkaFacadeImpl implements PublishKafkaFacade {
 
         // 向性能监控器汇报性能情况
         long consumedTime = System.currentTimeMillis() - startTime;
-        PerformanceStatisticContainer.addAsync(consumedTime, String.format("%s_%s", req.getAppId(), req.getCode()),
+        PerformanceStatisticContainer.add(consumedTime, String.format("%s_%s", req.getAppId(), req.getCode()),
                 monitorAppId);
-        PerformanceStatisticContainer.addAsync(consumedTime, "TotalPublish", monitorAppId);
-        PerformanceStatisticContainer.addAsync(consumedTime, String.format("TotalPublish.%s", NetUtil.getHostIp()),
+        PerformanceStatisticContainer.add(consumedTime, "TotalPublish", monitorAppId);
+        PerformanceStatisticContainer.add(consumedTime, String.format("TotalPublish.%s", NetUtil.getHostIp()),
                 staticAppId);
 
 

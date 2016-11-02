@@ -148,8 +148,8 @@ public class DispatchService {
         for (CallbackConfig callbackConfig : messageConfig.getCallbackCfgList()) {
             String consumerId = callbackConfig.getCallbackKey();
             int parallelismNum =
-                    (callbackConfig.getParallelismNum() == null || callbackConfig.getParallelismNum().intValue() < 2)
-                            ? 2 : callbackConfig.getParallelismNum().intValue();
+                    (callbackConfig.getParallelismNum() == null || callbackConfig.getParallelismNum().intValue() < 1)
+                            ? 1 : callbackConfig.getParallelismNum().intValue();
             AdjustableSemaphore semaphore = SemaphorManager.get(consumerId);
             if (semaphore == null) {
                 semaphore = new AdjustableSemaphore(parallelismNum);

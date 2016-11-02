@@ -145,10 +145,10 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
 
         // 向性能监控器汇报性能情况
         long consumedTime = System.currentTimeMillis() - startTime;
-        PerformanceStatisticContainer.addAsync(consumedTime, String.format("%s.dispatch", message.getAppCode()),
+        PerformanceStatisticContainer.add(consumedTime, String.format("%s.dispatch", message.getAppCode()),
                 monitorAppId);
-        PerformanceStatisticContainer.addAsync(consumedTime, "TotalDispatch", monitorAppId);
-        PerformanceStatisticContainer.addAsync(consumedTime, String.format("TotalDispatch.%s", NetUtil.getHostIp()),
+        PerformanceStatisticContainer.add(consumedTime, "TotalDispatch", monitorAppId);
+        PerformanceStatisticContainer.add(consumedTime, String.format("TotalDispatch.%s", NetUtil.getHostIp()),
                 staticAppId);
     }
 
