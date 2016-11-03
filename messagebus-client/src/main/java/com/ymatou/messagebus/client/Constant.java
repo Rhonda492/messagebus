@@ -22,8 +22,9 @@ public class Constant {
      * 1.0.8-增加Component注解
      * 1.0.9-取消Component注解
      * 1.0.10-增加notWriteDefaultValue字段控制消息的JSON序列化
+     * 1.1.0-JVM关闭时优化了异常处理
      */
-    public static final String VERSION = "1.0.10";
+    public static final String VERSION = "1.1.0";
 
     /**
      * RabbitMQ的MapName
