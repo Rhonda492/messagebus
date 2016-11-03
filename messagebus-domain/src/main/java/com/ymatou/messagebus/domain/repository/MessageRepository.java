@@ -213,7 +213,7 @@ public class MessageRepository extends MongoRepository implements InitializingBe
         calendarBegin.add(Calendar.HOUR, -48);
 
         Calendar calendarEnd = Calendar.getInstance();
-        calendarEnd.add(Calendar.MINUTE, -5);
+        calendarEnd.add(Calendar.MINUTE, -10);
 
 
 

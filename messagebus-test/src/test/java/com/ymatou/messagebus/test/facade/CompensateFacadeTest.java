@@ -91,7 +91,7 @@ public class CompensateFacadeTest extends BaseTest {
         String appId = "testjava";
         String code = "hello";
         Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.MINUTE, -6);
+        calendar.add(Calendar.MINUTE, -11);
 
         Message message = buildMessage(appId, code, "hello");
         message.setCreateTime(calendar.getTime());
@@ -119,7 +119,7 @@ public class CompensateFacadeTest extends BaseTest {
         String appId = "testjava";
         String code = "hello";
         Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.MINUTE, -6);
+        calendar.add(Calendar.MINUTE, -11);
 
         Message message = buildMessage(appId, code, "hello");
         message.setCreateTime(calendar.getTime());
@@ -178,7 +178,7 @@ public class CompensateFacadeTest extends BaseTest {
         String appId = "testjava";
         String code = "hello";
         Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.MINUTE, -6);
+        calendar.add(Calendar.MINUTE, -11);
 
         Message message = buildMessage(appId, code, TaskItemRequest.newInstance().toString());
         message.setCreateTime(calendar.getTime());
@@ -242,7 +242,7 @@ public class CompensateFacadeTest extends BaseTest {
         String appId = "testjava";
         String code = "hello";
         Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.MINUTE, -6);
+        calendar.add(Calendar.MINUTE, -11);
 
         Message message = buildMessage(appId, code, TaskItemRequest.newInstance().toString());
         message.setCreateTime(calendar.getTime());

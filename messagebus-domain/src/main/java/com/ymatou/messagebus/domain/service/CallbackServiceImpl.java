@@ -185,15 +185,15 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
         String requestId = MDC.get("logPrefix");
 
         if (enableLog == false) {
-            logger.info("callback service write success log, uuid:{}, messageId:{}.", message.getUuid(),
-                    message.getMessageId());
+            // logger.info("callback service write success log, uuid:{}, messageId:{}.",
+            // message.getUuid(),
+            // message.getMessageId());
             return;
         }
 
         taskExecutor.execute(() -> {
             MDC.put("logPrefix", requestId);
 
-            logger.info("----------------------- callback write success message begin ----------------");
             try {
                 MessageStatus messageStatus = MessageStatus.from(message, callbackConfig);
                 messageStatus.setSource(callbackMode.toString());
@@ -227,7 +227,6 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
             } catch (Exception e) {
                 logger.error("callback writeSuccessResult fail.", e);
             }
-            logger.info("----------------------- callback write success message end ----------------");
         });
     }
 
@@ -247,7 +246,6 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
         taskExecutor.execute(() -> {
             MDC.put("logPrefix", requestId);
 
-            logger.info("----------------------- callback write fail message begin ----------------");
             try {
                 MessageStatus messageStatus = MessageStatus.from(message, callbackConfig);
 
@@ -324,7 +322,6 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
                 logger.error(String.format("write callback fail result fail, appcode:%s, messageid:%s",
                         message.getAppCode(), message.getUuid()), e);
             }
-            logger.info("----------------------- callback write fail message end ----------------");
         });
     }
 

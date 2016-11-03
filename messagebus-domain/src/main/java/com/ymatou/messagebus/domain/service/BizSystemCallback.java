@@ -180,10 +180,6 @@ public class BizSystemCallback implements FutureCallback<HttpResponse> {
     public void send() {
         try {
             beginTime = System.currentTimeMillis();
-
-            logger.info("appcode:{}, messageUuid:{}, executing request:{}.", message.getAppCode(), message.getUuid(),
-                    httpPost.getRequestLine());
-
             semaphore.acquire();
 
             String body = message.getBody();
@@ -191,8 +187,10 @@ public class BizSystemCallback implements FutureCallback<HttpResponse> {
                 StringEntity postEntity = new StringEntity(body, "UTF-8");
                 httpPost.setEntity(postEntity);
 
-                logger.info("appcode:{}, messageUuid:{}, request body:{}.", message.getAppCode(), message.getUuid(),
-                        body);;
+                if (isEnableLog()) {
+                    logger.info("appcode:{}, messageUuid:{}, request body:{}.", message.getAppCode(), message.getUuid(),
+                            body);
+                }
             }
             httpClient.execute(httpPost, this);
 
