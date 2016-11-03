@@ -60,7 +60,7 @@ public class MessageLocalConsumer extends Thread {
                 TimeUnit.MILLISECONDS.sleep(1000 * 5);
             }
         } catch (InterruptedException e) {
-            logger.error("message local consume thread is interrupted", e);
+            logger.warn("message local consume thread is interrupted", e);
         }
     }
 

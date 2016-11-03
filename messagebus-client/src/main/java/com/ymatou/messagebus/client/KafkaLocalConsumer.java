@@ -60,7 +60,7 @@ public class KafkaLocalConsumer extends Thread {
                 TimeUnit.MILLISECONDS.sleep(1000 * 5);
             }
         } catch (InterruptedException e) {
-            logger.error("kafka message local consume thread is interrupted", e);
+            logger.warn("kafka message local consume thread is interrupted", e);
         }
     }
 
