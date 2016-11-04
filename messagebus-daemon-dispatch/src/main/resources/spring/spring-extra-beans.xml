@@ -84,6 +84,17 @@
 		<property name="appId" value="mqpublish.kafka.iapi.ymatou.com"></property>
 		<property name="serverUrl" value="${perfmonapi.url}"></property>
 	</bean>
+	<aop:config>
+		<aop:advisor advice-ref="performanceMonitorAdvice"
+			pointcut="execution(* com.ymatou.messagebus.facade.*Facade.*(..))
+						|| execution(* com.ymatou.messagebus.facade.rest.*Resource.*(..))
+						|| execution(* com.ymatou.messagebus.domain.service.MessageBusService.*(..))
+						|| execution(* com.ymatou.messagebus.infrastructure.rabbitmq.EndPoint.*(..))
+						|| execution(* com.ymatou.messagebus.infrastructure.kafka..*Client.*(..))
+						|| execution(* com.ymatou.messagebus..*Repository.*(..)))
+						" />
+	</aop:config> 
+	
  
 	<import resource="classpath:spring/persistence.xml" />
 
