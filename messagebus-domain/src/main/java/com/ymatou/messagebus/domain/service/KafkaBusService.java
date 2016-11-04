@@ -20,6 +20,7 @@ import com.ymatou.messagebus.facade.BizException;
 import com.ymatou.messagebus.facade.ErrorCode;
 import com.ymatou.messagebus.facade.enums.MQTypeEnum;
 import com.ymatou.messagebus.infrastructure.kafka.KafkaProducerClient;
+import com.ymatou.performancemonitorclient.PerformanceStatisticContainer;
 
 /**
  * Kafka消息接收发布服务
@@ -44,6 +45,8 @@ public class KafkaBusService {
     private AppConfigCache appConfigCache;
 
     public void publish(Message message) {
+        long startTime = System.currentTimeMillis();
+
         AppConfig appConfig = appConfigCache.get(message.getAppId());
         if (appConfig == null) {
             throw new BizException(ErrorCode.ILLEGAL_ARGUMENT, "invalid appId:" +
@@ -60,12 +63,20 @@ public class KafkaBusService {
             throw new BizException(ErrorCode.ILLEGAL_ARGUMENT, "invalid code:" + message.getCode());
         }
 
+        long consumedTime = System.currentTimeMillis() - startTime;
+        PerformanceStatisticContainer.add(consumedTime, "KafkaBusService.validateMessage",
+                "mqpublish.kafka.iapi.ymatou.com");
+
         if (messageConfig.getEnableLog()) {
-            writeMongoAsync(message, MDC.get("logPrefix"));
+            PerformanceStatisticContainer.add(() -> {
+                writeMongoAsync(message, MDC.get("logPrefix"));
+            }, "KafkaBusService.writeMongoAsync", "mqpublish.kafka.iapi.ymatou.com");
         }
 
-        kafkaClient.sendAsync(message.getKafkaTopic(), message.getKafkaMessageKey(),
-                message.getBody());
+        PerformanceStatisticContainer.add(() -> {
+            kafkaClient.sendAsync(message.getKafkaTopic(), message.getKafkaMessageKey(),
+                    message.getBody());
+        }, "KafkaClient.sendAsync", "mqpublish.kafka.iapi.ymatou.com");
     }
 
     /**

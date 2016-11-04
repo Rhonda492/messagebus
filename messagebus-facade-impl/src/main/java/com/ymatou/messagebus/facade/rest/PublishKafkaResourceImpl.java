@@ -19,6 +19,7 @@ import com.ymatou.messagebus.facade.PublishKafkaFacade;
 import com.ymatou.messagebus.facade.model.PublishMessageReq;
 import com.ymatou.messagebus.facade.model.PublishMessageResp;
 import com.ymatou.messagebus.facade.model.PublishMessageRestReq;
+import com.ymatou.performancemonitorclient.PerformanceStatisticContainer;
 
 /**
  * @author wangxudong 2016年7月27日 下午7:14:02
@@ -46,6 +47,8 @@ public class PublishKafkaResourceImpl implements PublishKafkaResource {
     @POST
     @Path("/{publish:(?i:publish)}")
     public RestResp publish(PublishMessageRestReq req) {
+        long startTime = System.currentTimeMillis();
+
         PublishMessageReq request = new PublishMessageReq();
         request.setAppId(req.getAppId());
         request.setCode(req.getCode());
@@ -55,7 +58,12 @@ public class PublishKafkaResourceImpl implements PublishKafkaResource {
 
         PublishMessageResp resp = publishKafkaFacade.publish(request);
 
+        // 向性能监控器汇报性能情况
+        long consumedTime = System.currentTimeMillis() - startTime;
+        PerformanceStatisticContainer.add(consumedTime, "Rest.Publish", "mqpublish.kafka.iapi.ymatou.com");
+
         return RestResp.newInstance(resp);
+
     }
 
 }
