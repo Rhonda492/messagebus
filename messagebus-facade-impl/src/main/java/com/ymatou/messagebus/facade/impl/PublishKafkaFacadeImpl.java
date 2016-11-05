@@ -67,7 +67,7 @@ public class PublishKafkaFacadeImpl implements PublishKafkaFacade {
         }
 
         MDC.put("logPrefix", req.getMsgUniqueId());
-        logger.info("Recv:{}", req);
+        // logger.info("Recv:{}", req);
 
         PublishMessageResp resp = null;
         try {
@@ -81,14 +81,12 @@ public class PublishKafkaFacadeImpl implements PublishKafkaFacade {
         } catch (BizException e) {
             resp = builErrorResponse(e.getErrorCode(), e.getErrorCode().getMessage() + "|" +
                     e.getLocalizedMessage());
-            logger.warn("Failed to execute request: {}, Error:{}", req.getRequestId(),
+            logger.warn("Failed to execute request: {}, Error:{}", req,
                     e.getErrorCode() + "|" + e.getErrorCode().getMessage() + "|" + e.getLocalizedMessage());
 
         } catch (Throwable e) {
             resp = builErrorResponse(ErrorCode.UNKNOWN, e.getLocalizedMessage());
             logger.error("Unknown error in executing request:{}", req, e);
-        } finally {
-            logger.info("Resp:{}", resp);
         }
 
         // 向性能监控器汇报性能情况
@@ -99,6 +97,7 @@ public class PublishKafkaFacadeImpl implements PublishKafkaFacade {
         PerformanceStatisticContainer.add(consumedTime, String.format("TotalPublish.%s", NetUtil.getHostIp()),
                 staticAppId);
 
+        logger.info("messageId:{}, consume:{}ms", req.getMsgUniqueId(), consumedTime);
 
         return resp;
     }

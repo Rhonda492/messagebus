@@ -7,6 +7,8 @@ package com.ymatou.messagebus.domain.service;
 
 import javax.annotation.Resource;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Component;
@@ -31,6 +33,7 @@ import com.ymatou.performancemonitorclient.PerformanceStatisticContainer;
 @Component
 public class KafkaBusService {
 
+    private static Logger logger = LoggerFactory.getLogger(KafkaBusService.class);
 
     @Resource
     private KafkaProducerClient kafkaClient;
@@ -43,6 +46,8 @@ public class KafkaBusService {
 
     @Resource
     private AppConfigCache appConfigCache;
+
+    private String appId = "mqpublish.kafka.iapi.ymatou.com";
 
     public void publish(Message message) {
         long startTime = System.currentTimeMillis();
@@ -64,19 +69,20 @@ public class KafkaBusService {
         }
 
         long consumedTime = System.currentTimeMillis() - startTime;
-        PerformanceStatisticContainer.add(consumedTime, "KafkaBusService.validateMessage",
-                "mqpublish.kafka.iapi.ymatou.com");
+        PerformanceStatisticContainer.add(consumedTime, "KafkaBusService.validateMessage", appId);
 
         if (messageConfig.getEnableLog()) {
+            logger.info("write mongo:{}", message);
+
             PerformanceStatisticContainer.add(() -> {
                 writeMongoAsync(message, MDC.get("logPrefix"));
-            }, "KafkaBusService.writeMongoAsync", "mqpublish.kafka.iapi.ymatou.com");
+            }, "KafkaBusService.writeMongoAsync", appId);
         }
 
         PerformanceStatisticContainer.add(() -> {
             kafkaClient.sendAsync(message.getKafkaTopic(), message.getKafkaMessageKey(),
                     message.getBody());
-        }, "KafkaClient.sendAsync", "mqpublish.kafka.iapi.ymatou.com");
+        }, "KafkaClient.sendAsync", appId);
     }
 
     /**
