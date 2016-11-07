@@ -58,7 +58,7 @@ public class MessageStatusRepository extends MongoRepository implements Initiali
         String collectionName = "mq_subscribe_" + appId;
 
         return newQuery(MessageStatus.class, dbName, collectionName, ReadPreference.primaryPreferred()).field("uuid")
-                .equal(uuid).field("cid").equal(consumerId).get();
+                .equal(uuid).field("cid").equal(consumerId).order("-ctime").get();
     }
 
     @Override

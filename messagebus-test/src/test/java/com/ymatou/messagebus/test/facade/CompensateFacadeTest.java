@@ -17,9 +17,12 @@ import javax.annotation.Resource;
 
 import org.junit.Test;
 
+import com.ymatou.messagebus.domain.model.AppConfig;
 import com.ymatou.messagebus.domain.model.Message;
 import com.ymatou.messagebus.domain.model.MessageCompensate;
+import com.ymatou.messagebus.domain.model.MessageConfig;
 import com.ymatou.messagebus.domain.model.MessageStatus;
+import com.ymatou.messagebus.domain.repository.AppConfigRepository;
 import com.ymatou.messagebus.domain.repository.MessageCompensateRepository;
 import com.ymatou.messagebus.domain.repository.MessageRepository;
 import com.ymatou.messagebus.domain.repository.MessageStatusRepository;
@@ -30,6 +33,7 @@ import com.ymatou.messagebus.facade.enums.MessageCompensateSourceEnum;
 import com.ymatou.messagebus.facade.enums.MessageCompensateStatusEnum;
 import com.ymatou.messagebus.facade.enums.MessageNewStatusEnum;
 import com.ymatou.messagebus.facade.enums.MessageProcessStatusEnum;
+import com.ymatou.messagebus.facade.enums.MessageStatusEnum;
 import com.ymatou.messagebus.facade.model.CheckToCompensateReq;
 import com.ymatou.messagebus.facade.model.CheckToCompensateResp;
 import com.ymatou.messagebus.facade.model.CompensateReq;
@@ -44,6 +48,9 @@ import com.ymatou.messagebus.test.TaskItemRequest;
  *
  */
 public class CompensateFacadeTest extends BaseTest {
+
+    @Resource
+    private AppConfigRepository appConfigRepository;
 
     @Resource
     private CompensateFacade compensateFacade;
@@ -112,6 +119,55 @@ public class CompensateFacadeTest extends BaseTest {
         assertNotNull(compensate);
         assertEquals(MessageCompensateStatusEnum.NotRetry.code(), compensate.getNewStatus());
         assertEquals(MessageCompensateSourceEnum.Compensate.code(), compensate.getSource());
+    }
+
+    /**
+     * 由于消息表是异步写入的，写入时间可能晚于分发时间，因此可能出现已经分发的消息没有改变状态，为避免这样的消息检测进入补单，在检测进入补单的逻辑里增加了对消息分发记录的查询判断
+     * 
+     * 如果发现需要检测进入补单的消息已经有过分发记录了，则不进入补单库，直接根据分发记录修改消息状态
+     * 
+     * @throws InterruptedException
+     */
+    @Test
+    public void testCheckToCompensateWhenMessageDispatched() throws InterruptedException {
+        String appId = "testjava";
+        String code = "hello";
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.MINUTE, -11);
+
+        Message message = buildMessage(appId, code, "hello");
+        message.setCreateTime(calendar.getTime());
+        messageRepository.insert(message);
+
+        // 模拟分发记录
+        AppConfig appConfig = appConfigRepository.getAppConfig(appId);
+        MessageConfig messageConfig = appConfig.getMessageConfig(code);
+        String consumerId = messageConfig.getCallbackCfgList().get(0).getCallbackKey();
+
+        MessageStatus messageStatus = new MessageStatus();
+        messageStatus.setMessageUuid(message.getUuid());
+        messageStatus.setConsumerId(consumerId);
+        messageStatus.setStatus(MessageStatusEnum.PushOk.toString());
+        messageStatus.setCreateTime(new Date());
+        messageStatusRepository.insert(messageStatus, appId);
+
+        Thread.sleep(200);
+
+        CheckToCompensateReq req = new CheckToCompensateReq();
+        req.setAppId(appId);
+        req.setCode(code);
+
+        CheckToCompensateResp resp = compensateFacade.checkToCompensate(req);
+        assertEquals(true, resp.isSuccess());
+
+        Message msgAssert = messageRepository.getByUuid(appId, code, message.getUuid());
+        assertNotNull(msgAssert);
+        assertEquals(MessageNewStatusEnum.InRabbitMQ.code(), msgAssert.getNewStatus());
+        assertEquals(MessageProcessStatusEnum.Success.code(), msgAssert.getProcessStatus());
+
+        // 这种情况下不需要进入补单
+        MessageCompensate compensate = messageCompensateRepository.getByUuid(appId, code, message.getUuid());
+        assertNull(compensate);
     }
 
     @Test

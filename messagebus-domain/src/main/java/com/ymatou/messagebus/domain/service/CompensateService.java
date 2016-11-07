@@ -28,6 +28,7 @@ import com.ymatou.messagebus.domain.model.CallbackConfig;
 import com.ymatou.messagebus.domain.model.Message;
 import com.ymatou.messagebus.domain.model.MessageCompensate;
 import com.ymatou.messagebus.domain.model.MessageConfig;
+import com.ymatou.messagebus.domain.model.MessageStatus;
 import com.ymatou.messagebus.domain.repository.AppConfigRepository;
 import com.ymatou.messagebus.domain.repository.MessageCompensateRepository;
 import com.ymatou.messagebus.domain.repository.MessageRepository;
@@ -37,6 +38,7 @@ import com.ymatou.messagebus.facade.ErrorCode;
 import com.ymatou.messagebus.facade.enums.MessageCompensateSourceEnum;
 import com.ymatou.messagebus.facade.enums.MessageNewStatusEnum;
 import com.ymatou.messagebus.facade.enums.MessageProcessStatusEnum;
+import com.ymatou.messagebus.facade.enums.MessageStatusEnum;
 import com.ymatou.messagebus.infrastructure.thread.AdjustableSemaphore;
 import com.ymatou.messagebus.infrastructure.thread.SemaphorManager;
 
@@ -176,13 +178,31 @@ public class CompensateService implements InitializingBean {
             logger.error("check need to compensate,appId{}, code:{}, num:{}", appId, code, needToCompensate.size());
 
             for (Message message : needToCompensate) {
+                MessageStatus messageStatus = null;
                 for (CallbackConfig callbackConfig : messageConfig.getCallbackCfgList()) {
+                    messageStatus = messageStatusRepository.getByUuid(appId, message.getUuid(),
+                            callbackConfig.getCallbackKey());
+                    if (messageStatus != null) { // 如果状态表中已经有记录了,说明这条消息已经被分发过,不需要再进入补单了
+                        break;
+                    }
+
                     MessageCompensate messageCompensate =
                             MessageCompensate.from(message, callbackConfig, MessageCompensateSourceEnum.Compensate);
                     messageCompensateRepository.insert(messageCompensate);
                 }
-                messageRepository.updateMessageStatus(appId, code, message.getUuid(),
-                        MessageNewStatusEnum.CheckToCompensate, MessageProcessStatusEnum.Init);
+
+                if (messageStatus == null) {
+                    messageRepository.updateMessageStatus(appId, code, message.getUuid(),
+                            MessageNewStatusEnum.CheckToCompensate, MessageProcessStatusEnum.Init);
+                } else {
+                    if (MessageStatusEnum.PushOk.toString().equals(messageStatus.getStatus())) {
+                        messageRepository.updateMessageStatus(appId, code, message.getUuid(),
+                                MessageNewStatusEnum.InRabbitMQ, MessageProcessStatusEnum.Success);
+                    } else {
+                        messageRepository.updateMessageStatus(appId, code, message.getUuid(),
+                                MessageNewStatusEnum.DispatchToCompensate, MessageProcessStatusEnum.Compensate);
+                    }
+                }
             }
         }
     }

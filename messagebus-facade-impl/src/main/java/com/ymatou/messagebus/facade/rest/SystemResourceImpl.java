@@ -39,7 +39,8 @@ public class SystemResourceImpl implements SystemResource {
                 + "\"1.0.6\":\"2016-11-01.1 change message and compensate mongodb.\","
                 + "\"1.0.7\":\"2016-11-03.1 set checkToCompensate time to 10 and reduce dispatch log.\","
                 + "\"1.0.8\":\"2016-11-04.1 remove monitor aop.\","
-                + "\"1.0.9\":\"2016-11-05.1 upgrade performace monitor to ver 1.1.2.\""
+                + "\"1.0.9\":\"2016-11-05.1 upgrade performace monitor to ver 1.1.2.\","
+                + "\"1.1.0\":\"2016-11-07.1 fix checkToCompensate when message dispatched.\""
                 + "}";
     }
 
