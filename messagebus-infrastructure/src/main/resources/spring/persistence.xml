@@ -44,7 +44,7 @@
 	</bean>
 	
 	<bean id="httpPostErrorConsumer" class="com.ymatou.errorreporter.api.HttpPostErrorConsumer">
-		<constructor-arg value="${perfmonapi.url}"></constructor-arg>
+		<constructor-arg value="${errorreport.url}"></constructor-arg>
 	</bean>
 	
 	<bean id="bufferErrorReporter" class="com.ymatou.errorreporter.api.BufferedErrorReporter">

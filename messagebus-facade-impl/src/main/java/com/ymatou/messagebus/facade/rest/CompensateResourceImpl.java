@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 
 import com.ymatou.messagebus.domain.repository.MessageCompensateRepository;
 import com.ymatou.messagebus.domain.repository.MessageRepository;
+import com.ymatou.messagebus.domain.repository.MessageStatusRepository;
 import com.ymatou.messagebus.facade.CompensateFacade;
 import com.ymatou.messagebus.facade.model.CheckToCompensateReq;
 import com.ymatou.messagebus.facade.model.CheckToCompensateResp;
@@ -53,6 +54,9 @@ public class CompensateResourceImpl implements CompensateResource {
     @Resource
     private MessageRepository messageRepository;
 
+    @Resource
+    private MessageStatusRepository messageStatusRepository;
+
     @GET
     @Path("/lock/list")
     @Override
@@ -85,7 +89,10 @@ public class CompensateResourceImpl implements CompensateResource {
             logger.info("message compensate index success.");
 
             messageRepository.index();
-            logger.info("message and status index success.");
+            logger.info("message index success.");
+
+            messageStatusRepository.index();
+            logger.info("message status index success.");
 
             logger.info("-------------------index success------------------------");
         } catch (Exception exception) {

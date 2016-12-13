@@ -174,8 +174,15 @@ public class CompensateService implements InitializingBean {
         }
 
         List<Message> needToCompensate = messageRepository.getNeedToCompensate(appId, code);
+        int needToCompensateNum = 0;
+        if (needToCompensate != null) {
+            needToCompensateNum = needToCompensate.size();
+        }
+        logger.info(
+                String.format("check need to compensate,appId:%s, code:%s, num:%d", appId, code, needToCompensateNum));
+
         if (needToCompensate != null && needToCompensate.size() > 0) {
-            logger.error("check need to compensate,appId{}, code:{}, num:{}", appId, code, needToCompensate.size());
+            logger.error("check need to compensate,appId:{}, code:{}, num:{}", appId, code, needToCompensate.size());
 
             for (Message message : needToCompensate) {
                 MessageStatus messageStatus = null;
@@ -223,6 +230,14 @@ public class CompensateService implements InitializingBean {
 
 
         List<MessageCompensate> messageCompensatesList = messageCompensateRepository.getNeedCompensate(appId, code);
+
+        int needToCompensateNum = 0;
+        if (messageCompensatesList != null) {
+            needToCompensateNum = messageCompensatesList.size();
+        }
+        logger.info(
+                String.format("find need to compensate,appId:%s, code:%s, num:%d", appId, code, needToCompensateNum));
+
         if (messageCompensatesList.size() > 0) {
             logger.info("find need to compensate,appId:{}, code:{}, num:{}", appId, code,
                     messageCompensatesList.size());
