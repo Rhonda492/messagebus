@@ -105,9 +105,14 @@ public class CompensateService implements InitializingBean {
 
         for (CallbackConfig callbackConfig : callbackCfgList) {
             String consumerId = callbackConfig.getCallbackKey();
-            int parallelismNum =
-                    (callbackConfig.getParallelismNum() == null || callbackConfig.getParallelismNum().intValue() < 2)
-                            ? 2 : callbackConfig.getParallelismNum().intValue();
+            /*
+             * int parallelismNum =
+             * (callbackConfig.getParallelismNum() == null ||
+             * callbackConfig.getParallelismNum().intValue() < 2)
+             * ? 2 : callbackConfig.getParallelismNum().intValue();
+             */
+
+            int parallelismNum = 10000; // 补单站的并发数增加，避免补单延时
             AdjustableSemaphore semaphore = SemaphorManager.get(consumerId);
             if (semaphore == null) {
                 semaphore = new AdjustableSemaphore(parallelismNum);
