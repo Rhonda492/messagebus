@@ -27,6 +27,8 @@ public class KafkaConsumerThread extends Thread {
 
     private CallbackService callbackService;
 
+    private KafkaConsumerConfig kafkaConsumerConfig;
+
     private String topic;
 
     /**
@@ -40,6 +42,7 @@ public class KafkaConsumerThread extends Thread {
 
     public KafkaConsumerThread(String topic, KafkaConsumerConfig config, CallbackService callbackService) {
         this.setTopic(topic);
+        this.kafkaConsumerConfig = config;
         this.callbackService = callbackService;
 
         consumer = new KafkaConsumer<>(config);
@@ -60,7 +63,7 @@ public class KafkaConsumerThread extends Thread {
         logger.info("dispatch server start consume topic:{}.", this.getName());
         try {
             while (true) {
-                ConsumerRecords<String, String> records = consumer.poll(5000);
+                ConsumerRecords<String, String> records = consumer.poll(kafkaConsumerConfig.getConsumerPollSize());
                 for (ConsumerRecord<String, String> record : records) {
                     MDC.put("logPrefix", String.format("%s|%s", this.getName(), UUID.randomUUID().toString()));
 
