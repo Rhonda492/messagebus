@@ -155,6 +155,6 @@ public class MessageCompensateRepository extends MongoRepository {
         query.and(query.criteria("rtime").lessThanOrEq(calendar.getTime()));
 
 
-        return query.asList();
+        return query.limit(100).asList();
     }
 }

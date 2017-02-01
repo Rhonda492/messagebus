@@ -167,7 +167,7 @@ public class BizSystemCallback implements FutureCallback<HttpResponse> {
      */
     private boolean isCallbackSuccess(int statusCode, String body) {
         if (statusCode == 200 && body != null
-                && (body.equalsIgnoreCase("ok") || body.equalsIgnoreCase("\"ok\""))) {
+                && (body.trim().equalsIgnoreCase("ok") || body.trim().equalsIgnoreCase("\"ok\""))) {
             return true;
         } else {
             return false;

@@ -138,11 +138,14 @@ public class CompensateService implements InitializingBean {
 
                         logger.info("check and compensate Start, appId:{}, code:{}.", appId, code);
 
-                        logger.info("STEP.1 checkToCompensate");
-                        try {
-                            checkToCompensate(appId, code);
-                        } catch (Exception e) {
-                            logger.error("STEP.1 checkToCompensate fail.", e);
+                        // 如果关闭日志，就不需要检测进补单
+                        if (messageConfig.getEnableLog() == null || Boolean.TRUE.equals(messageConfig.getEnableLog())) {
+                            logger.info("STEP.1 checkToCompensate");
+                            try {
+                                checkToCompensate(appId, code);
+                            } catch (Exception e) {
+                                logger.error("STEP.1 checkToCompensate fail.", e);
+                            }
                         }
 
                         logger.info("STEP.2 compensate");

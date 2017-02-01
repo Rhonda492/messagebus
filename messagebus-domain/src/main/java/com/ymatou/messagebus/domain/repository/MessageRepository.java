@@ -224,7 +224,7 @@ public class MessageRepository extends MongoRepository implements InitializingBe
                 query.criteria("pstatus").equal(MessageProcessStatusEnum.Init.code()),
                 query.criteria("ctime").greaterThan(calendarBegin.getTime()),
                 query.criteria("ctime").lessThan(calendarEnd.getTime()));
-        List<Message> curMonthList = query.asList();
+        List<Message> curMonthList = query.limit(100).asList();
 
         // 如果是跨月第一天，则补单需要查询上月的数据
         if (calendarEnd.get(Calendar.DATE) == 1) {
@@ -236,7 +236,7 @@ public class MessageRepository extends MongoRepository implements InitializingBe
                     queryLast.criteria("pstatus").equal(MessageProcessStatusEnum.Init.code()),
                     queryLast.criteria("ctime").greaterThan(calendarBegin.getTime()),
                     queryLast.criteria("ctime").lessThan(calendarEnd.getTime()));
-            List<Message> lastMonthList = queryLast.asList();
+            List<Message> lastMonthList = queryLast.limit(100).asList();
 
             curMonthList.addAll(lastMonthList);
         }
