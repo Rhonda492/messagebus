@@ -106,7 +106,8 @@ public class KafkaDispatchService {
             String topic = appConfig.getKafkaTopic(messageConfig.getCode());
 
             initSemaphore(messageConfig);
-            kafkaConsumerClient.subscribe(topic, dispatchConfig.getGroupId());
+
+            kafkaConsumerClient.subscribe(topic, dispatchConfig.getGroupId(), messageConfig.getPoolSize().intValue());
         }
     }
 

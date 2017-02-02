@@ -62,9 +62,9 @@ public class KafkaConsumerClient {
      * 
      * @param topic
      */
-    public void subscribe(String topic, String groupId) {
+    public void subscribe(String topic, String groupId, int poolSize) {
         if (!consumerMap.containsKey(topic)) {
-            startConsumer(topic, groupId);
+            startConsumer(topic, groupId, poolSize);
         } else {
             KafkaConsumerThread kafkaConsumerThread = consumerMap.get(topic);
             if (kafkaConsumerThread == null ||
@@ -72,7 +72,9 @@ public class KafkaConsumerClient {
                 logger.error("find consumer:{} thread terminate, start new", topic);
 
                 consumerMap.remove(topic);
-                startConsumer(topic, groupId);
+                startConsumer(topic, groupId, poolSize);
+            } else {
+                kafkaConsumerThread.setPoolSize(poolSize);
             }
         }
     }
@@ -102,7 +104,7 @@ public class KafkaConsumerClient {
      * 
      * @param topic
      */
-    private void startConsumer(String topic, String groupId) {
+    private void startConsumer(String topic, String groupId, int poolSize) {
         myLock.writeLock().lock();
         try {
             if (!consumerMap.containsKey(topic)) {
@@ -113,9 +115,12 @@ public class KafkaConsumerClient {
                 KafkaConsumerThread kafkaConsumerThread =
                         new KafkaConsumerThread(topic, kafkaConfig, callbackService);
                 kafkaConsumerThread.setName(topic);
+                kafkaConsumerThread.setPoolSize(poolSize);
                 kafkaConsumerThread.start();
 
                 consumerMap.put(topic, kafkaConsumerThread);
+            } else {
+                consumerMap.get(topic).setPoolSize(poolSize);
             }
         } catch (Exception e) {
             logger.error("dispatch server subscribe failed, topic:" + topic, e);

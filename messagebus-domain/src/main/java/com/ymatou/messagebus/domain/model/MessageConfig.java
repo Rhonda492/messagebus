@@ -30,6 +30,52 @@ public class MessageConfig {
     @Property("EnableLog")
     private Boolean enableLog;
 
+    /**
+     * Kafka一次抽取的数量
+     */
+    @Property("PoolSize")
+    private Integer poolSize;
+
+    /**
+     * 检测进补单时间 间隔
+     */
+    @Property("CheckCompensateDelay")
+    private Integer checkCompensateDelay;
+
+    public Integer getPoolSize() {
+        if (poolSize == null || poolSize < 1) {
+            return 50;
+        } else {
+            return poolSize;
+        }
+    }
+
+    public void setPoolSize(Integer poolSize) {
+        this.poolSize = poolSize;
+    }
+
+    public Integer getCheckCompensateDelay() {
+        return checkCompensateDelay;
+    }
+
+    public void setCheckCompensateDelay(Integer checkCompensateDelay) {
+        this.checkCompensateDelay = checkCompensateDelay;
+    }
+
+    public Integer getCheckCompensateTimeSpan() {
+        return checkCompensateTimeSpan;
+    }
+
+    public void setCheckCompensateTimeSpan(Integer checkCompensateTimeSpan) {
+        this.checkCompensateTimeSpan = checkCompensateTimeSpan;
+    }
+
+    /**
+     * 检测进补单时间跨度
+     */
+    @Property("CheckCompensateTimeSpan")
+    private Integer checkCompensateTimeSpan;
+
     @Embedded("CallbackCfgList")
     private List<CallbackConfig> callbackCfgList;
 

@@ -74,13 +74,11 @@
 		<appender-ref ref="ASYNC-DEFAULT-APPENDER" />
 		<appender-ref ref="ASYNC-ERROR-APPENDER" />
 		<appender-ref ref="HTTP-POST-ERROR-APPENDER" />
-		<appender-ref ref="STDOUT" />
 	</logger>
 
 	<root level="${level}">
 		<appender-ref ref="ASYNC-DEFAULT-APPENDER" />
 		<appender-ref ref="ASYNC-ERROR-APPENDER" />
 		<appender-ref ref="HTTP-POST-ERROR-APPENDER" />
-		<appender-ref ref="STDOUT" />
 	</root>
 </configuration>

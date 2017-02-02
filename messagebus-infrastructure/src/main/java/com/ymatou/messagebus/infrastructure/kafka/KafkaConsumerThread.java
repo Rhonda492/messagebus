@@ -27,9 +27,9 @@ public class KafkaConsumerThread extends Thread {
 
     private CallbackService callbackService;
 
-    private KafkaConsumerConfig kafkaConsumerConfig;
-
     private String topic;
+
+    private int poolSize;
 
     /**
      * 请求暂停
@@ -42,7 +42,6 @@ public class KafkaConsumerThread extends Thread {
 
     public KafkaConsumerThread(String topic, KafkaConsumerConfig config, CallbackService callbackService) {
         this.setTopic(topic);
-        this.kafkaConsumerConfig = config;
         this.callbackService = callbackService;
 
         consumer = new KafkaConsumer<>(config);
@@ -63,7 +62,7 @@ public class KafkaConsumerThread extends Thread {
         logger.info("dispatch server start consume topic:{}.", this.getName());
         try {
             while (true) {
-                ConsumerRecords<String, String> records = consumer.poll(kafkaConsumerConfig.getConsumerPollSize());
+                ConsumerRecords<String, String> records = consumer.poll(poolSize > 0 ? poolSize : 1);
                 for (ConsumerRecord<String, String> record : records) {
                     MDC.put("logPrefix", String.format("%s|%s", this.getName(), UUID.randomUUID().toString()));
 
@@ -108,5 +107,15 @@ public class KafkaConsumerThread extends Thread {
      */
     public void setTopic(String topic) {
         this.topic = topic;
+    }
+
+    public int getPoolSize() {
+        return poolSize;
+    }
+
+    public void setPoolSize(int poolSize) {
+        this.poolSize = poolSize;
+
+        logger.info("KafkaConsummerThread[{}] set poolSize:{}", topic, this.poolSize);
     }
 }
