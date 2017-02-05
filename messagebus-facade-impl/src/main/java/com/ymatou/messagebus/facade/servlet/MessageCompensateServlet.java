@@ -7,7 +7,6 @@ package com.ymatou.messagebus.facade.servlet;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Timer;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -19,7 +18,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ymatou.messagebus.domain.task.MessageCompensateTask;
+import com.ymatou.messagebus.domain.task.MessageCompensateTaskManager;
 
 
 /**
@@ -37,8 +36,9 @@ public class MessageCompensateServlet extends HttpServlet {
      */
     private static final long serialVersionUID = 1L;
 
-    // 定时器
-    private Timer timer = null;
+    // 补单任务管理器
+    private MessageCompensateTaskManager taskManager = new MessageCompensateTaskManager();
+
 
     /*
      * (non-Javadoc)
@@ -114,12 +114,10 @@ public class MessageCompensateServlet extends HttpServlet {
      * @param out
      */
     private String stop() throws Exception {
-        if (timer != null) {
-            timer.cancel();
-            timer.purge();
-            timer = null;
+        if (taskManager.isStarted()) {
+            taskManager.stopAll();
 
-            logger.info("compensate task stop success.");
+            logger.info("compensate task all stop success.");
             return "stop success!";
         } else {
             return "task allready stop.";
@@ -132,13 +130,12 @@ public class MessageCompensateServlet extends HttpServlet {
      * @param out
      */
     private String start() throws Exception {
-        if (timer == null) {
-            timer = new Timer(true);
-            timer.schedule(new MessageCompensateTask(), 0, 1000 * 30);
-            logger.info("compensate task start success.");
-            return "start success!";
-        } else {
+        if (taskManager.isStarted()) {
             return "task allready start.";
+        } else {
+            taskManager.startAll();
+            logger.info("compensate task all start success.");
+            return "start success!";
         }
     }
 }

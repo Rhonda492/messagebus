@@ -93,7 +93,7 @@ public class CompensateService implements InitializingBean {
      * 
      * @param messageConfig
      */
-    private void initSemaphore(MessageConfig messageConfig) {
+    public void initSemaphore(MessageConfig messageConfig) {
         if (messageConfig == null) {
             return;
         }
@@ -105,14 +105,11 @@ public class CompensateService implements InitializingBean {
 
         for (CallbackConfig callbackConfig : callbackCfgList) {
             String consumerId = callbackConfig.getCallbackKey();
-            /*
-             * int parallelismNum =
-             * (callbackConfig.getParallelismNum() == null ||
-             * callbackConfig.getParallelismNum().intValue() < 2)
-             * ? 2 : callbackConfig.getParallelismNum().intValue();
-             */
 
-            int parallelismNum = 10000; // 补单站的并发数增加，避免补单延时
+            int parallelismNum = (callbackConfig.getParallelismNum() == null ||
+                    callbackConfig.getParallelismNum().intValue() < 1) ? 2
+                            : callbackConfig.getParallelismNum().intValue();
+
             AdjustableSemaphore semaphore = SemaphorManager.get(consumerId);
             if (semaphore == null) {
                 semaphore = new AdjustableSemaphore(parallelismNum);
@@ -139,7 +136,7 @@ public class CompensateService implements InitializingBean {
                         logger.info("check and compensate Start, appId:{}, code:{}.", appId, code);
 
                         // 如果关闭日志，就不需要检测进补单
-                        if (messageConfig.getEnableLog() == null || Boolean.TRUE.equals(messageConfig.getEnableLog())) {
+                        if (messageConfig.isNeedCheckCompensate()) {
                             logger.info("STEP.1 checkToCompensate");
                             try {
                                 checkToCompensate(appId, code);
@@ -162,6 +159,34 @@ public class CompensateService implements InitializingBean {
         }
     }
 
+
+    public void checkAndCompensate(String appId, MessageConfig messageConfig) {
+        if (!Boolean.FALSE.equals(messageConfig.getEnable())) {
+            String code = messageConfig.getCode();
+            logger.info("check and compensate Start, appId:{}, code:{}.", appId, code);
+
+            // 如果关闭日志，就不需要检测进补单
+            if (messageConfig.isNeedCheckCompensate()) {
+                logger.info("STEP.1 checkToCompensate");
+                try {
+                    checkToCompensate(appId, code);
+                } catch (Exception e) {
+                    logger.error("STEP.1 checkToCompensate fail.", e);
+                }
+            }
+
+            logger.info("STEP.2 compensate");
+            try {
+                compensate(appId, code);
+            } catch (Exception e) {
+                logger.error("STEP.2 compensate fail.", e);
+            }
+
+            logger.info("check and compensate end.");
+
+        }
+    }
+
     /**
      * 检测出需要补偿的消息写入补单库
      */
@@ -181,7 +206,8 @@ public class CompensateService implements InitializingBean {
                     String.format("appid:%s, code:%s", appId, code));
         }
 
-        List<Message> needToCompensate = messageRepository.getNeedToCompensate(appId, code);
+        List<Message> needToCompensate = messageRepository.getNeedToCompensate(appId, code,
+                messageConfig.getCheckCompensateDelay(), messageConfig.getCheckCompensateTimeSpan());
         int needToCompensateNum = 0;
         if (needToCompensate != null) {
             needToCompensateNum = needToCompensate.size();

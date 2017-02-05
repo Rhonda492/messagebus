@@ -57,7 +57,7 @@ public class DistributedLockRepository extends MongoRepository implements Initia
 
             DistributedLock distributedLock = new DistributedLock();
             if (lock != null) {
-                distributedLock = lock;
+                distributedLock = lock; // 发现了已经过期的锁，直接Update
             }
 
             Calendar now = Calendar.getInstance();

@@ -257,9 +257,11 @@ public class CompensateFacadeTest extends BaseTest {
         assertEquals(MessageCompensateSourceEnum.Compensate.code(), compensate.getSource());
         assertEquals(0, compensate.getCompensateCount().intValue());
 
+        System.out.println("MessageId:" + message.getMessageId());
+
         Calendar calandar = Calendar.getInstance();
         calandar.add(Calendar.MINUTE, 1);
-        assertEquals(true, calandar.getTime().getTime() - compensate.getRetryTime().getTime() < 500);
+        assertEquals(true, Math.abs(calandar.getTime().getTime() - compensate.getRetryTime().getTime()) < 1000);
 
         // 确保执行补单可以查出这条记录
         compensate.setRetryTime(new Date());

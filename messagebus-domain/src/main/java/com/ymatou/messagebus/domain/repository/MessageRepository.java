@@ -205,15 +205,15 @@ public class MessageRepository extends MongoRepository implements InitializingBe
      * @param code
      * @return
      */
-    public List<Message> getNeedToCompensate(String appId, String code) {
+    public List<Message> getNeedToCompensate(String appId, String code, int delayMinute, int spanHour) {
         String dbName = "JMQ_Message_" + appId + "_";
         String collectionName = "Message_" + code;
 
         Calendar calendarBegin = Calendar.getInstance();
-        calendarBegin.add(Calendar.HOUR, -48);
+        calendarBegin.add(Calendar.HOUR, -spanHour);
 
         Calendar calendarEnd = Calendar.getInstance();
-        calendarEnd.add(Calendar.MINUTE, -10);
+        calendarEnd.add(Calendar.MINUTE, -delayMinute);
 
 
 

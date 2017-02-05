@@ -5,7 +5,9 @@
  */
 package com.ymatou.messagebus.test.facade;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import java.util.UUID;
 
@@ -84,7 +86,7 @@ public class DispatchMessageFacadeTest extends BaseTest {
         DispatchMessageResp resp = dispatchMessageFacade.dipatch(req);
         assertEquals(true, resp.isSuccess());
 
-        Thread.sleep(200);
+        Thread.sleep(800);
 
         MessageStatus messageStatus =
                 messageStatusRepository.getByUuid(req.getAppId(), req.getMessageUuid(), "testjava_hello_c0");
@@ -127,7 +129,7 @@ public class DispatchMessageFacadeTest extends BaseTest {
         DispatchMessageResp resp = dispatchMessageFacade.dipatch(req);
         assertEquals(true, resp.isSuccess());
 
-        Thread.sleep(200);
+        Thread.sleep(800);
 
         MessageStatus messageStatus =
                 messageStatusRepository.getByUuid(req.getAppId(), req.getMessageUuid(), "testjava_hello_c0");
@@ -165,14 +167,12 @@ public class DispatchMessageFacadeTest extends BaseTest {
         req.setMessageId(message.getMessageId());
         req.setMessageUuid(message.getUuid());
 
-
         compensateService.initSemaphore();
-
 
         DispatchMessageResp resp = dispatchMessageFacade.dipatch(req);
         assertEquals(true, resp.isSuccess());
 
-        Thread.sleep(200);
+        Thread.sleep(1000);
 
         MessageStatus messageStatus =
                 messageStatusRepository.getByUuid(req.getAppId(), req.getMessageUuid(), "testjava_noretry_c0");
@@ -209,7 +209,7 @@ public class DispatchMessageFacadeTest extends BaseTest {
         DispatchMessageResp resp = dispatchMessageFacade.dipatch(req);
         assertEquals(true, resp.isSuccess());
 
-        Thread.sleep(300);
+        Thread.sleep(600);
 
         MessageStatus messageStatus =
                 messageStatusRepository.getByUuid(req.getAppId(), req.getMessageUuid(), "testjava_hello2_c0");

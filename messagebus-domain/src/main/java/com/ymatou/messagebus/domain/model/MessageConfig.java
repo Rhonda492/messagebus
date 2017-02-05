@@ -37,41 +37,13 @@ public class MessageConfig {
     private Integer poolSize;
 
     /**
-     * 检测进补单时间 间隔
+     * 检测进补单时间间隔(分钟)：默认10分钟 ，0 代表关闭检测进补单
      */
     @Property("CheckCompensateDelay")
     private Integer checkCompensateDelay;
 
-    public Integer getPoolSize() {
-        if (poolSize == null || poolSize < 1) {
-            return 50;
-        } else {
-            return poolSize;
-        }
-    }
-
-    public void setPoolSize(Integer poolSize) {
-        this.poolSize = poolSize;
-    }
-
-    public Integer getCheckCompensateDelay() {
-        return checkCompensateDelay;
-    }
-
-    public void setCheckCompensateDelay(Integer checkCompensateDelay) {
-        this.checkCompensateDelay = checkCompensateDelay;
-    }
-
-    public Integer getCheckCompensateTimeSpan() {
-        return checkCompensateTimeSpan;
-    }
-
-    public void setCheckCompensateTimeSpan(Integer checkCompensateTimeSpan) {
-        this.checkCompensateTimeSpan = checkCompensateTimeSpan;
-    }
-
     /**
-     * 检测进补单时间跨度
+     * 检测进补单时间跨度（小时）：默认48小时 ，0 代表关闭检测进补单
      */
     @Property("CheckCompensateTimeSpan")
     private Integer checkCompensateTimeSpan;
@@ -100,7 +72,11 @@ public class MessageConfig {
      * @return the enable
      */
     public Boolean getEnable() {
-        return enable;
+        if (enable == null) {
+            return true;
+        } else {
+            return enable;
+        }
     }
 
     /**
@@ -177,5 +153,55 @@ public class MessageConfig {
      */
     public void setEnableLog(Boolean enableLog) {
         this.enableLog = enableLog;
+    }
+
+    public Integer getPoolSize() {
+        if (poolSize == null || poolSize < 1) {
+            return 50;
+        } else {
+            return poolSize;
+        }
+    }
+
+    public void setPoolSize(Integer poolSize) {
+        this.poolSize = poolSize;
+    }
+
+    public Integer getCheckCompensateDelay() {
+        if (checkCompensateDelay == null || checkCompensateDelay < 0) {
+            return 10; // 不配置代表默认检测10分钟前没有处理的消息, 0 表示关闭检测进入补单
+        } else {
+            return checkCompensateDelay;
+        }
+    }
+
+    public void setCheckCompensateDelay(Integer checkCompensateDelay) {
+        this.checkCompensateDelay = checkCompensateDelay;
+    }
+
+    public Integer getCheckCompensateTimeSpan() {
+        if (checkCompensateTimeSpan == null || checkCompensateTimeSpan < 0) {
+            return 48; // 不配置代表默认检测48小时内没有处理的消息， 0 表示关闭检测进入补单
+        } else {
+            return checkCompensateTimeSpan;
+        }
+    }
+
+    public void setCheckCompensateTimeSpan(Integer checkCompensateTimeSpan) {
+        this.checkCompensateTimeSpan = checkCompensateTimeSpan;
+    }
+
+    /**
+     * 判断是否需要开启检测进入补单模式
+     * 
+     * @return
+     */
+    public boolean isNeedCheckCompensate() {
+        if (Boolean.TRUE.equals(getEnable()) && Boolean.TRUE.equals(getEnableLog()) && getCheckCompensateDelay() > 0
+                && getCheckCompensateTimeSpan() > 0) {
+            return true;
+        } else {
+            return false;
+        }
     }
 }

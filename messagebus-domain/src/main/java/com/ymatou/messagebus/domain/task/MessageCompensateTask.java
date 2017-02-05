@@ -14,6 +14,7 @@ import org.slf4j.MDC;
 import org.springframework.web.context.ContextLoader;
 import org.springframework.web.context.WebApplicationContext;
 
+import com.ymatou.messagebus.domain.model.MessageConfig;
 import com.ymatou.messagebus.domain.repository.DistributedLockRepository;
 import com.ymatou.messagebus.domain.service.CompensateService;
 
@@ -32,16 +33,18 @@ public class MessageCompensateTask extends TimerTask {
     private DistributedLockRepository distributedLockRepository;
 
     /**
-     * 分布式锁的类型
-     */
-    private final String lockType = "Compensate";
-
-    /**
      * 分布式锁的生命周期
      */
     private final int lockLifeTimeMinute = 5;
 
-    public MessageCompensateTask() {
+    private String appId;
+
+    private MessageConfig messageConfig;
+
+    public MessageCompensateTask(String appId, MessageConfig messageConfig) {
+        this.setAppId(appId);
+        this.setMessageConfig(messageConfig);
+
         WebApplicationContext wac = ContextLoader.getCurrentWebApplicationContext();
         compensateService = (CompensateService) wac.getBean("compensateService");
         distributedLockRepository = (DistributedLockRepository) wac.getBean("distributedLockRepository");
@@ -49,27 +52,54 @@ public class MessageCompensateTask extends TimerTask {
 
     @Override
     public void run() {
+        boolean acquireLock = false;
         try {
             MDC.put("logPrefix", "MessageCompensateTask|" + UUID.randomUUID().toString().replaceAll("-", ""));
 
             logger.info("----------------------compensate task begin-------------------------------");
-            boolean acquireLock = distributedLockRepository.AcquireLock(lockType, lockLifeTimeMinute);
+            acquireLock = distributedLockRepository.AcquireLock(getTaskId(), lockLifeTimeMinute);
             if (acquireLock == false) {
                 logger.info("acquireLock fail exit task.");
             } else {
-                logger.info("acquireLock success in task.");
+                logger.info("acquireLock success in task."); // 获取到锁，执行补单任务
 
-                compensateService.initSemaphore();
-
-                compensateService.checkAndCompensate();
+                compensateService.initSemaphore(messageConfig);
+                compensateService.checkAndCompensate(appId, messageConfig);
             }
 
         } catch (Exception e) {
             logger.error("compensate fail in task", e);
         } finally {
-            distributedLockRepository.delete(lockType);
-            logger.info("----------------------compensate task end delete lock-------------------------------");
+            if (acquireLock) { // 如果获取到锁，在任务执行完毕后需要释放
+                distributedLockRepository.delete(getTaskId());
+                logger.info("----------------------compensate task end delete lock-------------------------------");
+            }
         }
+    }
+
+    public String getTaskId() {
+        return String.format("CompensateTask_%s_%s", appId, messageConfig.getCode());
+    }
+
+    @Override
+    public String toString() {
+        return getTaskId();
+    }
+
+    public String getAppId() {
+        return appId;
+    }
+
+    public void setAppId(String appId) {
+        this.appId = appId;
+    }
+
+    public MessageConfig getMessageConfig() {
+        return messageConfig;
+    }
+
+    public void setMessageConfig(MessageConfig messageConfig) {
+        this.messageConfig = messageConfig;
     }
 
 }

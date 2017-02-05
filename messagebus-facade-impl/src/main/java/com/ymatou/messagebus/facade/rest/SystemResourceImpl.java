@@ -12,6 +12,8 @@ import javax.ws.rs.core.MediaType;
 
 import org.springframework.stereotype.Component;
 
+import com.ymatou.messagebus.infrastructure.net.NetUtil;
+
 
 /**
  * 系统消息实现
@@ -30,6 +32,7 @@ public class SystemResourceImpl implements SystemResource {
     @Override
     public String version() {
         return "{"
+                + "\"ip\":\"" + NetUtil.getHostIp() + "\","
                 + "\"1.0.0\":\"2016-09-01.1 first deploy.\","
                 + "\"1.0.1\":\"2016-10-13.1 add kafka publish service.\","
                 + "\"1.0.2\":\"2016-10-13.1 add kafka dispatch service.\","
@@ -44,6 +47,7 @@ public class SystemResourceImpl implements SystemResource {
                 + "\"1.1.1\":\"2016-12-13.1 fix message status index cause by isolate message and log.\","
                 + "\"1.1.2\":\"2016-12-15.1 add kafka consumer pool size and allocation executorService by topic.\","
                 + "\"1.1.3\":\"2016-12-15.2 set secondCompensate num to 3 and increase taskExecutor maxPoolSize to 100.\""
+                + "\"1.1.4\":\"2017-02-06.1 compensate with timer one by one code.\""
                 + "}";
     }
 
