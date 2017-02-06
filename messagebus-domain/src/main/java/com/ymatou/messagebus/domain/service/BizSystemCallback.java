@@ -91,7 +91,7 @@ public class BizSystemCallback implements FutureCallback<HttpResponse> {
         this.messageCompensate = messageCompensate;
         this.callbackConfig = callbackConfig;
         this.callbackServiceImpl = callbackServiceImpl;
-        this.httpPost = new HttpPost(callbackConfig.getUrl());
+        this.httpPost = new HttpPost(callbackConfig.getUrl().trim());
         this.semaphore = SemaphorManager.get(callbackConfig.getCallbackKey());
 
         setContentType(callbackConfig.getContentType());
