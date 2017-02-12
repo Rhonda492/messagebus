@@ -121,7 +121,8 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
         List<CallbackConfig> callbackCfgList = messageConfig.getCallbackCfgList();
         if (callbackCfgList == null
                 || !callbackCfgList.stream().anyMatch(x -> x.getEnable() == null || x.getEnable() == true)) {
-            throw new BizException(ErrorCode.NOT_EXIST_INVALID_CALLBACK, "appCode:" + appCode);
+            // throw new BizException(ErrorCode.NOT_EXIST_INVALID_CALLBACK, "appCode:" + appCode);
+            return; // 没有消费者或者所有消费者都没有启用，直接放过
         }
 
         if (StringUtils.isEmpty(messageId)) {
