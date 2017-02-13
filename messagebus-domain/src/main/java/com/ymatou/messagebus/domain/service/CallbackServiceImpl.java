@@ -419,8 +419,9 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
 
         List<CallbackConfig> callbackCfgList = messageConfig.getCallbackCfgList();
         if (callbackCfgList != null && callbackCfgList.isEmpty() == false) {
-
-            while (true) {
+            long startTime = System.currentTimeMillis();
+            long waitTimeMS = 0;
+            while (waitTimeMS < 1000 * 60) { // 最多等待60s
                 boolean allSemaphoreRelease = true;
                 for (CallbackConfig callbackConfig : callbackCfgList) {
                     AdjustableSemaphore semaphore = SemaphorManager.get(callbackConfig.getCallbackKey());
@@ -433,6 +434,8 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
                 if (allSemaphoreRelease == true) {
                     break;
                 }
+
+                waitTimeMS = System.currentTimeMillis() - startTime;
             }
         }
 

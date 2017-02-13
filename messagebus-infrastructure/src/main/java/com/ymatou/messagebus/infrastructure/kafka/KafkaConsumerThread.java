@@ -8,7 +8,6 @@ package com.ymatou.messagebus.infrastructure.kafka;
 import java.util.Arrays;
 import java.util.UUID;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -87,9 +86,9 @@ public class KafkaConsumerThread extends Thread {
                     }
                 }
 
-                if (!StringUtils.isEmpty(appId) && !StringUtils.isEmpty(appCode)) {
-                    callbackService.waitForSemaphore(appId, appCode);
-                }
+                // if (!StringUtils.isEmpty(appId) && !StringUtils.isEmpty(appCode)) {
+                // callbackService.waitForSemaphore(appId, appCode);
+                // }
 
                 if (this.pleaseStop) {
                     logger.info("dispatch server recv pleaseStop topic:{}, break while.", this.getName());
