@@ -23,4 +23,12 @@ public interface CallbackService {
      * @param messageUuid
      */
     public void invoke(String appId, String appCode, String messageBody, String messageId, String messageUuid);
+
+    /**
+     * 等待信号量释放
+     * 
+     * @param appId
+     * @param appCode
+     */
+    public void waitForSemaphore(String appId, String appCode);
 }

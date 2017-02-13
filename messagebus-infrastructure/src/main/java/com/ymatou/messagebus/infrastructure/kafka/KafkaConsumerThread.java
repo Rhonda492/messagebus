@@ -8,6 +8,7 @@ package com.ymatou.messagebus.infrastructure.kafka;
 import java.util.Arrays;
 import java.util.UUID;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -63,6 +64,8 @@ public class KafkaConsumerThread extends Thread {
         try {
             while (true) {
                 ConsumerRecords<String, String> records = consumer.poll(poolSize > 0 ? poolSize : 1);
+                String appId = null;
+                String appCode = null;
                 for (ConsumerRecord<String, String> record : records) {
                     MDC.put("logPrefix", String.format("%s|%s", this.getName(), UUID.randomUUID().toString()));
 
@@ -70,7 +73,9 @@ public class KafkaConsumerThread extends Thread {
                     KafkaMessageKey key = null;
                     try {
                         key = KafkaMessageKey.valueOf(record.key());
-                        callbackService.invoke(key.getAppId(), key.getAppCode(), record.value(), key.getMessageId(),
+                        appId = key.getAppId();
+                        appCode = key.getAppCode();
+                        callbackService.invoke(appId, appCode, record.value(), key.getMessageId(),
                                 key.getUuid());
 
                     } catch (Exception e) {
@@ -80,6 +85,10 @@ public class KafkaConsumerThread extends Thread {
                             logger.error("fail to consume kafka message" + key.getUuid(), e);
                         }
                     }
+                }
+
+                if (!StringUtils.isEmpty(appId) && !StringUtils.isEmpty(appCode)) {
+                    callbackService.waitForSemaphore(appId, appCode);
                 }
 
                 if (this.pleaseStop) {

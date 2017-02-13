@@ -322,8 +322,6 @@ public class DispatchMessageFacadeTest extends BaseTest {
         req.setMessageUuid(Message.newUuid());
 
         DispatchMessageResp resp = dispatchMessageFacade.dipatch(req);
-        assertEquals(false, resp.isSuccess());
-        assertEquals(ErrorCode.NOT_EXIST_INVALID_CALLBACK, resp.getErrorCode());
-        assertEquals(true, resp.getErrorMessage().contains("不存在有效的回调信息"));
+        assertEquals(true, resp.isSuccess()); // 没有回调代表空调用，不会抛出错误
     }
 }

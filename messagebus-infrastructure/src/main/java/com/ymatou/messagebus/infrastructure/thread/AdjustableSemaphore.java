@@ -51,6 +51,10 @@ final public class AdjustableSemaphore implements Serializable {
         this.semaphore.acquire();
     }
 
+    public int availablePermits() {
+        return this.semaphore.availablePermits();
+    }
+
     private static final class ResizeableSemaphore extends Semaphore {
         private static final long serialVersionUID = 1L;
 

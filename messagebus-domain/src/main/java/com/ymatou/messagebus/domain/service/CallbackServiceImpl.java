@@ -49,6 +49,8 @@ import com.ymatou.messagebus.facade.model.SecondCompensateResp;
 import com.ymatou.messagebus.infrastructure.logger.ErrorReportClient;
 import com.ymatou.messagebus.infrastructure.mq.CallbackService;
 import com.ymatou.messagebus.infrastructure.net.NetUtil;
+import com.ymatou.messagebus.infrastructure.thread.AdjustableSemaphore;
+import com.ymatou.messagebus.infrastructure.thread.SemaphorManager;
 import com.ymatou.performancemonitorclient.PerformanceStatisticContainer;
 
 /**
@@ -395,6 +397,45 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
         httpClient = HttpAsyncClients.custom().setDefaultRequestConfig(defaultRequestConfig)
                 .setConnectionManager(cm).build();
         httpClient.start();
+    }
+
+    /**
+     * 等待所有消费者释放信号量
+     * 
+     * @param appId
+     * @param appCode
+     */
+    @Override
+    public void waitForSemaphore(String appId, String appCode) {
+        AppConfig appConfig = appConfigCache.get(appId);
+        if (appConfig == null) {
+            return;
+        }
+
+        MessageConfig messageConfig = appConfig.getMessageConfigByAppCode(appCode);
+        if (messageConfig == null) {
+            return;
+        }
+
+        List<CallbackConfig> callbackCfgList = messageConfig.getCallbackCfgList();
+        if (callbackCfgList != null && callbackCfgList.isEmpty() == false) {
+
+            while (true) {
+                boolean allSemaphoreRelease = true;
+                for (CallbackConfig callbackConfig : callbackCfgList) {
+                    AdjustableSemaphore semaphore = SemaphorManager.get(callbackConfig.getCallbackKey());
+                    if (semaphore.availablePermits() < semaphore.getMaxPermits()) {
+                        allSemaphoreRelease = false;
+                        break;
+                    }
+                }
+
+                if (allSemaphoreRelease == true) {
+                    break;
+                }
+            }
+        }
+
     }
 
 }
