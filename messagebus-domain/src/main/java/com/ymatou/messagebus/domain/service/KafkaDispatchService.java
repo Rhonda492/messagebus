@@ -104,7 +104,7 @@ public class KafkaDispatchService {
                 // 所有异常都catch到 防止异常导致定时任务停止
                 logger.error("kafka consumer check timeout timer ", e);
             }
-        }, 0, 1000L, TimeUnit.MILLISECONDS);
+        }, 60, 1000L, TimeUnit.MILLISECONDS);
     }
 
     /**
