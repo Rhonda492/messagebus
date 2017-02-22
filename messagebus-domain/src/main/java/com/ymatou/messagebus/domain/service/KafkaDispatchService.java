@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import javax.annotation.Resource;
@@ -22,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 
+import com.ymatou.messagebus.domain.cache.ConfigCache;
 import com.ymatou.messagebus.domain.config.DispatchConfig;
 import com.ymatou.messagebus.domain.model.AppConfig;
 import com.ymatou.messagebus.domain.model.CallbackConfig;
@@ -73,12 +76,7 @@ public class KafkaDispatchService {
     public void start() {
         logger.info("kafka dispatch {} service start consumer!", dispatchConfig.getGroupId());
 
-        List<AppConfig> allAppConfig = appConfigRepository.getAllAppConfig();
-        for (AppConfig appConfig : allAppConfig) {
-            if (MQTypeEnum.Kafka.code().equals(appConfig.getMqType())) {
-                initConsumer(appConfig);
-            }
-        }
+        initConsumer();
 
         if (timer == null) {
             timer = new Timer(true);
@@ -87,8 +85,45 @@ public class KafkaDispatchService {
                 public void run() {
                     checkReload();
                 }
-            }, 0, 1000 * 60);
+            }, 60, 1000 * 60);
         }
+
+        initKafkaConsumerTimer();
+
+    }
+
+    private void initKafkaConsumerTimer() {
+        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> {
+            try {
+
+                long currentTime = System.currentTimeMillis();
+                kafkaConsumerClient.getKafkaConsumerThreadMap().values().stream()
+                        .forEach(thread -> thread.preventTimeout(currentTime));
+
+            } catch (Exception e) {
+                // 所有异常都catch到 防止异常导致定时任务停止
+                logger.error("kafka consumer check timeout timer ", e);
+            }
+        }, 0, 1000L, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * 初始化消息者，重新获取配置
+     */
+    private void initConsumer(){
+        List<AppConfig> allAppConfig = appConfigRepository.getAllAppConfig();
+        ConfigCache.resetCache(allAppConfig);
+
+        ConfigCache.appConfigMap.values().forEach(appConfig -> {
+            if (MQTypeEnum.Kafka.code().equals(appConfig.getMqType())) {
+                initConsumer(appConfig);
+            }
+        });
+
+        //删除后台已删除的callbackkey 线程
+        ConfigCache.needRemoveCallBackConfigList
+                .forEach(callbackConfig -> kafkaConsumerClient.unscribe(callbackConfig.getCallbackKey()));
+        ConfigCache.needRemoveCallBackConfigList.clear();
     }
 
     /**
@@ -103,11 +138,17 @@ public class KafkaDispatchService {
      */
     private void initConsumer(AppConfig appConfig) {
         for (MessageConfig messageConfig : appConfig.getMessageCfgList()) {
+
             String topic = appConfig.getKafkaTopic(messageConfig.getCode());
+            for (CallbackConfig callbackConfig : messageConfig.getCallbackCfgList()) {
+                
+                kafkaConsumerClient.subscribe(topic, dispatchConfig.getGroupId(), callbackConfig.getCallbackKey(),
+                        messageConfig.getPoolSize().intValue());
 
-            initSemaphore(messageConfig);
+                // 初始化信号量
+                initSemaphore(callbackConfig);
+            }
 
-            kafkaConsumerClient.subscribe(topic, dispatchConfig.getGroupId(), messageConfig.getPoolSize().intValue());
         }
     }
 
@@ -140,12 +181,7 @@ public class KafkaDispatchService {
     public void checkReload() {
         try {
             MDC.put("logPrefix", "KafkaDispatchTask|" + UUID.randomUUID().toString().replaceAll("-", ""));
-            List<AppConfig> allAppConfig = appConfigRepository.getAllAppConfig();
-            for (AppConfig appConfig : allAppConfig) {
-                if (MQTypeEnum.Kafka.code().equals(appConfig.getMqType())) {
-                    initConsumer(appConfig);
-                }
-            }
+            initConsumer();
             logger.info("kafka dispatch service check reload.");
         } catch (Exception e) {
             logger.error("kafka dispatch service check reload failed.", e);
@@ -156,21 +192,21 @@ public class KafkaDispatchService {
     /**
      * 初始化信号量
      * 
-     * @param messageConfig
+     * @param callbackConfig
      */
-    private void initSemaphore(MessageConfig messageConfig) {
-        for (CallbackConfig callbackConfig : messageConfig.getCallbackCfgList()) {
-            String consumerId = callbackConfig.getCallbackKey();
-            int parallelismNum =
-                    (callbackConfig.getParallelismNum() == null || callbackConfig.getParallelismNum().intValue() < 1)
-                            ? 1 : callbackConfig.getParallelismNum().intValue();
-            AdjustableSemaphore semaphore = SemaphorManager.get(consumerId);
-            if (semaphore == null) {
-                semaphore = new AdjustableSemaphore(parallelismNum);
-                SemaphorManager.put(consumerId, semaphore);
-            } else {
-                semaphore.setMaxPermits(parallelismNum);
-            }
+    private void initSemaphore(CallbackConfig callbackConfig) {
+
+        String consumerId = callbackConfig.getCallbackKey();
+        int parallelismNum =
+                (callbackConfig.getParallelismNum() == null || callbackConfig.getParallelismNum().intValue() < 1)
+                        ? 1 : callbackConfig.getParallelismNum().intValue();
+        AdjustableSemaphore semaphore = SemaphorManager.get(consumerId);
+        if (semaphore == null) {
+            semaphore = new AdjustableSemaphore(parallelismNum);
+            SemaphorManager.put(consumerId, semaphore);
+        } else {
+            semaphore.setMaxPermits(parallelismNum);
         }
+
     }
 }

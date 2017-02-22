@@ -7,6 +7,7 @@ package com.ymatou.messagebus.domain.service;
 
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 import javax.annotation.Resource;
 
@@ -25,12 +26,8 @@ import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Component;
 
 import com.ymatou.messagebus.domain.cache.AppConfigCache;
-import com.ymatou.messagebus.domain.model.AppConfig;
-import com.ymatou.messagebus.domain.model.CallbackConfig;
-import com.ymatou.messagebus.domain.model.Message;
-import com.ymatou.messagebus.domain.model.MessageCompensate;
-import com.ymatou.messagebus.domain.model.MessageConfig;
-import com.ymatou.messagebus.domain.model.MessageStatus;
+import com.ymatou.messagebus.domain.cache.ConfigCache;
+import com.ymatou.messagebus.domain.model.*;
 import com.ymatou.messagebus.domain.repository.AlarmRepository;
 import com.ymatou.messagebus.domain.repository.MessageCompensateRepository;
 import com.ymatou.messagebus.domain.repository.MessageRepository;
@@ -38,12 +35,7 @@ import com.ymatou.messagebus.domain.repository.MessageStatusRepository;
 import com.ymatou.messagebus.facade.BizException;
 import com.ymatou.messagebus.facade.CompensateFacade;
 import com.ymatou.messagebus.facade.ErrorCode;
-import com.ymatou.messagebus.facade.enums.CallbackModeEnum;
-import com.ymatou.messagebus.facade.enums.MessageCompensateSourceEnum;
-import com.ymatou.messagebus.facade.enums.MessageCompensateStatusEnum;
-import com.ymatou.messagebus.facade.enums.MessageNewStatusEnum;
-import com.ymatou.messagebus.facade.enums.MessageProcessStatusEnum;
-import com.ymatou.messagebus.facade.enums.MessageStatusEnum;
+import com.ymatou.messagebus.facade.enums.*;
 import com.ymatou.messagebus.facade.model.SecondCompensateReq;
 import com.ymatou.messagebus.facade.model.SecondCompensateResp;
 import com.ymatou.messagebus.infrastructure.logger.ErrorReportClient;
@@ -155,6 +147,58 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
                 staticAppId);
     }
 
+    @Override
+    public void invokeOneCallBack(String callbackKey, String appId, String appCode, String messageBody,
+            String messageId, String messageUuid, CountDownLatch countDownLatch)throws Exception {
+
+
+        AppConfig appConfig = ConfigCache.appConfigMap.get(appId);
+        if (appConfig == null) {
+            throw new BizException(ErrorCode.ILLEGAL_ARGUMENT, "invalid appId:" + appId);
+        }
+
+        MessageConfig messageConfig = appConfig.getMessageConfigByAppCode(appCode);
+        if (messageConfig == null) {
+            throw new BizException(ErrorCode.ILLEGAL_ARGUMENT, "invalid appCode:" + appCode);
+        }
+
+        CallbackConfig callbackConfig = ConfigCache.callbackConfigMap.get(callbackKey);
+
+        if (callbackConfig == null
+                || (callbackConfig.getEnable() != null && !callbackConfig.getEnable())) {
+//             throw new BizException(ErrorCode.NOT_EXIST_INVALID_CALLBACK, "appCode:" + appCode);
+            return;// 没有消费者或者所有消费者都没有启用
+        }
+
+        if (StringUtils.isEmpty(messageId)) {
+            throw new BizException(ErrorCode.ILLEGAL_ARGUMENT, "messageId can not be empty.");
+        }
+
+        if (StringUtils.isEmpty(messageUuid)) {
+            throw new BizException(ErrorCode.ILLEGAL_ARGUMENT, "messageUuid can not be empty.");
+        }
+
+        Message message = new Message();
+        message.setAppId(appConfig.getAppId());
+        message.setCode(messageConfig.getCode());
+        message.setBody(messageBody);
+        message.setMessageId(messageId);
+        message.setUuid(messageUuid);
+
+        long startTime = System.currentTimeMillis();
+
+        invokeOne(message, messageConfig, callbackConfig);
+
+        // 向性能监控器汇报性能情况
+        long consumedTime = System.currentTimeMillis() - startTime;
+
+        PerformanceStatisticContainer.add(consumedTime, "SingleDispatch", monitorAppId);
+        PerformanceStatisticContainer.add(consumedTime, String.format("SingleDispatch.%s", NetUtil.getHostIp()),
+                staticAppId);
+    }
+
+
+
     /**
      * 回调核心逻辑
      * 
@@ -163,16 +207,19 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
      */
     private void invokeCore(Message message, MessageConfig messageConfig) {
         for (CallbackConfig callbackConfig : messageConfig.getCallbackCfgList()) {
-            if (callbackConfig.getEnable() == null || callbackConfig.getEnable() == true) {
-
-                try {
-                    new BizSystemCallback(httpClient, message, null, callbackConfig, this)
-                            .setEnableLog(messageConfig.getEnableLog()).send();
-                } catch (Exception e) {
-                    logger.error(String.format("invoke biz system fail,appCode:%s, messageUuid:%s",
-                            message.getAppCode(), message.getUuid()), e);
-                }
+            try {
+                invokeOne(message, messageConfig, callbackConfig);
+            } catch (Exception e) {
+                logger.error(String.format("invoke biz system fail,appCode:%s, messageUuid:%s",
+                        message.getAppCode(), message.getUuid()), e);
             }
+        }
+    }
+
+    private void invokeOne(Message message, MessageConfig messageConfig, CallbackConfig callbackConfig) throws InterruptedException{
+        if (callbackConfig.getEnable() == null || callbackConfig.getEnable()) {
+            new BizSystemCallback(httpClient, message, null, callbackConfig, this)
+                    .setEnableLog(messageConfig.getEnableLog()).send();
         }
     }
 

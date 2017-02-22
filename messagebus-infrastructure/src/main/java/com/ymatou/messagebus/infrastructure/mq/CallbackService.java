@@ -5,6 +5,8 @@
  */
 package com.ymatou.messagebus.infrastructure.mq;
 
+import java.util.concurrent.CountDownLatch;
+
 /**
  * 分发回调服务
  * 
@@ -22,7 +24,11 @@ public interface CallbackService {
      * @param messageId
      * @param messageUuid
      */
-    public void invoke(String appId, String appCode, String messageBody, String messageId, String messageUuid);
+    void invoke(String appId, String appCode, String messageBody, String messageId, String messageUuid);
+
+
+    void invokeOneCallBack(String callbackKey, String appId, String appCode, String messageBody, String messageId, String messageUuid, CountDownLatch countDownLatch)throws Exception;
+
 
     /**
      * 等待信号量释放
@@ -30,5 +36,5 @@ public interface CallbackService {
      * @param appId
      * @param appCode
      */
-    public void waitForSemaphore(String appId, String appCode);
+    void waitForSemaphore(String appId, String appCode);
 }

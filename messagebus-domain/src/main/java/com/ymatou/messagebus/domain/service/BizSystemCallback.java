@@ -5,8 +5,6 @@
  */
 package com.ymatou.messagebus.domain.service;
 
-import java.io.UnsupportedEncodingException;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -25,7 +23,6 @@ import com.ymatou.messagebus.domain.model.MessageCompensate;
 import com.ymatou.messagebus.facade.enums.CallbackModeEnum;
 import com.ymatou.messagebus.infrastructure.thread.AdjustableSemaphore;
 import com.ymatou.messagebus.infrastructure.thread.SemaphorManager;
-
 
 /**
  * 调用业务系统
@@ -81,11 +78,9 @@ public class BizSystemCallback implements FutureCallback<HttpResponse> {
      * @param httpClient
      * @param url
      * @param body
-     * @throws UnsupportedEncodingException
      */
     public BizSystemCallback(CloseableHttpAsyncClient httpClient, Message message, MessageCompensate messageCompensate,
-            CallbackConfig callbackConfig, CallbackServiceImpl callbackServiceImpl)
-            throws UnsupportedEncodingException {
+            CallbackConfig callbackConfig, CallbackServiceImpl callbackServiceImpl) {
         this.httpClient = httpClient;
         this.message = message;
         this.messageCompensate = messageCompensate;
@@ -177,27 +172,21 @@ public class BizSystemCallback implements FutureCallback<HttpResponse> {
     /**
      * 发送POST请求
      */
-    public void send() {
-        try {
-            beginTime = System.currentTimeMillis();
-            semaphore.acquire();
+    public void send() throws InterruptedException {
+        beginTime = System.currentTimeMillis();
+        semaphore.acquire();
 
-            String body = message.getBody();
-            if (StringUtils.isEmpty(body) == false) {
-                StringEntity postEntity = new StringEntity(body, "UTF-8");
-                httpPost.setEntity(postEntity);
+        String body = message.getBody();
+        if (StringUtils.isEmpty(body) == false) {
+            StringEntity postEntity = new StringEntity(body, "UTF-8");
+            httpPost.setEntity(postEntity);
 
-                if (isEnableLog()) {
-                    logger.info("appcode:{}, messageUuid:{}, request body:{}.", message.getAppCode(), message.getUuid(),
-                            body);
-                }
+            if (isEnableLog()) {
+                logger.info("appcode:{}, messageUuid:{}, request body:{}.", message.getAppCode(), message.getUuid(),
+                        body);
             }
-            httpClient.execute(httpPost, this);
-
-        } catch (Exception e) {
-            logger.error(String.format("biz callback accquire semaphore fail, appcode:%s, messageUuid:%s",
-                    message.getAppCode(), message.getUuid()), e);
         }
+        httpClient.execute(httpPost, this);
     }
 
     /**
@@ -210,7 +199,12 @@ public class BizSystemCallback implements FutureCallback<HttpResponse> {
         for (int i = 0; i < 3; i++) {
 
             logger.info("secondCompensate no.{}, messageId:{}", i + 1, message.getMessageId());
-            send();
+            try {
+                send();
+            } catch (InterruptedException e) {
+                logger.error(String.format("biz callback accquire semaphore fail, appcode:%s, messageUuid:%s",
+                        message.getAppCode(), message.getUuid()), e);
+            }
 
             try {
                 Thread.sleep(timeSpanSecond * 1000);
