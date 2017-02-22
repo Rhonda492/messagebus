@@ -115,7 +115,8 @@ public class KafkaDispatchService {
         ConfigCache.resetCache(allAppConfig);
 
         ConfigCache.appConfigMap.values().forEach(appConfig -> {
-            if (MQTypeEnum.Kafka.code().equals(appConfig.getMqType())) {
+            if (MQTypeEnum.Kafka.code().equals(appConfig.getMqType()) &&
+                    dispatchConfig.getGroupId().equals(appConfig.getDispatchGroup())) {
                 initConsumer(appConfig);
             }
         });

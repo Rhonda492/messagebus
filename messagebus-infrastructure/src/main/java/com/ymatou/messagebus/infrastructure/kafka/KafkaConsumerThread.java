@@ -7,7 +7,6 @@ package com.ymatou.messagebus.infrastructure.kafka;
 
 import java.util.Arrays;
 import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
 
 import org.apache.kafka.clients.consumer.*;
 import org.slf4j.Logger;
