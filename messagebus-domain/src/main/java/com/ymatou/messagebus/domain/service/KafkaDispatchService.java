@@ -115,6 +115,7 @@ public class KafkaDispatchService {
         ConfigCache.resetCache(allAppConfig);
 
         ConfigCache.appConfigMap.values().forEach(appConfig -> {
+            //只处理kafka消息 并且只处理此分发组的消息
             if (MQTypeEnum.Kafka.code().equals(appConfig.getMqType()) &&
                     dispatchConfig.getGroupId().equals(appConfig.getDispatchGroup())) {
                 initConsumer(appConfig);
