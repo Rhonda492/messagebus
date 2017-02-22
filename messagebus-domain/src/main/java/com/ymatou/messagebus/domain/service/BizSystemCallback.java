@@ -24,6 +24,8 @@ import com.ymatou.messagebus.facade.enums.CallbackModeEnum;
 import com.ymatou.messagebus.infrastructure.thread.AdjustableSemaphore;
 import com.ymatou.messagebus.infrastructure.thread.SemaphorManager;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * 调用业务系统
  * 
@@ -281,6 +283,4 @@ public class BizSystemCallback implements FutureCallback<HttpResponse> {
 
         clear();
     }
-
-
 }

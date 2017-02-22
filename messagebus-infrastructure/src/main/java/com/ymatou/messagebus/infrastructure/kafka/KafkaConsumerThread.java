@@ -99,11 +99,12 @@ public class KafkaConsumerThread extends Thread {
                     String appCode = null;
                     if(!records.isEmpty()){
                         setStartProcessTime(System.currentTimeMillis());
-                        CountDownLatch countDownLatch = new CountDownLatch(records.count());
+                        boolean isInterrupted = false;
                         for (ConsumerRecord<String, String> record : records) {
                             MDC.put("logPrefix", String.format("%s|%s", this.getName(), UUID.randomUUID().toString()));
 
                             logger.info("recv kafka message:{}", record);
+
                             KafkaMessageKey key = null;
                             try {
                                 key = KafkaMessageKey.valueOf(record.key());
@@ -112,13 +113,16 @@ public class KafkaConsumerThread extends Thread {
 
                                 //处理一条 callback
                                 callbackService.invokeOneCallBack(callbackKey,appId, appCode, record.value(), key.getMessageId(),
-                                        key.getUuid(),countDownLatch);
+                                        key.getUuid(),isInterrupted);
 
                             }catch (InterruptedException e){
                                 logger.error("thread interrupted process kafka callback timeout,recordSize:{}",
                                         records.count());
-                                //退出for 使consumer继续poll,防止rebalancing
-                                break;
+                                isInterrupted = true;
+                                // 当前数据和之后数据都进入补单，使consumer继续poll,防止rebalancing
+                                callbackService.invokeOneCallBack(callbackKey,appId, appCode, record.value(), key.getMessageId(),
+                                        key.getUuid(),true);
+
                             } catch (Exception e) {
                                 if (key == null) {
                                     logger.error("fail to consume kafka message, key is null", e);

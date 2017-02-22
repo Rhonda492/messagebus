@@ -7,7 +7,6 @@ package com.ymatou.messagebus.domain.service;
 
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 
 import javax.annotation.Resource;
 
@@ -147,11 +146,39 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
                 staticAppId);
     }
 
+
+
     @Override
     public void invokeOneCallBack(String callbackKey, String appId, String appCode, String messageBody,
-            String messageId, String messageUuid, CountDownLatch countDownLatch)throws Exception {
+            String messageId, String messageUuid,boolean isInterrupted)throws Exception {
 
+        Message message = assembleMessageAndValidate(callbackKey,appId,appCode,messageBody,messageId,messageUuid);
 
+        AppConfig appConfig = ConfigCache.appConfigMap.get(appId);
+        MessageConfig messageConfig = appConfig.getMessageConfigByAppCode(appCode);
+        CallbackConfig callbackConfig = ConfigCache.callbackConfigMap.get(callbackKey);
+
+        long startTime = System.currentTimeMillis();
+
+        if(isInterrupted){
+            if (callbackConfig.getEnable() == null || callbackConfig.getEnable()) {
+                writeFailResult(CallbackModeEnum.Dispatch, message, null, callbackConfig,
+                        "kafka 消费者消费太慢 进入补单，防止rebalancing", 0, null);
+            }
+        }else {
+            invokeOne(message, messageConfig, callbackConfig);
+        }
+
+        // 向性能监控器汇报性能情况
+        long consumedTime = System.currentTimeMillis() - startTime;
+
+        PerformanceStatisticContainer.add(consumedTime, "SingleDispatch", monitorAppId);
+        PerformanceStatisticContainer.add(consumedTime, String.format("SingleDispatch.%s", NetUtil.getHostIp()),
+                staticAppId);
+    }
+
+    private Message assembleMessageAndValidate(String callbackKey, String appId, String appCode, String messageBody,
+                                               String messageId, String messageUuid){
         AppConfig appConfig = ConfigCache.appConfigMap.get(appId);
         if (appConfig == null) {
             throw new BizException(ErrorCode.ILLEGAL_ARGUMENT, "invalid appId:" + appId);
@@ -164,10 +191,10 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
 
         CallbackConfig callbackConfig = ConfigCache.callbackConfigMap.get(callbackKey);
 
+        // 没有消费者或者所有消费者都没有启用
         if (callbackConfig == null
                 || (callbackConfig.getEnable() != null && !callbackConfig.getEnable())) {
-//             throw new BizException(ErrorCode.NOT_EXIST_INVALID_CALLBACK, "appCode:" + appCode);
-            return;// 没有消费者或者所有消费者都没有启用
+            throw new BizException(ErrorCode.NOT_EXIST_INVALID_CALLBACK, "appCode:" + appCode);
         }
 
         if (StringUtils.isEmpty(messageId)) {
@@ -185,18 +212,8 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
         message.setMessageId(messageId);
         message.setUuid(messageUuid);
 
-        long startTime = System.currentTimeMillis();
-
-        invokeOne(message, messageConfig, callbackConfig);
-
-        // 向性能监控器汇报性能情况
-        long consumedTime = System.currentTimeMillis() - startTime;
-
-        PerformanceStatisticContainer.add(consumedTime, "SingleDispatch", monitorAppId);
-        PerformanceStatisticContainer.add(consumedTime, String.format("SingleDispatch.%s", NetUtil.getHostIp()),
-                staticAppId);
+        return message;
     }
-
 
 
     /**
