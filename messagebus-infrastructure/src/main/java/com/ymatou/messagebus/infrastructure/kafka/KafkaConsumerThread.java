@@ -97,9 +97,11 @@ public class KafkaConsumerThread extends Thread {
                     ConsumerRecords<String, String> records = consumer.poll(5000);
                     String appId = null;
                     String appCode = null;
+
                     if(!records.isEmpty()){
                         setStartProcessTime(System.currentTimeMillis());
                         boolean isInterrupted = false;
+
                         for (ConsumerRecord<String, String> record : records) {
                             MDC.put("logPrefix", String.format("%s|%s", this.getName(), UUID.randomUUID().toString()));
 
