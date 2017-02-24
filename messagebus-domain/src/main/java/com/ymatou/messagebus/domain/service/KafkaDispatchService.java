@@ -112,7 +112,9 @@ public class KafkaDispatchService {
      */
     private void initConsumer(){
         List<AppConfig> allAppConfig = appConfigRepository.getAllAppConfig();
-        ConfigCache.resetCache(allAppConfig);
+        if(allAppConfig != null && !allAppConfig.isEmpty()){
+            ConfigCache.resetCache(allAppConfig);
+        }
 
         ConfigCache.appConfigMap.values().forEach(appConfig -> {
             //只处理kafka消息 并且只处理此分发组的消息
