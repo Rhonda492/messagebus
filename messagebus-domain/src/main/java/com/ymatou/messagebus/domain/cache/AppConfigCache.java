@@ -21,6 +21,7 @@ import com.google.common.cache.LoadingCache;
 import com.ymatou.messagebus.domain.model.AppConfig;
 import com.ymatou.messagebus.domain.repository.AppConfigRepository;
 
+//FIXME: AppConfig全量加载，定期刷新。Mongo配置库挂，只是不能动态更改配置。当前实现方式，Mongo配置库挂，会导致系统不可用
 @Component
 public class AppConfigCache implements InitializingBean {
 
