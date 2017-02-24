@@ -5,6 +5,7 @@
  */
 package com.ymatou.messagebus.domain.service;
 
+import com.ymatou.performancemonitorclient.PerformanceStatisticContainer;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -76,7 +77,6 @@ public class BizSystemCallback implements FutureCallback<HttpResponse> {
 
     /**
      * 构造异步回调实例
-     * 
      * @param httpClient
      * @param url
      * @param body
@@ -175,7 +175,7 @@ public class BizSystemCallback implements FutureCallback<HttpResponse> {
      * 发送POST请求
      */
     public void send() throws InterruptedException {
-        beginTime = System.currentTimeMillis();
+
         semaphore.acquire();
 
         String body = message.getBody();
@@ -188,6 +188,7 @@ public class BizSystemCallback implements FutureCallback<HttpResponse> {
                         body);
             }
         }
+        beginTime = System.currentTimeMillis();
         httpClient.execute(httpPost, this);
     }
 
@@ -241,6 +242,9 @@ public class BizSystemCallback implements FutureCallback<HttpResponse> {
 
             logger.info("appcode:{}, messageUuid:{}, async response code:{}, duration:{}ms, message:{}.",
                     message.getAppCode(), message.getUuid(), statusCode, duration, reponseStr);
+            //每个url回调性能监控
+            PerformanceStatisticContainer.add(duration, String.format("%s_%s",callbackConfig.getCallbackKey(),callbackConfig.getUrl()),
+                    CallbackServiceImpl.MONITOR_CALLBACK_KEY_URL_APP_ID);
 
             if (isCallbackSuccess(statusCode, reponseStr)) {
                 callbackResult = true;

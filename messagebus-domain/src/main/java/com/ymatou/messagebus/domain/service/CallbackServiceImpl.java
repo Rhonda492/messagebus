@@ -84,12 +84,17 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
     /**
      * 按照业务统计
      */
-    private String monitorAppId = "mqmonitor.iapi.ymatou.com";
+    public static final String MONITOR_APP_ID = "mqmonitor.iapi.ymatou.com";
+
+    /**
+     * 每个回调key url的业务性能监控
+     */
+    public static final String MONITOR_CALLBACK_KEY_URL_APP_ID = "mqmonitor.callbackkeyurl.iapi.ymatou.com";
 
     /**
      * 按照机器统计性能数据
      */
-    private String staticAppId = "mqstatic.iapi.ymatou.com";
+    private static final String STATIC_APP_ID = "mqstatic.iapi.ymatou.com";
 
 
     /*
@@ -137,13 +142,14 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
 
         invokeCore(message, messageConfig);
 
+        // fixme 性能监控时间不对 http异步
         // 向性能监控器汇报性能情况
         long consumedTime = System.currentTimeMillis() - startTime;
         PerformanceStatisticContainer.add(consumedTime, String.format("%s.dispatch", message.getAppCode()),
-                monitorAppId);
-        PerformanceStatisticContainer.add(consumedTime, "TotalDispatch", monitorAppId);
+                MONITOR_APP_ID);
+        PerformanceStatisticContainer.add(consumedTime, "TotalDispatch", MONITOR_APP_ID);
         PerformanceStatisticContainer.add(consumedTime, String.format("TotalDispatch.%s", NetUtil.getHostIp()),
-                staticAppId);
+                STATIC_APP_ID);
     }
 
 
@@ -171,10 +177,11 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
 
         // 向性能监控器汇报性能情况
         long consumedTime = System.currentTimeMillis() - startTime;
-
-        PerformanceStatisticContainer.add(consumedTime, "SingleDispatch", monitorAppId);
+        PerformanceStatisticContainer.add(consumedTime, String.format("%s.dispatch", message.getAppCode()),
+                MONITOR_APP_ID);
+        PerformanceStatisticContainer.add(consumedTime, "SingleDispatch", MONITOR_APP_ID);
         PerformanceStatisticContainer.add(consumedTime, String.format("SingleDispatch.%s", NetUtil.getHostIp()),
-                staticAppId);
+                STATIC_APP_ID);
     }
 
     private Message assembleMessageAndValidate(String callbackKey, String appId, String appCode, String messageBody,
