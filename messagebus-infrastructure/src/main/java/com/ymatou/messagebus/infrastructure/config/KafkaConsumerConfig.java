@@ -61,15 +61,4 @@ public class KafkaConsumerConfig extends Properties implements IDisconfUpdate, I
     public void afterPropertiesSet() throws Exception {
         init();
     }
-
-    /**
-     * 获取到消费者一次拉取消息的数量
-     * 
-     * @return
-     */
-    public int getConsumerPollSize() {
-        String poolSize = getProperty("consumer.poll.size", "300");
-
-        return Integer.valueOf(poolSize).intValue();
-    }
 }

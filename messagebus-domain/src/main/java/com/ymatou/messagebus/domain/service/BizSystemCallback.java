@@ -5,8 +5,7 @@
  */
 package com.ymatou.messagebus.domain.service;
 
-import java.io.UnsupportedEncodingException;
-
+import com.ymatou.performancemonitorclient.PerformanceStatisticContainer;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -26,6 +25,7 @@ import com.ymatou.messagebus.facade.enums.CallbackModeEnum;
 import com.ymatou.messagebus.infrastructure.thread.AdjustableSemaphore;
 import com.ymatou.messagebus.infrastructure.thread.SemaphorManager;
 
+import java.util.concurrent.TimeUnit;
 
 /**
  * 调用业务系统
@@ -77,15 +77,12 @@ public class BizSystemCallback implements FutureCallback<HttpResponse> {
 
     /**
      * 构造异步回调实例
-     * 
      * @param httpClient
      * @param url
      * @param body
-     * @throws UnsupportedEncodingException
      */
     public BizSystemCallback(CloseableHttpAsyncClient httpClient, Message message, MessageCompensate messageCompensate,
-            CallbackConfig callbackConfig, CallbackServiceImpl callbackServiceImpl)
-            throws UnsupportedEncodingException {
+            CallbackConfig callbackConfig, CallbackServiceImpl callbackServiceImpl) {
         this.httpClient = httpClient;
         this.message = message;
         this.messageCompensate = messageCompensate;
@@ -177,27 +174,22 @@ public class BizSystemCallback implements FutureCallback<HttpResponse> {
     /**
      * 发送POST请求
      */
-    public void send() {
-        try {
-            beginTime = System.currentTimeMillis();
-            semaphore.acquire();
+    public void send() throws InterruptedException {
 
-            String body = message.getBody();
-            if (StringUtils.isEmpty(body) == false) {
-                StringEntity postEntity = new StringEntity(body, "UTF-8");
-                httpPost.setEntity(postEntity);
+        semaphore.acquire();
 
-                if (isEnableLog()) {
-                    logger.info("appcode:{}, messageUuid:{}, request body:{}.", message.getAppCode(), message.getUuid(),
-                            body);
-                }
+        String body = message.getBody();
+        if (StringUtils.isEmpty(body) == false) {
+            StringEntity postEntity = new StringEntity(body, "UTF-8");
+            httpPost.setEntity(postEntity);
+
+            if (isEnableLog()) {
+                logger.info("appcode:{}, messageUuid:{}, request body:{}.", message.getAppCode(), message.getUuid(),
+                        body);
             }
-            httpClient.execute(httpPost, this);
-
-        } catch (Exception e) {
-            logger.error(String.format("biz callback accquire semaphore fail, appcode:%s, messageUuid:%s",
-                    message.getAppCode(), message.getUuid()), e);
         }
+        beginTime = System.currentTimeMillis();
+        httpClient.execute(httpPost, this);
     }
 
     /**
@@ -210,7 +202,12 @@ public class BizSystemCallback implements FutureCallback<HttpResponse> {
         for (int i = 0; i < 3; i++) {
 
             logger.info("secondCompensate no.{}, messageId:{}", i + 1, message.getMessageId());
-            send();
+            try {
+                send();
+            } catch (InterruptedException e) {
+                logger.error(String.format("biz callback accquire semaphore fail, appcode:%s, messageUuid:%s",
+                        message.getAppCode(), message.getUuid()), e);
+            }
 
             try {
                 Thread.sleep(timeSpanSecond * 1000);
@@ -245,6 +242,9 @@ public class BizSystemCallback implements FutureCallback<HttpResponse> {
 
             logger.info("appcode:{}, messageUuid:{}, async response code:{}, duration:{}ms, message:{}.",
                     message.getAppCode(), message.getUuid(), statusCode, duration, reponseStr);
+            //每个url回调性能监控
+            PerformanceStatisticContainer.add(duration, String.format("%s_%s",callbackConfig.getCallbackKey(),callbackConfig.getUrl()),
+                    CallbackServiceImpl.MONITOR_CALLBACK_KEY_URL_APP_ID);
 
             if (isCallbackSuccess(statusCode, reponseStr)) {
                 callbackResult = true;
@@ -287,6 +287,4 @@ public class BizSystemCallback implements FutureCallback<HttpResponse> {
 
         clear();
     }
-
-
 }
