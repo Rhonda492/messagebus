@@ -274,4 +274,46 @@ public class CallbackConfig {
     public void setRetryPolicy(String retryPolicy) {
         this.retryPolicy = retryPolicy;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        CallbackConfig that = (CallbackConfig) o;
+
+        if (!callbackKey.equals(that.callbackKey)) return false;
+        if (url != null ? !url.equals(that.url) : that.url != null) return false;
+        if (enable != null ? !enable.equals(that.enable) : that.enable != null) return false;
+        if (isRetry != null ? !isRetry.equals(that.isRetry) : that.isRetry != null) return false;
+        if (httpMethod != null ? !httpMethod.equals(that.httpMethod) : that.httpMethod != null) return false;
+        if (contentType != null ? !contentType.equals(that.contentType) : that.contentType != null) return false;
+        if (callbackTimeOut != null ? !callbackTimeOut.equals(that.callbackTimeOut) : that.callbackTimeOut != null)
+            return false;
+        if (parallelismNum != null ? !parallelismNum.equals(that.parallelismNum) : that.parallelismNum != null)
+            return false;
+        if (retryTimeout != null ? !retryTimeout.equals(that.retryTimeout) : that.retryTimeout != null) return false;
+        if (retryPolicy != null ? !retryPolicy.equals(that.retryPolicy) : that.retryPolicy != null) return false;
+        if (callbackAppId != null ? !callbackAppId.equals(that.callbackAppId) : that.callbackAppId != null)
+            return false;
+        return secondCompensateSpan != null ? secondCompensateSpan.equals(that.secondCompensateSpan) : that.secondCompensateSpan == null;
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = callbackKey.hashCode();
+        result = 31 * result + (url != null ? url.hashCode() : 0);
+        result = 31 * result + (enable != null ? enable.hashCode() : 0);
+        result = 31 * result + (isRetry != null ? isRetry.hashCode() : 0);
+        result = 31 * result + (httpMethod != null ? httpMethod.hashCode() : 0);
+        result = 31 * result + (contentType != null ? contentType.hashCode() : 0);
+        result = 31 * result + (callbackTimeOut != null ? callbackTimeOut.hashCode() : 0);
+        result = 31 * result + (parallelismNum != null ? parallelismNum.hashCode() : 0);
+        result = 31 * result + (retryTimeout != null ? retryTimeout.hashCode() : 0);
+        result = 31 * result + (retryPolicy != null ? retryPolicy.hashCode() : 0);
+        result = 31 * result + (callbackAppId != null ? callbackAppId.hashCode() : 0);
+        result = 31 * result + (secondCompensateSpan != null ? secondCompensateSpan.hashCode() : 0);
+        return result;
+    }
 }
