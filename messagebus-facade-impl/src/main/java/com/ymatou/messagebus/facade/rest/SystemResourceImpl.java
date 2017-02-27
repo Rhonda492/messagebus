@@ -49,6 +49,7 @@ public class SystemResourceImpl implements SystemResource {
                 + "\"1.1.3\":\"2016-12-15.2 set secondCompensate num to 3 and increase taskExecutor maxPoolSize to 100.\","
                 + "\"1.1.4\":\"2017-02-13.2 compensate with timer one by one code.\""
                 + "\"1.1.5\":\"2017-02-23.1 kafka optimization.\""
+                + "\"1.1.6\":\"2017-02-27.1 callbackconfig remove hashcode,semaphor modify ConcurrentMap and null prevent \""
                 + "}";
     }
 

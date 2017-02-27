@@ -5,7 +5,6 @@
  */
 package com.ymatou.messagebus.domain.service;
 
-import com.ymatou.performancemonitorclient.PerformanceStatisticContainer;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -24,8 +23,7 @@ import com.ymatou.messagebus.domain.model.MessageCompensate;
 import com.ymatou.messagebus.facade.enums.CallbackModeEnum;
 import com.ymatou.messagebus.infrastructure.thread.AdjustableSemaphore;
 import com.ymatou.messagebus.infrastructure.thread.SemaphorManager;
-
-import java.util.concurrent.TimeUnit;
+import com.ymatou.performancemonitorclient.PerformanceStatisticContainer;
 
 /**
  * 调用业务系统
@@ -176,7 +174,9 @@ public class BizSystemCallback implements FutureCallback<HttpResponse> {
      */
     public void send() throws InterruptedException {
 
-        semaphore.acquire();
+        if(semaphore != null){
+            semaphore.acquire();
+        }
 
         String body = message.getBody();
         if (StringUtils.isEmpty(body) == false) {
@@ -226,7 +226,9 @@ public class BizSystemCallback implements FutureCallback<HttpResponse> {
      * 释放资源
      */
     private void clear() {
-        semaphore.release();
+        if(semaphore != null){
+            semaphore.release();
+        }
         if (this.callbackMode != CallbackModeEnum.SecondCompensate) {
             httpPost.releaseConnection();
         }

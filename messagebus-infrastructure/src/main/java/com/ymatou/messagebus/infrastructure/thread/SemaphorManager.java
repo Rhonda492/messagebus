@@ -5,7 +5,8 @@
  */
 package com.ymatou.messagebus.infrastructure.thread;
 
-import java.util.HashMap;
+import com.google.common.collect.Maps;
+
 import java.util.Map;
 
 
@@ -20,7 +21,7 @@ public class SemaphorManager {
     /**
      * 信号量列表：key = {consumerId}
      */
-    private static Map<String, AdjustableSemaphore> semaphoreMap = new HashMap<String, AdjustableSemaphore>();
+    private static Map<String, AdjustableSemaphore> semaphoreMap = Maps.newConcurrentMap();
 
 
     /**
