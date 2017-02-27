@@ -63,7 +63,13 @@ public class ConfigCache {
     // 将list转为map工具
     public static <K, V> Map<K, V> listToMap(List<V> list, Function<V, K> function) {
         Map<K, V> map = Maps.newConcurrentMap();
-        forEachList(list, v -> map.put(function.apply(v), v));
+        forEachList(list, v -> {
+            K k = function.apply(v);
+            if (k != null) {
+                map.put(k, v);
+            }
+        });
+
         return map;
     }
 

@@ -19,6 +19,7 @@ import java.util.concurrent.TimeoutException;
 
 import javax.annotation.Resource;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -112,7 +113,9 @@ public class KafkaDispatchService {
      */
     private void initConsumer(){
         List<AppConfig> allAppConfig = appConfigRepository.getAllAppConfig();
-        ConfigCache.resetCache(allAppConfig);
+        if(allAppConfig != null && !allAppConfig.isEmpty()){
+            ConfigCache.resetCache(allAppConfig);
+        }
 
         ConfigCache.appConfigMap.values().forEach(appConfig -> {
             //只处理kafka消息 并且只处理此分发组的消息
@@ -143,12 +146,14 @@ public class KafkaDispatchService {
 
             String topic = appConfig.getKafkaTopic(messageConfig.getCode());
             for (CallbackConfig callbackConfig : messageConfig.getCallbackCfgList()) {
-                
-                kafkaConsumerClient.subscribe(topic, dispatchConfig.getGroupId(), callbackConfig.getCallbackKey(),
-                        messageConfig.getPoolSize().intValue());
 
-                // 初始化信号量
-                initSemaphore(callbackConfig);
+                if(StringUtils.isNotBlank(callbackConfig.getCallbackKey())){
+                    kafkaConsumerClient.subscribe(topic, dispatchConfig.getGroupId(), callbackConfig.getCallbackKey(),
+                            messageConfig.getPoolSize().intValue());
+
+                    // 初始化信号量
+                    initSemaphore(callbackConfig);
+                }
             }
 
         }
