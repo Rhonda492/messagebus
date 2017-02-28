@@ -273,6 +273,9 @@ public class EndPoint implements HealthService {
     }
 
     /**
+     * FIXME:健康检测逻辑有问题
+     * 见http://www.rabbitmq.com/api-guide.html
+     * 中<em>Atomicity and use of the isOpen() method</em>章节
      * 判断终结点是否健康
      * 
      * @return

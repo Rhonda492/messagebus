@@ -214,7 +214,7 @@ public class MessageBusService implements InitializingBean {
         for (CallbackConfig callbackConfig : messageConfig.getCallbackCfgList()) {
             MessageCompensate messageCompensate =
                     MessageCompensate.from(message, callbackConfig, MessageCompensateSourceEnum.Publish);
-
+            //FIXME:怎么处理部分callback补偿插入成功，部分失败呢
             compensateRepository.insert(messageCompensate);
         }
 

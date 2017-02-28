@@ -23,6 +23,8 @@ import com.ymatou.messagebus.infrastructure.cluster.HealthService;
 import com.ymatou.messagebus.infrastructure.config.RabbitMQConfig;
 
 /**
+ * FIXME:关于MessageProducer和EndPoint的封装与缓存太复杂
+ * MessageProducer应该是单例，由它负责出channel发消息即可
  * 消息生产者
  * 
  * @author wangxudong 2016年7月29日 下午2:50:14
