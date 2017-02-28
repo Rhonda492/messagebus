@@ -158,11 +158,16 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
     public void invokeOneCallBack(String callbackKey, String appId, String appCode, String messageBody,
             String messageId, String messageUuid,boolean isInterrupted)throws Exception {
 
+        CallbackConfig callbackConfig = ConfigCache.callbackConfigMap.get(callbackKey);
+        if (callbackConfig == null
+                || (callbackConfig.getEnable() != null && !callbackConfig.getEnable())) {
+            return; // 没有消费者或者所有消费者都没有启用，直接放过
+        }
+
         Message message = assembleMessageAndValidate(callbackKey,appId,appCode,messageBody,messageId,messageUuid);
 
         AppConfig appConfig = ConfigCache.appConfigMap.get(appId);
         MessageConfig messageConfig = appConfig.getMessageConfigByAppCode(appCode);
-        CallbackConfig callbackConfig = ConfigCache.callbackConfigMap.get(callbackKey);
 
         long startTime = System.currentTimeMillis();
 
@@ -194,14 +199,6 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
         MessageConfig messageConfig = appConfig.getMessageConfigByAppCode(appCode);
         if (messageConfig == null) {
             throw new BizException(ErrorCode.ILLEGAL_ARGUMENT, "invalid appCode:" + appCode);
-        }
-
-        CallbackConfig callbackConfig = ConfigCache.callbackConfigMap.get(callbackKey);
-
-        // 没有消费者或者所有消费者都没有启用
-        if (callbackConfig == null
-                || (callbackConfig.getEnable() != null && !callbackConfig.getEnable())) {
-            throw new BizException(ErrorCode.NOT_EXIST_INVALID_CALLBACK, "appCode:" + appCode);
         }
 
         if (StringUtils.isEmpty(messageId)) {
