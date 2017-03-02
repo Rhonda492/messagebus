@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -140,6 +141,9 @@ public class ConfigCache{
      * @return
      */
     public AppConfig getAppConfig(String appId) {
+        if(StringUtils.isBlank(appId)){
+            return null;
+        }
         return appConfigMap.get(appId);
     }
 
