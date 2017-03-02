@@ -103,8 +103,7 @@
 	<dubbo:registry address="zookeeper://${dubbo.zoo}" timeout="30000" />
 
 	<!-- 用dubbo协议在20880端口暴露服务 -->
-	<dubbo:protocol name="dubbo" port="${dubbo.port}"
-		serialization="kryo" />
+	<dubbo:protocol name="dubbo" port="${dubbo.port}"/>
 
 	<dubbo:service interface="com.ymatou.messagebus.facade.CompensateFacade" 
 		ref="compensateFacade" protocol="dubbo" />

@@ -57,7 +57,7 @@
 		<joda-time.verson>2.9.3</joda-time.verson>
 
 		<el-api.version>2.2</el-api.version>
-		<errorreporter.version>1.0.7</errorreporter.version>
+		<errorreporter.version>1.0.9</errorreporter.version>
 		<performance.monitor.client.version>1.1.5</performance.monitor.client.version>
 
 		<thoughtworks.xstream.version>1.4.7</thoughtworks.xstream.version>
