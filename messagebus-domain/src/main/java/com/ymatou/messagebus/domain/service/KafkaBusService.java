@@ -13,7 +13,7 @@ import org.slf4j.MDC;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Component;
 
-import com.ymatou.messagebus.domain.cache.AppConfigCache;
+import com.ymatou.messagebus.domain.cache.ConfigCache;
 import com.ymatou.messagebus.domain.model.AppConfig;
 import com.ymatou.messagebus.domain.model.Message;
 import com.ymatou.messagebus.domain.model.MessageConfig;
@@ -45,14 +45,14 @@ public class KafkaBusService {
     private MessageRepository messageRepository;
 
     @Resource
-    private AppConfigCache appConfigCache;
+    private ConfigCache configCache;
 
     private String appId = "mqpublish.kafka.iapi.ymatou.com";
 
     public void publish(Message message) {
         long startTime = System.currentTimeMillis();
 
-        AppConfig appConfig = appConfigCache.get(message.getAppId());
+        AppConfig appConfig = configCache.getAppConfig(message.getAppId());
         if (appConfig == null) {
             throw new BizException(ErrorCode.ILLEGAL_ARGUMENT, "invalid appId:" +
                     message.getAppId());

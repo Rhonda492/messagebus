@@ -49,7 +49,7 @@ public class MessageCompensateServlet extends HttpServlet {
         super.init(config);
 
         try {
-            start();
+            taskManager.initCompensateTask();
             logger.info("message compensate servlet init.");
         } catch (Exception ex) {
             logger.error("message compensate task start failed", ex);

@@ -50,6 +50,11 @@ public class KafkaProducerClient {
     @PreDestroy
     public void destroy() {
         producer.close();
+
+        //关闭
+        defaultProducerExecutor.shutdown();
+
+        producerExecutorMap.values().stream().forEach(ExecutorService::shutdown);
     }
 
     public void sendAsync(String topic, KafkaMessageKey key, String message) {

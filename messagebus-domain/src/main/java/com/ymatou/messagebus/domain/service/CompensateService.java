@@ -23,12 +23,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Component;
 
-import com.ymatou.messagebus.domain.model.AppConfig;
-import com.ymatou.messagebus.domain.model.CallbackConfig;
-import com.ymatou.messagebus.domain.model.Message;
-import com.ymatou.messagebus.domain.model.MessageCompensate;
-import com.ymatou.messagebus.domain.model.MessageConfig;
-import com.ymatou.messagebus.domain.model.MessageStatus;
+import com.ymatou.messagebus.domain.model.*;
 import com.ymatou.messagebus.domain.repository.AppConfigRepository;
 import com.ymatou.messagebus.domain.repository.MessageCompensateRepository;
 import com.ymatou.messagebus.domain.repository.MessageRepository;
@@ -39,8 +34,6 @@ import com.ymatou.messagebus.facade.enums.MessageCompensateSourceEnum;
 import com.ymatou.messagebus.facade.enums.MessageNewStatusEnum;
 import com.ymatou.messagebus.facade.enums.MessageProcessStatusEnum;
 import com.ymatou.messagebus.facade.enums.MessageStatusEnum;
-import com.ymatou.messagebus.infrastructure.thread.AdjustableSemaphore;
-import com.ymatou.messagebus.infrastructure.thread.SemaphorManager;
 
 /**
  * 补单服务
@@ -72,53 +65,6 @@ public class CompensateService implements InitializingBean {
 
     @Resource
     private TaskExecutor taskExecutor;
-
-
-    /**
-     * 初始化信号量
-     */
-    public void initSemaphore() {
-        List<AppConfig> allAppConfig = appConfigRepository.getAllAppConfig();
-        for (AppConfig appConfig : allAppConfig) {
-            if (!StringUtils.isEmpty(appConfig.getDispatchGroup())) {
-                for (MessageConfig messageConfig : appConfig.getMessageCfgList()) {
-                    initSemaphore(messageConfig);
-                }
-            }
-        }
-    }
-
-    /**
-     * 初始化信号量，供调度使用
-     * 
-     * @param messageConfig
-     */
-    public void initSemaphore(MessageConfig messageConfig) {
-        if (messageConfig == null) {
-            return;
-        }
-
-        List<CallbackConfig> callbackCfgList = messageConfig.getCallbackCfgList();
-        if (callbackCfgList == null) {
-            return;
-        }
-
-        for (CallbackConfig callbackConfig : callbackCfgList) {
-            String consumerId = callbackConfig.getCallbackKey();
-
-            int parallelismNum = (callbackConfig.getParallelismNum() == null ||
-                    callbackConfig.getParallelismNum().intValue() < 1) ? 2
-                            : callbackConfig.getParallelismNum().intValue();
-
-            AdjustableSemaphore semaphore = SemaphorManager.get(consumerId);
-            if (semaphore == null) {
-                semaphore = new AdjustableSemaphore(parallelismNum);
-                SemaphorManager.put(consumerId, semaphore);
-            } else {
-                semaphore.setMaxPermits(parallelismNum);
-            }
-        }
-    }
 
     /**
      * 检测补单合并逻辑，供调度使用

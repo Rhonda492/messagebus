@@ -55,7 +55,11 @@ public class DispatchServiceTest extends BaseTest {
         String appId = "testjava";
         String code = "hello";
         PublishMessageResp resp = publishMessage(appId, code);
-        dispatchService.start();
+        try {
+            dispatchService.start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         Thread.sleep(300 * 1);
 

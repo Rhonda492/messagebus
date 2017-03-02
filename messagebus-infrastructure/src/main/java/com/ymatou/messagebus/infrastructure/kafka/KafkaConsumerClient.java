@@ -68,13 +68,14 @@ public class KafkaConsumerClient {
     }
 
     /**
+     * 加synchronized 防止创建多个钱程
      * 每个callbackKey 对应一个consumer 线程
      * @param topic 主题
      * @param dispatchGroup 分发组
      * @param callbackKey kafka 订阅分组
      * @param poolSize 一次拉取大小，暂无用
      */
-    public void subscribe(String topic,String dispatchGroup, String callbackKey, int poolSize) {
+    public synchronized void subscribe(String topic,String dispatchGroup, String callbackKey, int poolSize) {
         if (!consumerMap.containsKey(topic)) {
             startConsumer(topic, dispatchGroup, callbackKey, poolSize);
         } else {
