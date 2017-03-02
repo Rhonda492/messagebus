@@ -47,10 +47,11 @@ public class SystemResourceImpl implements SystemResource {
                 + "\"1.1.1\":\"2016-12-13.1 fix message status index cause by isolate message and log.\","
                 + "\"1.1.2\":\"2016-12-15.1 add kafka consumer pool size and allocation executorService by topic.\","
                 + "\"1.1.3\":\"2016-12-15.2 set secondCompensate num to 3 and increase taskExecutor maxPoolSize to 100.\","
-                + "\"1.1.4\":\"2017-02-13.2 compensate with timer one by one code.\""
-                + "\"1.1.5\":\"2017-02-23.1 kafka optimization.\""
-                + "\"1.1.6\":\"2017-02-27.1 callbackconfig remove hashcode,semaphor modify ConcurrentMap and null prevent \""
-                + "\"1.1.7\":\"2017-02-28.1 modify bizexecption kafka callback disabled\""
+                + "\"1.1.4\":\"2017-02-13.2 compensate with timer one by one code.\","
+                + "\"1.1.5\":\"2017-02-23.1 kafka optimization.\","
+                + "\"1.1.6\":\"2017-02-27.1 callbackconfig remove hashcode,semaphor modify ConcurrentMap and null prevent \","
+                + "\"1.1.7\":\"2017-02-28.1 modify bizexecption kafka callback disabled\","
+                + "\"1.1.7\":\"2017-03-02.1 20170302-cache-reload-and-managecode\""
                 + "}";
     }
 
