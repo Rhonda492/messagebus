@@ -84,7 +84,11 @@ public class HumanTest extends BaseTest {
             InterruptedException {
         testPublish();
 
-        dispatchService.start();
+        try {
+            dispatchService.start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         Thread.sleep(1000 * 100);
     }

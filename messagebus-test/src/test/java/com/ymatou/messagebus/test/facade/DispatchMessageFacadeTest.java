@@ -13,6 +13,7 @@ import java.util.UUID;
 
 import javax.annotation.Resource;
 
+import com.ymatou.messagebus.domain.util.CallbackSemaphoreHelper;
 import org.junit.Test;
 
 import com.ymatou.messagebus.domain.model.Message;
@@ -80,7 +81,7 @@ public class DispatchMessageFacadeTest extends BaseTest {
         req.setMessageUuid(message.getUuid());
 
 
-        compensateService.initSemaphore();
+        CallbackSemaphoreHelper.initSemaphores();
 
 
         DispatchMessageResp resp = dispatchMessageFacade.dipatch(req);
@@ -124,7 +125,7 @@ public class DispatchMessageFacadeTest extends BaseTest {
         req.setMessageId(UUID.randomUUID().toString());
         req.setMessageUuid(Message.newUuid());
 
-        compensateService.initSemaphore();
+        CallbackSemaphoreHelper.initSemaphores();
 
         DispatchMessageResp resp = dispatchMessageFacade.dipatch(req);
         assertEquals(true, resp.isSuccess());
@@ -167,7 +168,7 @@ public class DispatchMessageFacadeTest extends BaseTest {
         req.setMessageId(message.getMessageId());
         req.setMessageUuid(message.getUuid());
 
-        compensateService.initSemaphore();
+        CallbackSemaphoreHelper.initSemaphores();
 
         DispatchMessageResp resp = dispatchMessageFacade.dipatch(req);
         assertEquals(true, resp.isSuccess());
@@ -204,7 +205,7 @@ public class DispatchMessageFacadeTest extends BaseTest {
         req.setMessageId(message.getMessageId());
         req.setMessageUuid(message.getUuid());
 
-        compensateService.initSemaphore();
+        CallbackSemaphoreHelper.initSemaphores();
 
         DispatchMessageResp resp = dispatchMessageFacade.dipatch(req);
         assertEquals(true, resp.isSuccess());

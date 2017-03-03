@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.commons.lang3.StringUtils;
 import org.mongodb.morphia.annotations.Embedded;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Property;
@@ -185,6 +186,9 @@ public class AppConfig extends PrintFriendliness {
      * @return
      */
     public MessageConfig getMessageConfigByAppCode(String appCode) {
+        if(StringUtils.isBlank(appCode)){
+            return null;
+        }
         String code = appCode.substring(getAppId().length() + 1);
         return getMessageConfig(code);
     }

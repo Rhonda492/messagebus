@@ -90,7 +90,7 @@
 	<dubbo:application name="${appId}" />
 	<dubbo:registry address="zookeeper://${dubbo.zoo}" timeout="30000" />
 
-	<dubbo:protocol name="dubbo" port="${dubbo.port}" serialization="kryo" />
+	<dubbo:protocol name="dubbo" port="${dubbo.port}"/>
 	<dubbo:protocol name="rest" server="servlet" port="${rest.port}"
 		extension="com.ymatou.messagebus.infrastructure.serialize.JacksonConfig" />
 

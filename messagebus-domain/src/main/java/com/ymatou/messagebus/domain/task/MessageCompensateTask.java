@@ -58,13 +58,11 @@ public class MessageCompensateTask extends TimerTask {
 
             logger.info("----------------------compensate task begin-------------------------------");
             acquireLock = distributedLockRepository.AcquireLock(getTaskId(), lockLifeTimeMinute);
-            if (acquireLock == false) {
-                logger.info("acquireLock fail exit task.");
-            } else {
+            if (acquireLock) {
                 logger.info("acquireLock success in task."); // 获取到锁，执行补单任务
-
-                compensateService.initSemaphore(messageConfig);
                 compensateService.checkAndCompensate(appId, messageConfig);
+            } else {
+                logger.info("acquireLock fail exit task.");
             }
 
         } catch (Exception e) {

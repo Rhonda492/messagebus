@@ -5,8 +5,6 @@
  */
 package com.ymatou.messagebus.domain.task;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -14,9 +12,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.context.ContextLoader;
 import org.springframework.web.context.WebApplicationContext;
 
-import com.ymatou.messagebus.domain.model.AppConfig;
+import com.google.common.collect.Maps;
+import com.ymatou.messagebus.domain.cache.ConfigCache;
 import com.ymatou.messagebus.domain.model.MessageConfig;
-import com.ymatou.messagebus.domain.repository.AppConfigRepository;
+import com.ymatou.messagebus.domain.util.CallbackSemaphoreHelper;
 
 /**
  * 补单任务管理器
@@ -26,13 +25,13 @@ import com.ymatou.messagebus.domain.repository.AppConfigRepository;
  */
 public class MessageCompensateTaskManager {
 
-    private Map<String, MessageCompensateTaskTimer> compensatTaskTimerMap = new HashMap<>();
+    private Map<String, MessageCompensateTaskTimer> compensatTaskTimerMap = Maps.newConcurrentMap();
 
-    private AppConfigRepository appConfigRepository;
+    private ConfigCache configCache;
 
     public MessageCompensateTaskManager() {
         WebApplicationContext wac = ContextLoader.getCurrentWebApplicationContext();
-        setAppConfigRepository((AppConfigRepository) wac.getBean("appConfigRepository"));
+        configCache = wac.getBean(ConfigCache.class);
     }
 
     /**
@@ -44,8 +43,30 @@ public class MessageCompensateTaskManager {
      * 启动所有的补单任务
      */
     public void startAll() {
-        List<AppConfig> allAppConfig = appConfigRepository.getAllAppConfig();
-        for (AppConfig appConfig : allAppConfig) {
+        started = true;
+
+        //初始化task
+        initTasks();
+
+    }
+
+    public void initCompensateTask(){
+        //配置更新重新init任务
+        configCache.addConfigCacheListener(() -> initTasks());
+
+        startAll();
+    }
+
+    /**
+     * 初始化task，
+     * 只增加task
+     * 不考虑删除message code时删除任务的情况
+     */
+    private void initTasks() {
+        if(!started){//停用 不处理
+            return;
+        }
+        configCache.appConfigMap.values().stream().forEach(appConfig -> {
             if (!StringUtils.isEmpty(appConfig.getDispatchGroup())) {
                 for (MessageConfig messageConfig : appConfig.getMessageCfgList()) {
                     if (!Boolean.FALSE.equals(messageConfig.getEnable())) {
@@ -53,10 +74,9 @@ public class MessageCompensateTaskManager {
                         startTask(appConfig.getAppId(), messageConfig); // 启动单个补单任务
                     }
                 }
-
             }
-        }
-        started = true;
+        });
+        CallbackSemaphoreHelper.initSemaphores();
     }
 
     /**
@@ -70,6 +90,8 @@ public class MessageCompensateTaskManager {
         MessageCompensateTaskTimer compensateTaskTimer;
         if (compensatTaskTimerMap.containsKey(taskName)) {
             compensateTaskTimer = compensatTaskTimerMap.get(taskName);
+
+            //重新设置messageconfig配置
             compensateTaskTimer.setMessageConfig(messageConfig);
         } else {
             compensateTaskTimer = new MessageCompensateTaskTimer(appId, messageConfig);
@@ -91,13 +113,6 @@ public class MessageCompensateTaskManager {
         started = false;
     }
 
-    public AppConfigRepository getAppConfigRepository() {
-        return appConfigRepository;
-    }
-
-    public void setAppConfigRepository(AppConfigRepository appConfigRepository) {
-        this.appConfigRepository = appConfigRepository;
-    }
 
     public boolean isStarted() {
         return started;

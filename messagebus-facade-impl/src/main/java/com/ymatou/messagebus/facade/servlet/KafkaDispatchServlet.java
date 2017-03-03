@@ -33,7 +33,7 @@ public class KafkaDispatchServlet {
 
     @PostConstruct
     public void init() throws Exception {
-        kafkaDispatchService.start();
+        kafkaDispatchService.initKafkaDispatch();
     }
 
     @PreDestroy

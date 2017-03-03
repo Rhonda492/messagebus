@@ -24,7 +24,6 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Component;
 
-import com.ymatou.messagebus.domain.cache.AppConfigCache;
 import com.ymatou.messagebus.domain.cache.ConfigCache;
 import com.ymatou.messagebus.domain.model.*;
 import com.ymatou.messagebus.domain.repository.AlarmRepository;
@@ -58,7 +57,7 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
     private CloseableHttpAsyncClient httpClient;
 
     @Resource
-    private AppConfigCache appConfigCache;
+    private ConfigCache configCache;
 
     @Resource
     private AlarmRepository alarmRepository;
@@ -106,7 +105,7 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
     @Override
     public void invoke(String appId, String appCode, String messageBody, String messageId,
             String messageUuid) {
-        AppConfig appConfig = appConfigCache.get(appId);
+        AppConfig appConfig = configCache.getAppConfig(appId);
         if (appConfig == null) {
             throw new BizException(ErrorCode.ILLEGAL_ARGUMENT, "invalid appId:" + appId);
         }
@@ -387,7 +386,7 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
                                 message.getUuid(), MessageProcessStatusEnum.Compensate);
                     }
                 }
-                sendErrorReport(message, callbackConfig, throwable);
+                sendErrorReport(message, callbackConfig,response, throwable);
 
             } catch (Exception e) {
                 logger.error(String.format("write callback fail result fail, appcode:%s, messageid:%s",
@@ -397,23 +396,22 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
     }
 
 
-
     /**
      * 发送回调错误报告
-     * 
-     * @param appId
-     * @param code
-     * @param callbackConfig
      * @param message
-     * @param uuid
+     * @param callbackConfig
+     * @param response
      * @param ex
      */
-    private void sendErrorReport(Message message, CallbackConfig callbackConfig, Throwable ex) {
+    private void sendErrorReport(Message message, CallbackConfig callbackConfig,String response, Throwable ex) {
+
         String consumerId = callbackConfig.getCallbackKey();
         String callbackAppId = callbackConfig.getCallbackAppId();
 
         String title = String.format(
-                "messagebus callback Exception, appid:%s, code:%s, consumerId:%s, url:%s, messageId:%s, uuid:%s",
+                "bizResp:%s,exception:%s,messagebus callback Exception, appid:%s, code:%s, consumerId:%s, url:%s, messageId:%s, uuid:%s",
+                response,
+                ex == null ? "" : ex.toString(),
                 message.getAppId(), message.getCode(), consumerId, callbackConfig.getUrl(), message.getMessageId(),
                 message.getUuid());
         logger.error(title, ex);
@@ -475,7 +473,7 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
      */
     @Override
     public void waitForSemaphore(String appId, String appCode) {
-        AppConfig appConfig = appConfigCache.get(appId);
+        AppConfig appConfig = configCache.getAppConfig(appId);
         if (appConfig == null) {
             return;
         }

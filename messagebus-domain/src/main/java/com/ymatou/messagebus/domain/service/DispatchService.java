@@ -9,27 +9,26 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
-import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 
+import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.task.TaskExecutor;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 
+import com.ymatou.messagebus.domain.cache.ConfigCache;
 import com.ymatou.messagebus.domain.config.DispatchConfig;
 import com.ymatou.messagebus.domain.model.AppConfig;
-import com.ymatou.messagebus.domain.model.CallbackConfig;
 import com.ymatou.messagebus.domain.model.MessageConfig;
-import com.ymatou.messagebus.domain.repository.AppConfigRepository;
+import com.ymatou.messagebus.domain.util.CallbackSemaphoreHelper;
 import com.ymatou.messagebus.infrastructure.config.RabbitMQConfig;
 import com.ymatou.messagebus.infrastructure.mq.CallbackService;
 import com.ymatou.messagebus.infrastructure.rabbitmq.ConnectionPool;
 import com.ymatou.messagebus.infrastructure.rabbitmq.MessageConsumer;
-import com.ymatou.messagebus.infrastructure.thread.AdjustableSemaphore;
-import com.ymatou.messagebus.infrastructure.thread.SemaphorManager;
 
 /**
  * 分发服务
@@ -49,32 +48,61 @@ public class DispatchService {
     private RabbitMQConfig rabbitMQConfig;
 
     @Resource
-    private AppConfigRepository appConfigRepository;
-
-    @Resource
-    private TaskExecutor taskExecutor;
-
-    @Resource
     private CallbackService callbackService;
+
+    @Resource
+    private ConfigCache configCache;
+
+    //是否已启动
+    private static boolean started = false;
 
     /**
      * 启动分发服务
-     * 
-     * @throws URISyntaxException
-     * @throws TimeoutException
-     * @throws IOException
-     * @throws NoSuchAlgorithmException
-     * @throws KeyManagementException
+     *
      */
-    public void start()
-            throws KeyManagementException, NoSuchAlgorithmException, IOException, TimeoutException, URISyntaxException {
-        List<AppConfig> allAppConfig = appConfigRepository.getAllAppConfig();
-        for (AppConfig appConfig : allAppConfig) {
+    public void start() throws Exception {
+
+        started = true;
+
+        initRabbitMqConsumer();
+
+    }
+
+    /**
+     * 由于多个项目关联太紧，不能使用postconstruct 将由servlet调用 初始化 rabbit dispatch 初始化 配置变更定时任务
+     */
+    public void initRabbitMqDispatch() throws Exception {
+        configCache.addConfigCacheListener(() -> {
+            try {
+                MDC.put("logPrefix", "MessageDispatchTask|" + UUID.randomUUID().toString().replaceAll("-", ""));
+
+                initRabbitMqConsumer();
+                logger.info("rabbitmq dispatch service check reload.");
+            } catch (Exception e) {
+                logger.error("rabbitmq dispatch service check reload failed.", e);
+            }
+        });
+
+        // 启动分发服务
+        start();
+    }
+
+    private void initRabbitMqConsumer() throws Exception{
+
+        if(!started){//停用不处理
+            return;
+        }
+
+        for (AppConfig appConfig : ConfigCache.appConfigMap.values()) {
             String dispatchGroup = appConfig.getDispatchGroup();
             if (dispatchGroup != null && dispatchGroup.contains(dispatchConfig.getGroupId())) {
                 initConsumer(appConfig);
+            }else {
+                //修改app分组后 删除消费者  不大可能发生 目前不允许修改分组
+                stopConsumer(appConfig);
             }
         }
+        CallbackSemaphoreHelper.initSemaphores();
     }
 
     /**
@@ -83,6 +111,8 @@ public class DispatchService {
      * @throws IOException
      */
     public void stop() throws IOException {
+
+        started = false;
         logger.info("dispatch {} service clear consumer!", dispatchConfig.getGroupId());
         MessageConsumer.clearAll();
 
@@ -90,26 +120,9 @@ public class DispatchService {
         ConnectionPool.clearAll();
     }
 
-    /**
-     * 检查重启
-     * 
-     * @throws KeyManagementException
-     * @throws NoSuchAlgorithmException
-     * @throws IOException
-     * @throws TimeoutException
-     * @throws URISyntaxException
-     */
-    public void checkReload()
-            throws KeyManagementException, NoSuchAlgorithmException, IOException, TimeoutException, URISyntaxException {
-        List<AppConfig> allAppConfig = appConfigRepository.getAllAppConfig();
-        for (AppConfig appConfig : allAppConfig) {
-            String dispatchGroup = appConfig.getDispatchGroup();
-            if (dispatchGroup != null && dispatchGroup.contains(dispatchConfig.getGroupId())) {
-                initConsumer(appConfig);
-            } else {
-                stopConsumer(appConfig);
-            }
-        }
+    @PreDestroy
+    public void destory() throws Exception{
+        stop();
     }
 
     /**
@@ -128,34 +141,11 @@ public class DispatchService {
             String appCode = appConfig.getAppCode(messageConfig.getCode());
             String appId = appConfig.getAppId();
 
-            initSemaphore(messageConfig);
-
             if (!MessageConsumer.contains(appId, appCode)) {
                 MessageConsumer consumer = MessageConsumer.newInstance(rabbitMQConfig, appId, appCode);
                 consumer.setCallbackService(callbackService);
                 consumer.run();
                 logger.info("init consumer {} success.", consumer.getConsumerId());
-            }
-        }
-    }
-
-    /**
-     * 初始化信号量
-     * 
-     * @param messageConfig
-     */
-    private void initSemaphore(MessageConfig messageConfig) {
-        for (CallbackConfig callbackConfig : messageConfig.getCallbackCfgList()) {
-            String consumerId = callbackConfig.getCallbackKey();
-            int parallelismNum =
-                    (callbackConfig.getParallelismNum() == null || callbackConfig.getParallelismNum().intValue() < 1)
-                            ? 1 : callbackConfig.getParallelismNum().intValue();
-            AdjustableSemaphore semaphore = SemaphorManager.get(consumerId);
-            if (semaphore == null) {
-                semaphore = new AdjustableSemaphore(parallelismNum);
-                SemaphorManager.put(consumerId, semaphore);
-            } else {
-                semaphore.setMaxPermits(parallelismNum);
             }
         }
     }

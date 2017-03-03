@@ -22,7 +22,6 @@ import org.springframework.web.context.ContextLoader;
 import org.springframework.web.context.WebApplicationContext;
 
 import com.ymatou.messagebus.domain.service.DispatchService;
-import com.ymatou.messagebus.domain.task.MessageDispatchTask;
 
 
 /**
@@ -38,9 +37,6 @@ public class MessageDispatchServlet extends HttpServlet {
      * 序列化版本
      */
     private static final long serialVersionUID = 1L;
-
-    // 定时器
-    private Timer timer = null;
 
     /**
      * 分发服务
@@ -58,9 +54,8 @@ public class MessageDispatchServlet extends HttpServlet {
         try {
             WebApplicationContext wac = ContextLoader.getCurrentWebApplicationContext();
             dispatchService = (DispatchService) wac.getBean("dispatchService");
-            dispatchService.start();
+            dispatchService.initRabbitMqDispatch();
 
-            start();
             logger.info("message dispatch servlet init success.");
         } catch (Exception ex) {
             logger.error("message dispatch task start failed", ex);
@@ -121,37 +116,21 @@ public class MessageDispatchServlet extends HttpServlet {
 
     /**
      * 停止任务
-     * 
-     * @param out
+     *
      */
     private String stop() throws Exception {
-        if (timer != null) {
-            timer.cancel();
-            timer.purge();
-            timer = null;
+        dispatchService.stop();
 
-            logger.info("dispatch task stop success.");
-            return "stop success!";
-        } else {
-            return "task allready stop.";
-        }
+        return "stop success!";
     }
 
     /**
      * 启动任务
-     * 
-     * @param out
+     *
      */
     private String start() throws Exception {
-        if (timer == null) {
-            timer = new Timer(true);
-            timer.schedule(new MessageDispatchTask(), 0, 1000 * 60);
 
-
-            logger.info("dispatch task start success.");
-            return "start success!";
-        } else {
-            return "task allready start.";
-        }
+        dispatchService.start();
+        return "start success!";
     }
 }

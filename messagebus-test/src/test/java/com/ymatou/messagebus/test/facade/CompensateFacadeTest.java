@@ -15,6 +15,7 @@ import java.util.UUID;
 
 import javax.annotation.Resource;
 
+import com.ymatou.messagebus.domain.util.CallbackSemaphoreHelper;
 import org.junit.Test;
 
 import com.ymatou.messagebus.domain.model.AppConfig;
@@ -202,7 +203,7 @@ public class CompensateFacadeTest extends BaseTest {
         messageCompensateRepository.update(compensate);
 
         // 执行补单
-        compensateService.initSemaphore();
+        CallbackSemaphoreHelper.initSemaphores();
 
         CompensateReq compensateReq = new CompensateReq();
         compensateReq.setAppId(appId);
@@ -268,7 +269,7 @@ public class CompensateFacadeTest extends BaseTest {
         messageCompensateRepository.update(compensate);
 
         // 执行补单
-        compensateService.initSemaphore();
+        CallbackSemaphoreHelper.initSemaphores();
 
         CompensateReq compensateReq = new CompensateReq();
         compensateReq.setAppId(appId);
@@ -333,7 +334,7 @@ public class CompensateFacadeTest extends BaseTest {
 
 
         // 执行补单
-        compensateService.initSemaphore();
+        CallbackSemaphoreHelper.initSemaphores();
 
         CompensateReq compensateReq = new CompensateReq();
         compensateReq.setAppId(appId);

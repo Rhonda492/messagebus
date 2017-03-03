@@ -9,14 +9,11 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.UUID;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 
 import org.apache.commons.lang3.StringUtils;
@@ -30,12 +27,10 @@ import com.ymatou.messagebus.domain.config.DispatchConfig;
 import com.ymatou.messagebus.domain.model.AppConfig;
 import com.ymatou.messagebus.domain.model.CallbackConfig;
 import com.ymatou.messagebus.domain.model.MessageConfig;
-import com.ymatou.messagebus.domain.repository.AppConfigRepository;
+import com.ymatou.messagebus.domain.util.CallbackSemaphoreHelper;
 import com.ymatou.messagebus.facade.enums.MQTypeEnum;
 import com.ymatou.messagebus.infrastructure.kafka.KafkaConsumerClient;
-import com.ymatou.messagebus.infrastructure.mq.CallbackService;
-import com.ymatou.messagebus.infrastructure.thread.AdjustableSemaphore;
-import com.ymatou.messagebus.infrastructure.thread.SemaphorManager;
+import com.ymatou.messagebus.infrastructure.thread.ScheduledExecutorHelper;
 
 /**
  * Kafka分发服务
@@ -52,16 +47,13 @@ public class KafkaDispatchService {
     private DispatchConfig dispatchConfig;
 
     @Resource
-    private AppConfigRepository appConfigRepository;
-
-    @Resource
-    private CallbackService callbackService;
-
-    @Resource
     private KafkaConsumerClient kafkaConsumerClient;
 
-    // 定时器
-    private Timer timer;
+    @Resource
+    private ConfigCache configCache;
+
+    //是否已启动
+    private static boolean started = false;
 
 
 
@@ -76,45 +68,56 @@ public class KafkaDispatchService {
      */
     public void start() {
         logger.info("kafka dispatch {} service start consumer!", dispatchConfig.getGroupId());
+        started = true;
 
         initConsumer();
-
-        if (timer == null) {
-            timer = new Timer(true);
-            timer.schedule(new TimerTask() {
-                @Override
-                public void run() {
-                    checkReload();
-                }
-            }, 60, 1000 * 60);
-        }
-
-        initKafkaConsumerTimer();
-
     }
 
-    private void initKafkaConsumerTimer() {
-        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> {
+    /**
+     * 由于多个项目关联太紧，不能使用postconstruct 将由servlet调用
+     * 初始化 kafka dispatch
+     *  初始化 配置变更定时任务，消费者定时超时任务
+     */
+    public void initKafkaDispatch() {
+
+        configCache.addConfigCacheListener(() -> {
             try {
-
-                long currentTime = System.currentTimeMillis();
-                kafkaConsumerClient.getKafkaConsumerThreadMap().values().stream()
-                        .forEach(thread -> thread.preventTimeout(currentTime));
-
+                MDC.put("logPrefix", "KafkaDispatchTask|" + UUID.randomUUID().toString().replaceAll("-", ""));
+                initConsumer();
+                logger.info("kafka dispatch service check reload.");
             } catch (Exception e) {
-                // 所有异常都catch到 防止异常导致定时任务停止
-                logger.error("kafka consumer check timeout timer ", e);
+                logger.error("kafka dispatch service check reload failed.", e);
             }
-        }, 60, 1000L, TimeUnit.MILLISECONDS);
+        });
+
+        /**
+         * kafka 消费者定时任务，防止rebalancing
+         */
+        ScheduledExecutorHelper.newSingleThreadScheduledExecutor("kafka-consumer-prevent-timeout")
+                .scheduleAtFixedRate(() -> {
+                    try {
+
+                        long currentTime = System.currentTimeMillis();
+                        kafkaConsumerClient.getKafkaConsumerThreadMap().values().stream()
+                                .forEach(thread -> thread.preventTimeout(currentTime));
+
+                    } catch (Exception e) {
+                        // 所有异常都catch到 防止异常导致定时任务停止
+                        logger.error("kafka consumer check timeout timer ", e);
+                    }
+                }, 60, 1000L, TimeUnit.MILLISECONDS);
+
+        //启动分发服务
+        start();
     }
 
     /**
      * 初始化消息者，重新获取配置
      */
     private void initConsumer(){
-        List<AppConfig> allAppConfig = appConfigRepository.getAllAppConfig();
-        if(allAppConfig != null && !allAppConfig.isEmpty()){
-            ConfigCache.resetCache(allAppConfig);
+
+        if (!started) { // 如果停掉了，不处理
+            return;
         }
 
         ConfigCache.appConfigMap.values().forEach(appConfig -> {
@@ -124,6 +127,8 @@ public class KafkaDispatchService {
                 initConsumer(appConfig);
             }
         });
+
+        CallbackSemaphoreHelper.initSemaphores();
 
         //删除后台已删除的callbackkey 线程
         ConfigCache.needRemoveCallBackConfigList
@@ -149,10 +154,7 @@ public class KafkaDispatchService {
 
                 if(StringUtils.isNotBlank(callbackConfig.getCallbackKey())){
                     kafkaConsumerClient.subscribe(topic, dispatchConfig.getGroupId(), callbackConfig.getCallbackKey(),
-                            messageConfig.getPoolSize().intValue());
-
-                    // 初始化信号量
-                    initSemaphore(callbackConfig);
+                            messageConfig.getPoolSize());
                 }
             }
 
@@ -168,52 +170,8 @@ public class KafkaDispatchService {
     public void stop() {
         logger.info("kafka dispatch {} service stop consumer!", dispatchConfig.getGroupId());
 
-        if (timer != null) {
-            timer.cancel();
-            timer.purge();
-            timer = null;
-        }
         kafkaConsumerClient.unscribeAll();
-    }
 
-    /**
-     * 检查重启
-     * 
-     * @throws KeyManagementException
-     * @throws NoSuchAlgorithmException
-     * @throws IOException
-     * @throws TimeoutException
-     * @throws URISyntaxException
-     */
-    public void checkReload() {
-        try {
-            MDC.put("logPrefix", "KafkaDispatchTask|" + UUID.randomUUID().toString().replaceAll("-", ""));
-            initConsumer();
-            logger.info("kafka dispatch service check reload.");
-        } catch (Exception e) {
-            logger.error("kafka dispatch service check reload failed.", e);
-        }
-    }
-
-
-    /**
-     * 初始化信号量
-     * 
-     * @param callbackConfig
-     */
-    private void initSemaphore(CallbackConfig callbackConfig) {
-
-        String consumerId = callbackConfig.getCallbackKey();
-        int parallelismNum =
-                (callbackConfig.getParallelismNum() == null || callbackConfig.getParallelismNum().intValue() < 1)
-                        ? 1 : callbackConfig.getParallelismNum().intValue();
-        AdjustableSemaphore semaphore = SemaphorManager.get(consumerId);
-        if (semaphore == null) {
-            semaphore = new AdjustableSemaphore(parallelismNum);
-            SemaphorManager.put(consumerId, semaphore);
-        } else {
-            semaphore.setMaxPermits(parallelismNum);
-        }
-
+        started = false;//停止
     }
 }

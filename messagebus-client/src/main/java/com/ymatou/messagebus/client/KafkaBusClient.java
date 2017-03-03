@@ -202,6 +202,9 @@ public class KafkaBusClient implements InitializingBean, DisposableBean {
         if (messageDB != null) {
             messageDB.close();
         }
+        if(kafkaBusExecutor != null ){
+            kafkaBusExecutor.shutdown();
+        }
     }
 
     /**

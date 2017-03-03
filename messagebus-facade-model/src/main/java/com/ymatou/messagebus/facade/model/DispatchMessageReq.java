@@ -6,6 +6,7 @@
 package com.ymatou.messagebus.facade.model;
 
 import com.ymatou.messagebus.facade.BaseRequest;
+import org.hibernate.validator.constraints.NotBlank;
 
 /**
  * 消息分发请求
@@ -17,12 +18,16 @@ public class DispatchMessageReq extends BaseRequest {
 
     private static final long serialVersionUID = 4598106876219805372L;
 
+    @NotBlank(message = "appId不能为空")
     private String appId;
 
+    @NotBlank(message = "code不能为空")
     private String code;
 
+    @NotBlank(message = "messageId can not be empty.")
     private String messageId;
 
+    @NotBlank(message = "messageUuid can not be empty.")
     private String messageUuid;
 
     private String messageBody;

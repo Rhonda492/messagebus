@@ -5,31 +5,24 @@
  */
 package com.ymatou.messagebus.domain.service;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import javax.annotation.Resource;
 
+import com.ymatou.messagebus.infrastructure.thread.ScheduledExecutorHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Component;
 
-import com.ymatou.messagebus.domain.cache.AppConfigCache;
-import com.ymatou.messagebus.domain.model.AppConfig;
-import com.ymatou.messagebus.domain.model.CallbackConfig;
-import com.ymatou.messagebus.domain.model.Message;
-import com.ymatou.messagebus.domain.model.MessageCompensate;
-import com.ymatou.messagebus.domain.model.MessageConfig;
+import com.ymatou.messagebus.domain.cache.ConfigCache;
+import com.ymatou.messagebus.domain.model.*;
 import com.ymatou.messagebus.domain.repository.MessageCompensateRepository;
 import com.ymatou.messagebus.domain.repository.MessageRepository;
 import com.ymatou.messagebus.facade.BizException;
@@ -41,13 +34,12 @@ import com.ymatou.messagebus.facade.enums.MessageProcessStatusEnum;
 import com.ymatou.messagebus.infrastructure.cluster.AutoResetHealthProxy;
 import com.ymatou.messagebus.infrastructure.config.RabbitMQConfig;
 import com.ymatou.messagebus.infrastructure.rabbitmq.MessageProducer;
-import com.ymatou.messagebus.infrastructure.rabbitmq.RabbitMQPublishException;
 
 /**
  * @author wangxudong 2016年8月1日 下午6:22:34
  */
 @Component
-public class MessageBusService implements InitializingBean {
+public class MessageBusService implements InitializingBean,DisposableBean {
 
     private static Logger logger = LoggerFactory.getLogger(MessageBusService.class);
 
@@ -55,7 +47,7 @@ public class MessageBusService implements InitializingBean {
     private MessageRepository messageRepository;
 
     @Resource
-    private AppConfigCache appConfigCache;
+    private ConfigCache configCache;
 
     @Resource
     private MessageCompensateRepository compensateRepository;
@@ -81,7 +73,7 @@ public class MessageBusService implements InitializingBean {
      * @param message
      */
     public void publish(Message message) {
-        AppConfig appConfig = appConfigCache.get(message.getAppId());
+        AppConfig appConfig = configCache.getAppConfig(message.getAppId());
         if (appConfig == null) {
             throw new BizException(ErrorCode.ILLEGAL_ARGUMENT, "invalid appId:" + message.getAppId());
         }
@@ -124,8 +116,7 @@ public class MessageBusService implements InitializingBean {
 
     /**
      * 异步写消息日志
-     * 
-     * @param appConfig
+     *
      * @param message
      */
     private void writeMongoAsync(Message message, String requestId) {
@@ -147,8 +138,7 @@ public class MessageBusService implements InitializingBean {
 
     /**
      * 异步发送消息
-     * 
-     * @param appConfig
+     *
      * @param message
      */
     private void publishToMQAsync(Message message, MessageConfig messageConfig, String requestId) {
@@ -174,15 +164,8 @@ public class MessageBusService implements InitializingBean {
 
     /**
      * 发布消息到MQ
-     * 
-     * @param appConfig
+     *
      * @param message
-     * @throws URISyntaxException
-     * @throws TimeoutException
-     * @throws IOException
-     * @throws NoSuchAlgorithmException
-     * @throws KeyManagementException
-     * @throws RabbitMQPublishException
      */
     public void publishToMQ(Message message, MessageConfig messageConfig, boolean alreadyWriteMessage) {
         try {
@@ -206,8 +189,7 @@ public class MessageBusService implements InitializingBean {
 
     /**
      * 发布消息到补偿库
-     * 
-     * @param appConfig
+     *
      * @param message
      */
     private void publishToCompensate(Message message, MessageConfig messageConfig, boolean alreadyWriteMessage) {
@@ -229,5 +211,10 @@ public class MessageBusService implements InitializingBean {
     public void afterPropertiesSet() throws Exception {
         autoResetHealthProxy = new AutoResetHealthProxy(1000 * 60);
 
+    }
+
+    @Override
+    public void destroy() throws Exception {
+        mongoDBLogExecutor.shutdown();
     }
 }
