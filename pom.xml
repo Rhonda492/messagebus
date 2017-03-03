@@ -284,19 +284,19 @@
 			</dependency>
 
 			<dependency>
-				<groupId>org.jboss.resteasy</groupId>
+				<groupId>com.ymatou.resteasy</groupId>
 				<artifactId>resteasy-jaxrs</artifactId>
 				<version>${resteasy-jaxrs.version}</version>
 			</dependency>
 
 			<dependency>
-				<groupId>org.jboss.resteasy</groupId>
+				<groupId>com.ymatou.resteasy</groupId>
 				<artifactId>resteasy-client</artifactId>
 				<version>${resteasy-jaxrs.version}</version>
 			</dependency>
 
 			<dependency>
-				<groupId>org.jboss.resteasy</groupId>
+				<groupId>com.ymatou.resteasy</groupId>
 				<artifactId>resteasy-jackson2-provider</artifactId>
 				<version>${resteasy-jaxrs.version}</version>
 				<exclusions>
