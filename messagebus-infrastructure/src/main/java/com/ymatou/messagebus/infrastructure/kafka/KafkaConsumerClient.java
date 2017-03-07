@@ -149,7 +149,7 @@ public class KafkaConsumerClient {
 
                 consumerMap.put(callbackKey, kafkaConsumerThread);
             } else {
-                //fixme 没有意义 暂时没法重新设置拉取大小
+                //FIXME 没有意义 暂时没法重新设置拉取大小
                 consumerMap.get(callbackKey).setPoolSize(poolSize);
             }
         } catch (Exception e) {
