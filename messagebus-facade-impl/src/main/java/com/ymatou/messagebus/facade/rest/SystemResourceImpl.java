@@ -51,7 +51,8 @@ public class SystemResourceImpl implements SystemResource {
                 + "\"1.1.5\":\"2017-02-23.1 kafka optimization.\","
                 + "\"1.1.6\":\"2017-02-27.1 callbackconfig remove hashcode,semaphor modify ConcurrentMap and null prevent \","
                 + "\"1.1.7\":\"2017-02-28.1 modify bizexecption kafka callback disabled\","
-                + "\"1.1.7\":\"2017-03-02.1 20170302-cache-reload-and-managecode\""
+                + "\"1.1.8\":\"2017-03-02.1 20170302-cache-reload-and-managecode\","
+                + "\"1.1.9\":\"2017-03-07.1 kafka semaphore timeout\""
                 + "}";
     }
 

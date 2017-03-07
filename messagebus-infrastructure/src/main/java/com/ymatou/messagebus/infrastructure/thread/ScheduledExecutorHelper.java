@@ -50,7 +50,7 @@ public class ScheduledExecutorHelper {
         if (scheduledExecutorServiceMap.get(threadName) == null) {
             ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(
                     threadFactory(threadName));
-            //FIXME: put into map first
+            scheduledExecutorServiceMap.put(threadName,scheduledExecutorService);
             return scheduledExecutorService;
         }
         return scheduledExecutorServiceMap.get(threadName);
