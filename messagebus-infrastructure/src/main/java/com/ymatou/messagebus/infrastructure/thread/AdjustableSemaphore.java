@@ -7,6 +7,7 @@ package com.ymatou.messagebus.infrastructure.thread;
 
 import java.io.Serializable;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 可以动态调整许可证的Semaphore
@@ -51,11 +52,17 @@ final public class AdjustableSemaphore implements Serializable {
         this.semaphore.acquire();
     }
 
+    public void tryAcquire(long timeout) throws InterruptedException {
+        boolean acquired = this.semaphore.tryAcquire(timeout, TimeUnit.MILLISECONDS);
+        if(!acquired){
+            throw new InterruptedException("acquire somaphore timeout interrupted");
+        }
+    }
+
     public int availablePermits() {
         return this.semaphore.availablePermits();
     }
 
-    //FIXME: needless
     private static final class ResizeableSemaphore extends Semaphore {
         private static final long serialVersionUID = 1L;
 

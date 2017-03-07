@@ -155,7 +155,7 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
 
     @Override
     public void invokeOneCallBack(String callbackKey, String appId, String appCode, String messageBody,
-            String messageId, String messageUuid,boolean isInterrupted)throws Exception {
+            String messageId, String messageUuid,boolean isInterrupted,long timeout)throws Exception {
 
         CallbackConfig callbackConfig = ConfigCache.callbackConfigMap.get(callbackKey);
         if (callbackConfig == null
@@ -176,7 +176,7 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
                         "kafka 消费者消费太慢 进入补单，防止rebalancing", 0, null);
             }
         }else {
-            invokeOne(message, messageConfig, callbackConfig);
+            invokeOne(message, messageConfig, callbackConfig,timeout);
         }
 
         // 向性能监控器汇报性能情况
@@ -228,7 +228,7 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
     private void invokeCore(Message message, MessageConfig messageConfig) {
         for (CallbackConfig callbackConfig : messageConfig.getCallbackCfgList()) {
             try {
-                invokeOne(message, messageConfig, callbackConfig);
+                invokeOne(message, messageConfig, callbackConfig,null);
             } catch (Exception e) {
                 logger.error(String.format("invoke biz system fail,appCode:%s, messageUuid:%s",
                         message.getAppCode(), message.getUuid()), e);
@@ -236,10 +236,10 @@ public class CallbackServiceImpl implements CallbackService, InitializingBean {
         }
     }
 
-    private void invokeOne(Message message, MessageConfig messageConfig, CallbackConfig callbackConfig) throws InterruptedException{
+    private void invokeOne(Message message, MessageConfig messageConfig, CallbackConfig callbackConfig,Long timeout) throws InterruptedException{
         if (callbackConfig.getEnable() == null || callbackConfig.getEnable()) {
             new BizSystemCallback(httpClient, message, null, callbackConfig, this)
-                    .setEnableLog(messageConfig.getEnableLog()).send();
+                    .setEnableLog(messageConfig.getEnableLog()).send(timeout);
         }
     }
 

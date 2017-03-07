@@ -27,7 +27,7 @@ public interface CallbackService {
     void invoke(String appId, String appCode, String messageBody, String messageId, String messageUuid);
 
 
-    void invokeOneCallBack(String callbackKey, String appId, String appCode, String messageBody, String messageId, String messageUuid,boolean isInterrupted)throws Exception;
+    void invokeOneCallBack(String callbackKey, String appId, String appCode, String messageBody, String messageId, String messageUuid,boolean isInterrupted,long timeout)throws Exception;
 
 
 

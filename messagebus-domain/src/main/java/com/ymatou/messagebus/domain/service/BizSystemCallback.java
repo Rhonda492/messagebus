@@ -5,6 +5,13 @@
  */
 package com.ymatou.messagebus.domain.service;
 
+import com.ymatou.messagebus.domain.model.CallbackConfig;
+import com.ymatou.messagebus.domain.model.Message;
+import com.ymatou.messagebus.domain.model.MessageCompensate;
+import com.ymatou.messagebus.facade.enums.CallbackModeEnum;
+import com.ymatou.messagebus.infrastructure.thread.AdjustableSemaphore;
+import com.ymatou.messagebus.infrastructure.thread.SemaphorManager;
+import com.ymatou.performancemonitorclient.PerformanceStatisticContainer;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -16,14 +23,6 @@ import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.ymatou.messagebus.domain.model.CallbackConfig;
-import com.ymatou.messagebus.domain.model.Message;
-import com.ymatou.messagebus.domain.model.MessageCompensate;
-import com.ymatou.messagebus.facade.enums.CallbackModeEnum;
-import com.ymatou.messagebus.infrastructure.thread.AdjustableSemaphore;
-import com.ymatou.messagebus.infrastructure.thread.SemaphorManager;
-import com.ymatou.performancemonitorclient.PerformanceStatisticContainer;
 
 /**
  * 调用业务系统
@@ -172,10 +171,21 @@ public class BizSystemCallback implements FutureCallback<HttpResponse> {
     /**
      * 发送POST请求
      */
-    public void send() throws InterruptedException {
+    public void send() throws InterruptedException{
+        send(null);//不设置超时
+    }
 
-        if(semaphore != null){
-            semaphore.acquire();
+    /**
+     * 发送POST请求
+     */
+    public void send(Long timeout) throws InterruptedException {
+
+        if (semaphore != null) {
+            if (timeout != null) {
+                semaphore.acquire();
+            } else {
+                semaphore.tryAcquire(timeout);
+            }
         }
 
         String body = message.getBody();

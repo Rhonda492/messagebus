@@ -40,7 +40,7 @@ public class KafkaProducerDemo {
                     new ProducerRecord<String, String>("messagebus.testjava_kafka_hello", kafkaMessageKey.toString(), String.valueOf(i));
             producer.send(record);
             try {
-                TimeUnit.MILLISECONDS.sleep(100);
+                TimeUnit.MILLISECONDS.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

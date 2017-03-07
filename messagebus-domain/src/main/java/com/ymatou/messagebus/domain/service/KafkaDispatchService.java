@@ -90,23 +90,6 @@ public class KafkaDispatchService {
             }
         });
 
-        /**
-         * kafka 消费者定时任务，防止rebalancing
-         */
-        ScheduledExecutorHelper.newSingleThreadScheduledExecutor("kafka-consumer-prevent-timeout")
-                .scheduleAtFixedRate(() -> {
-                    try {
-
-                        long currentTime = System.currentTimeMillis();
-                        kafkaConsumerClient.getKafkaConsumerThreadMap().values().stream()
-                                .forEach(thread -> thread.preventTimeout(currentTime));
-
-                    } catch (Exception e) {
-                        // 所有异常都catch到 防止异常导致定时任务停止
-                        logger.error("kafka consumer check timeout timer ", e);
-                    }
-                }, 60, 1000L, TimeUnit.MILLISECONDS);
-
         //启动分发服务
         start();
     }

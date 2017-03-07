@@ -30,8 +30,6 @@ public class KafkaConsumerThread extends Thread {
 
     private String callbackKey;
 
-    private volatile long startProcessTime;
-
     private int sessionTimeoutMs;
 
     /**
@@ -52,35 +50,12 @@ public class KafkaConsumerThread extends Thread {
         consumer.subscribe(Arrays.asList(topic));
 
         setSessionTimeoutMs(
-                Integer.valueOf(config.getProperty(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, "30000")));
-    }
-
-    /**
-     * 防止kafka consumer session time out rebalancing, 中断线程
-     * 
-     * @param currentTime
-     */
-    public void preventTimeout(long currentTime) {
-        if (startProcessTime == 0) {
-            return;
-        }
-        long duration = currentTime - startProcessTime;
-        if (duration >= (sessionTimeoutMs - 5000)) {
-            logger.info("thread will be interrupt,sessionTimout:{},duration:{},{}",sessionTimeoutMs,duration,getThreadInfo());
-            startProcessTime = 0;
-            this.interrupt();
-        }
+                Integer.valueOf(config.getProperty(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, "30000")) - 5000);
     }
 
     public String getThreadInfo() {
         return String.format("consumer thread: %s, state: %s.", toString(), getState().toString());
     }
-
-
-    public void setStartProcessTime(long startProcessTime) {
-        this.startProcessTime = startProcessTime;
-    }
-
 
     public void setSessionTimeoutMs(int sessionTimeoutMs) {
         this.sessionTimeoutMs = sessionTimeoutMs;
@@ -92,18 +67,17 @@ public class KafkaConsumerThread extends Thread {
         try {
             while (true) {
                 try {
-                    setStartProcessTime(0);//重新设置为0
                     ConsumerRecords<String, String> records = consumer.poll(5000);
                     String appId = null;
                     String appCode = null;
 
                     if(!records.isEmpty()){
-                        setStartProcessTime(System.currentTimeMillis());
                         boolean isInterrupted = false;
-
+                        long timeout = sessionTimeoutMs;
                         for (ConsumerRecord<String, String> record : records) {
                             MDC.put("logPrefix", String.format("%s|%s", this.getName(), UUID.randomUUID().toString()));
 
+                            long startTime = System.currentTimeMillis();
                             logger.info("recv kafka message:{}", record);
 
                             KafkaMessageKey key = null;
@@ -114,7 +88,7 @@ public class KafkaConsumerThread extends Thread {
 
                                 //处理一条 callback
                                 callbackService.invokeOneCallBack(callbackKey,appId, appCode, record.value(), key.getMessageId(),
-                                        key.getUuid(),isInterrupted);
+                                        key.getUuid(),isInterrupted,timeout);
 
                             }catch (InterruptedException e){
                                 logger.error("thread interrupted process kafka callback timeout,recordSize:{}",
@@ -122,7 +96,7 @@ public class KafkaConsumerThread extends Thread {
                                 isInterrupted = true;
                                 // 当前数据和之后数据都进入补单，使consumer继续poll,防止rebalancing
                                 callbackService.invokeOneCallBack(callbackKey,appId, appCode, record.value(), key.getMessageId(),
-                                        key.getUuid(),true);
+                                        key.getUuid(),true,timeout);
 
                             } catch (Exception e) {
                                 if (key == null) {
@@ -131,6 +105,8 @@ public class KafkaConsumerThread extends Thread {
                                     logger.error("fail to consume kafka message" + key.getUuid(), e);
                                 }
                             }
+                            long duration = System.currentTimeMillis() - startTime;
+                            timeout = timeout - duration;//剩余过期时间
                         }
                     }
 

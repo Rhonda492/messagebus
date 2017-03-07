@@ -7,8 +7,11 @@
 
 package com.ymatou.messagebus.test.kafka;
 
+import org.apache.commons.lang3.time.DateFormatUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.junit.Test;
 
+import java.util.Date;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -17,6 +20,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author luoshiqian 2017/2/20 16:58
  */
 public class InterruptThreadTest {
+
+    @Test
+    public void test1(){
+        Date date = new Date(1488605598150L);
+        System.out.println(DateFormatUtils.format(date,"yyyy-MM-dd hh:mm:ss "));
+        System.out.println(date);
+    }
 
     /**
      * 可以看出超时 没有报异常是 直接执行下面的
