@@ -97,7 +97,6 @@ public class PublishMessageFacadeImpl implements PublishMessageFacade {
         ReceiveMessageReq receiveMessageReq = new ReceiveMessageReq();
         BeanUtils.copyProperties(req,receiveMessageReq);
 
-        logger.error("receiveMessageReq:{}",receiveMessageReq);
         ReceiveMessageResp resp = receiveMessageFacade.publish(receiveMessageReq);
 
         if(resp.isSuccess()){
