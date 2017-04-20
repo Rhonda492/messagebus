@@ -179,12 +179,11 @@ public class BizSystemCallback implements FutureCallback<HttpResponse> {
      * 发送POST请求
      */
     public void send(Long timeout) throws InterruptedException {
-
         if (semaphore != null) {
             if (timeout != null) {
-                semaphore.acquire();
-            } else {
                 semaphore.tryAcquire(timeout);
+            } else {
+                semaphore.acquire();
             }
         }
 
