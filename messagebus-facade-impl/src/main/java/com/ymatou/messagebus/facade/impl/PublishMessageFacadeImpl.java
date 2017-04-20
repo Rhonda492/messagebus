@@ -13,6 +13,8 @@ import com.ymatou.messagebus.domain.config.ForwardConfig;
 import com.ymatou.messagebus.facade.ReceiveMessageFacade;
 import com.ymatou.messagebus.facade.model.ReceiveMessageReq;
 import com.ymatou.messagebus.facade.model.ReceiveMessageResp;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -36,6 +38,8 @@ import com.ymatou.performancemonitorclient.PerformanceStatisticContainer;
  */
 @Component("publishMessageFacade")
 public class PublishMessageFacadeImpl implements PublishMessageFacade {
+
+    private static Logger logger = LoggerFactory.getLogger(PublishMessageFacadeImpl.class);
 
     @Resource
     private MessageBusService messageBusService;
@@ -92,6 +96,8 @@ public class PublishMessageFacadeImpl implements PublishMessageFacade {
     private PublishMessageResp forwardToReceiver(PublishMessageReq req){
         ReceiveMessageReq receiveMessageReq = new ReceiveMessageReq();
         BeanUtils.copyProperties(req,receiveMessageReq);
+
+        logger.error("receiveMessageReq:{}",receiveMessageReq);
         ReceiveMessageResp resp = receiveMessageFacade.publish(receiveMessageReq);
 
         if(resp.isSuccess()){
