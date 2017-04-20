@@ -9,6 +9,12 @@ import java.util.Date;
 
 import javax.annotation.Resource;
 
+import com.ymatou.messagebus.domain.config.ForwardConfig;
+import com.ymatou.messagebus.facade.ReceiveMessageFacade;
+import com.ymatou.messagebus.facade.model.ReceiveMessageReq;
+import com.ymatou.messagebus.facade.model.ReceiveMessageResp;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.ymatou.messagebus.domain.model.Message;
@@ -34,6 +40,12 @@ public class PublishMessageFacadeImpl implements PublishMessageFacade {
     @Resource
     private MessageBusService messageBusService;
 
+    @Autowired(required = false)
+    private ReceiveMessageFacade receiveMessageFacade;
+
+    @Resource
+    private ForwardConfig forwardConfig;
+
     /**
      * 按照业务统计
      */
@@ -55,6 +67,49 @@ public class PublishMessageFacadeImpl implements PublishMessageFacade {
     public PublishMessageResp publish(PublishMessageReq req) {
         long startTime = System.currentTimeMillis();
 
+        PublishMessageResp resp;
+        if(receiveMessageFacade != null && forwardConfig.isNeedForward(req.getCode())){
+            resp = forwardToReceiver(req);
+        }else {
+            resp = selfHandle(req);
+        }
+
+        // 向性能监控器汇报性能情况
+        long consumedTime = System.currentTimeMillis() - startTime;
+        PerformanceStatisticContainer.add(consumedTime, req.getCode(), monitorAppId);
+        PerformanceStatisticContainer.add(consumedTime, "TotalPublish", monitorAppId);
+        PerformanceStatisticContainer.add(consumedTime, String.format("TotalPublish.%s", NetUtil.getHostIp()),
+                staticAppId);
+
+        return resp;
+    }
+
+    /**
+     * 转发到新的接收站
+     * @param req
+     * @return
+     */
+    private PublishMessageResp forwardToReceiver(PublishMessageReq req){
+        ReceiveMessageReq receiveMessageReq = new ReceiveMessageReq();
+        BeanUtils.copyProperties(req,receiveMessageReq);
+        ReceiveMessageResp resp = receiveMessageFacade.publish(receiveMessageReq);
+
+        if(resp.isSuccess()){
+            PublishMessageResp publishMessageResp = new PublishMessageResp();
+            resp.setSuccess(true);
+            resp.setUuid(resp.getUuid());
+            return publishMessageResp;
+        }else {
+            return selfHandle(req);
+        }
+    }
+
+    /**
+     * 本站处理
+     * @param req
+     * @return
+     */
+    private PublishMessageResp selfHandle(PublishMessageReq req){
         Message message = new Message();
         message.setAppId(req.getAppId());
         message.setBody(req.getBody());
@@ -73,15 +128,6 @@ public class PublishMessageFacadeImpl implements PublishMessageFacade {
         PublishMessageResp resp = new PublishMessageResp();
         resp.setSuccess(true);
         resp.setUuid(message.getUuid());
-
-
-        // 向性能监控器汇报性能情况
-        long consumedTime = System.currentTimeMillis() - startTime;
-        PerformanceStatisticContainer.add(consumedTime, message.getAppCode(), monitorAppId);
-        PerformanceStatisticContainer.add(consumedTime, "TotalPublish", monitorAppId);
-        PerformanceStatisticContainer.add(consumedTime, String.format("TotalPublish.%s", NetUtil.getHostIp()),
-                staticAppId);
-
         return resp;
     }
 

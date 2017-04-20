@@ -117,5 +117,10 @@
 		interface="com.ymatou.messagebus.facade.rest.PublishMessageResource"
 		ref="publishMessageResource" protocol="rest" />
 
+	<dubbo:consumer check="false" ></dubbo:consumer>
+
 	<dubbo:reference id="compensateClient" interface="com.ymatou.messagebus.facade.CompensateFacade" check="false" retries="1" timeout="10000" />
+
+	<dubbo:reference id="receiveMessageFacade" interface="com.ymatou.messagebus.facade.ReceiveMessageFacade" check="false" retries="1" timeout="10000" />
+
 </beans>

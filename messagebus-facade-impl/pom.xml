@@ -23,5 +23,10 @@
 			<groupId>com.ymatou.messagebus</groupId>
 			<artifactId>messagebus-domain</artifactId>
 		</dependency>
+
+		<dependency>
+			<groupId>com.ymatou.mq</groupId>
+			<artifactId>mq-rabbit-receiver-facade</artifactId>
+		</dependency>
 	</dependencies>
 </project>

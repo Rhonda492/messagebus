@@ -76,6 +76,7 @@
 		<!--开发联调，API还未稳定，需要频繁发布时，版本号变更为1.0.0.SNAPSHOT。 -->
 		<!--API最终确定后，版本号修改为“1.0.0YyyyMmDd”并release。客户端最终必须都是使用release版。 -->
 		<messagebus-facade.version>1.1.0</messagebus-facade.version>
+		<mqRabbitReceiverFacade.version>1.0.0.2017041201</mqRabbitReceiverFacade.version>
 
 	</properties>
 	<dependencyManagement>
@@ -465,6 +466,12 @@
 				<groupId>com.ymatou.messagebus</groupId>
 				<artifactId>messagebus-infrastructure</artifactId>
 				<version>${messagebus.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>com.ymatou.mq</groupId>
+				<artifactId>mq-rabbit-receiver-facade</artifactId>
+				<version>${mqRabbitReceiverFacade.version}</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
