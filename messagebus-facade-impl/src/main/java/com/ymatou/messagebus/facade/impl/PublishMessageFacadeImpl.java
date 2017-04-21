@@ -102,8 +102,8 @@ public class PublishMessageFacadeImpl implements PublishMessageFacade {
 
             if(resp.isSuccess()){
                 PublishMessageResp publishMessageResp = new PublishMessageResp();
-                resp.setSuccess(true);
-                resp.setUuid(resp.getUuid());
+                publishMessageResp.setSuccess(true);
+                publishMessageResp.setUuid(resp.getUuid());
                 return publishMessageResp;
             }
         } catch (Exception e) {
