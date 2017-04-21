@@ -24,7 +24,6 @@ import java.util.Set;
  */
 @Component
 @DisconfFile(fileName = "forward.properties")
-@DisconfUpdateService
 public class ForwardConfig  {
 
 

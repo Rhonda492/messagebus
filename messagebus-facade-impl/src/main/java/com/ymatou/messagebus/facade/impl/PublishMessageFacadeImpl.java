@@ -97,16 +97,20 @@ public class PublishMessageFacadeImpl implements PublishMessageFacade {
         ReceiveMessageReq receiveMessageReq = new ReceiveMessageReq();
         BeanUtils.copyProperties(req,receiveMessageReq);
 
-        ReceiveMessageResp resp = receiveMessageFacade.publish(receiveMessageReq);
+        try {
+            ReceiveMessageResp resp = receiveMessageFacade.publish(receiveMessageReq);
 
-        if(resp.isSuccess()){
-            PublishMessageResp publishMessageResp = new PublishMessageResp();
-            resp.setSuccess(true);
-            resp.setUuid(resp.getUuid());
-            return publishMessageResp;
-        }else {
-            return selfHandle(req);
+            if(resp.isSuccess()){
+                PublishMessageResp publishMessageResp = new PublishMessageResp();
+                resp.setSuccess(true);
+                resp.setUuid(resp.getUuid());
+                return publishMessageResp;
+            }
+        } catch (Exception e) {
+            logger.error("forwardToReceiver error,using selfhandle,req:{}",req,e);
         }
+
+        return selfHandle(req);
     }
 
     /**
